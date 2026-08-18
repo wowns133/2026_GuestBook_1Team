@@ -3,7 +3,7 @@
 
 #include "framework.h"
 #include "2026_GuestBook_1Team.h"
-
+#include "Draw.h"
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -121,6 +121,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
+Draw draw;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -142,11 +143,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_LBUTTONDOWN:
+        {
+        draw.startDrawingLine(hWnd, lParam);
+        break;
+        }
+    case WM_MOUSEMOVE:
+    {
+        draw.drawingLine(hWnd, lParam);
+        break;
+    }
+    case WM_LBUTTONUP:
+    {
+        draw.endDrawingLine(hWnd, lParam);
+        break;
+    }
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+            draw.drawWindowLines(hWnd, hdc);
             EndPaint(hWnd, &ps);
         }
         break;
