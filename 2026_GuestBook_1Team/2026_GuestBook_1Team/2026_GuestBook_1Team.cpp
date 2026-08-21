@@ -3,7 +3,11 @@
 
 #include "framework.h"
 #include "2026_GuestBook_1Team.h"
+
+///통합 헤더를 만들기 전 임시로 넣은 헤더
 #include "Draw.h"
+#include "WinUi.h"
+
 #define MAX_LOADSTRING 100
 
 // 전역 변수:
@@ -124,12 +128,56 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 Draw draw;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
     switch (message)
     {
+    case WM_CREATE:
+        {
+            makeTempButton(hWnd, hInst);
+        }
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
             // 메뉴 선택을 구문 분석합니다:
+
+            //임시 버튼 이벤트 처리를 모아 놓은 switch문 입니다. 임시 버튼의 이벤트 처리는 모두 여기서 담당합니다.
+            //충돌을 방지하기 위해 이 부분을 사용하여 테스트한 후에는 반드시 원상태로 복구해야 합니다.
+            //원상태의 예시는 아래와 같습니다.
+            //case ID_PEN_STYLE1:
+            //(TAB)break;
+            switch (wmId)
+            {
+            case ID_PEN_STYLE1:
+                break;
+            case ID_PEN_STYLE2:
+                break;
+            case ID_PEN_STYLE3:
+                break;
+            case ID_PEN_STYLE4:
+                break;
+            case ID_PEN_STYLE5:
+                break;
+            case ID_PEN_COLOR1:
+                break;
+            case ID_PEN_COLOR2:
+                break;
+            case ID_PEN_COLOR3:
+                break;
+            case ID_PEN_COLOR4:
+                break;
+            case ID_PEN_COLOR5:
+                break;
+            case ID_ERASER:
+                break;
+            case ID_REPLAY:
+                break;
+            case ID_SAVE_FILE:
+                break;
+            case ID_LOAD_FILE:
+                break;
+            }
+
+
             switch (wmId)
             {
             case IDM_ABOUT:
