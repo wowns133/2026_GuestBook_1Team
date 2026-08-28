@@ -8,24 +8,48 @@
 * @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는 
 * 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 */
+#define COLOR1 25
+#define COLOR2 255
+#define COLOR3 0
+#define COLOR4 0
 
 
 void Draw::drawWindowLines(HWND hWnd, HDC hdc)
 {
+	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
+	RECT temp_rect; //창 크기 구할 RECT 생성
+	GetClientRect(hWnd, &temp_rect); //temp_rect에 현재 작업영역 크기 구하기
+	Gdiplus::Bitmap dwl_bitmap(temp_rect.right, temp_rect.bottom, PixelFormat32bppARGB); // 비트맵 생성
+	Gdiplus::Graphics bitmap_graphics(&dwl_bitmap); //비트맵용 grapgics 생성
+
+	Gdiplus::Pen dwl_pen(Gdiplus::Color(COLOR1, COLOR2, COLOR3, COLOR4), 15.0f);
+	dwl_pen.SetStartCap(Gdiplus::LineCapRound);
+	dwl_pen.SetEndCap(Gdiplus::LineCapRound);
+
+	bitmap_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 	for (size_t line_num = 0; line_num < drawn_lines.size(); line_num++)
 	{
 		for (size_t point_num = 1; point_num < drawn_lines[line_num].size(); point_num++)
 		{
-			MoveToEx(hdc, drawn_lines[line_num][point_num - 1].x, drawn_lines[line_num][point_num - 1].y, NULL);
-			LineTo(hdc, drawn_lines[line_num][point_num].x, drawn_lines[line_num][point_num].y);
+			bitmap_graphics.DrawLine(&dwl_pen, 
+									(INT)drawn_lines[line_num][point_num - 1].point.x, 
+									(INT)drawn_lines[line_num][point_num - 1].point.y,
+									(INT)drawn_lines[line_num][point_num].point.x,
+									(INT)drawn_lines[line_num][point_num].point.y
+									);
 		}
 	}
-
+	
 	for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
 	{
-		MoveToEx(hdc, drawn_line[point_num - 1].x, drawn_line[point_num - 1].y, NULL);
-		LineTo(hdc, drawn_line[point_num].x, drawn_line[point_num].y);
+		bitmap_graphics.DrawLine(&dwl_pen, 
+								(INT)drawn_line[point_num - 1].point.x,
+								(INT)drawn_line[point_num - 1].point.y,
+								(INT)drawn_line[point_num].point.x,
+								(INT)drawn_line[point_num].point.y
+								);
 	}
+	hdc_graphics.DrawImage(&dwl_bitmap, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 }
 
 void Draw::gdiPlusStart()
@@ -53,8 +77,11 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	previous_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장 
 	previous_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
 
+
+	start_time = GetTickCount64(); //윈도우 창이 켜진 시점부터 흐르는 시간
+
 	//현재 좌표를 선의 시작점으로 저장
-	drawn_line.push_back({ previous_x, previous_y });
+	drawn_line.push_back({ { previous_x, previous_y }, 0, true});
 
 	//그리는 중이라고 플래그 표시
 	is_drawing = true;
@@ -66,7 +93,7 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 	if(is_drawing)
 	{
 	/*------------------임시 펜 조작-----------------------*/
-	Gdiplus::Pen pen(Gdiplus::Color(255, 0, 0, 0), 1.0f); 
+	Gdiplus::Pen pen(Gdiplus::Color(COLOR1, COLOR2, COLOR3, COLOR4), 15.0f);
 	pen.SetStartCap(Gdiplus::LineCapRound);
 	pen.SetEndCap(Gdiplus::LineCapRound);
 
@@ -74,16 +101,20 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 	current_x = LOWORD(lParam);
 	current_y = HIWORD(lParam);
 
+	ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
+
 	//현재 위치 좌표를 벡터에 저장
-	drawn_line.push_back({ current_x, current_y });
+	drawn_line.push_back({ { current_x, current_y }, elapsed_time, true});
 
 	/*--------------비트맵에 그리기--------------*/
+	draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
 	draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
 	draw_bmp_graphics->DrawLine(&pen, previous_x, previous_y, current_x, current_y);	// 선 긋기 함수 실행
 
 	previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
 	previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
 
+	draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 	draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	}
 }
@@ -113,7 +144,8 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 // void startDrawingLine(HWND hWnd, LPARAM lParam);
 // void drawingLine(HWND hWnd, LPARAM lParam);
 // void endDrawingLine(HWND hWnd, LPARAM lParam);
-// 위 세 함수의 이전 버전입니다.
+// void Draw::drawWindowLines(HWND hWnd, HDC hdc)
+// 위 네 함수의 이전 버전입니다.
 /*
 void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 {
@@ -156,6 +188,23 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 	drawn_lines.push_back(drawn_line); //다 그린 선을 선을 모아놓은 벡터에 저장
 	drawn_line.clear(); //선 벡터 비우기
 	is_drawing = false; //그리기 끝났으므로 플래그를 false로 변경
+}
+void Draw::drawWindowLines(HWND hWnd, HDC hdc)
+{
+	for (size_t line_num = 0; line_num < drawn_lines.size(); line_num++)
+	{
+		for (size_t point_num = 1; point_num < drawn_lines[line_num].size(); point_num++)
+		{
+			MoveToEx(hdc, drawn_lines[line_num][point_num - 1].x, drawn_lines[line_num][point_num - 1].y, NULL);
+			LineTo(hdc, drawn_lines[line_num][point_num].x, drawn_lines[line_num][point_num].y);
+		}
+	}
+
+	for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
+	{
+		MoveToEx(hdc, drawn_line[point_num - 1].x, drawn_line[point_num - 1].y, NULL);
+		LineTo(hdc, drawn_line[point_num].x, drawn_line[point_num].y);
+	}
 }
 */
 

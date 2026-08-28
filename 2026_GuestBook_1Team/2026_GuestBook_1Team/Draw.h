@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Windows.h>
-#include <unknwn.h>        // GdiplusGraphics.h 내 IUnknown 빨간줄 해결 핵심
+#include <unknwn.h>			// framework.h 내부 #define WIN32_LEAN_AND_MEAN로 인해 gdiplus에 필요한 몇몇 헤더들이 제외되어 직접 넣음 
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
 #include <vector>
@@ -11,16 +11,34 @@
 * @file
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
-* @todo 1. 화면 안에서 클릭한 후 화면 밖에서 땠을 때 다시 화면 안으로 돌아오면 화면 밖에서 생긴 이벤트를 감지할 수 없는 문제 해결
+* @todo 
+* 1. 화면 안에서 클릭한 후 화면 밖에서 땠을 때 다시 화면 안으로 돌아오면 화면 밖에서 생긴 이벤트를 감지할 수 없는 문제 해결
 * 2. 그릴 때 시간 측정하는 기능 추가
 * 3. drawingLine에는 임시 펜이 적용되어 있음. 추후 수정
 * 4. 빠르게 그렸을 때 선이 각지게 그려지는 문제 해결
 * 5. drawWindowLines 함수 더블 버퍼링 버전으로 변경
+* 6. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기
+* 7. 상하 크기조절 시 이상현상
 * @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는 
 * 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 * @author challenjoy01
 */
 
+
+
+
+
+/**
+* @brief 점의 데이터를 저장하기 위한 구조체
+* @details 
+* @author challenjoy01
+*/
+struct DrawPointData
+{
+	POINT point; ///< 좌표를 저장하는 변수
+	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
+	bool is_pen = TRUE;///< 그리는 중인지 지우개 쓰는 중인지 판별. 그리기 TRUE, 지우개 FALSE
+};
 
 
 /**
@@ -38,9 +56,7 @@ private:
 
 	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
 
-	std::vector<std::vector<POINT>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
-	std::vector<POINT> drawn_line;///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
-
+	
 	//------------------------GDI+---------------------//
 	ULONG_PTR drawing_token; ///< GDI 토큰 핸들
 
@@ -55,6 +71,12 @@ private:
 protected:
 
 public:
+	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
+	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
+	ULONGLONG start_time; ///< 
+
+
+
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 시작 함수. 선 그리기에 필요한 각종 값 설정 및 객체 생성을 맡는다.
 	* @details 선 그리기를 시작할 때 시작하는 시점에 실행되는 함수. 마우스 관련 메시지 식별자에서 사용하는 함수이다.
