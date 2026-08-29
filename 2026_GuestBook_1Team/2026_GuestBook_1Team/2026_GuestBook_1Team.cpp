@@ -7,6 +7,9 @@
 ///통합 헤더를 만들기 전 임시로 넣은 헤더
 #include "Draw.h"
 #include "WinUi.h"
+#include "FileInOut.h"
+#include "Delete.h"
+#include "Replay.h"
 
 #define MAX_LOADSTRING 100
 
@@ -193,9 +196,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case ID_REPLAY:
             break;
         case ID_SAVE_FILE:
+        {
+            FileInOut fileIo;
+            wchar_t filePath[MAX_PATH] = L"";
+
+            // 저장용 탐색기 창을 띄우고 (true = 저장 모드), 경로가 지정되면 저장 함수 실행
+            if (fileIo.OpenFileDialog(hWnd, filePath, true))
+            {
+                fileIo.SaveFile(hWnd, filePath, draw);
+            }
             break;
+        }
+        break;
         case ID_LOAD_FILE:
+        {
+            FileInOut fileIo;
+            wchar_t filePath[MAX_PATH] = L"";
+
+            // 불러오기용 탐색기 창을 띄우고 (false = 불러오기 모드), 경로가 선택되면 불러오기 함수 실행
+            if (fileIo.OpenFileDialog(hWnd, filePath, false))
+            {
+                fileIo.LoadFile(hWnd, filePath, draw);
+            }
             break;
+        }
+        break;
         }
 
 
