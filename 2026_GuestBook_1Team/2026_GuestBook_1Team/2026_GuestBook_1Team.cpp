@@ -26,6 +26,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 /*=============================== test ===============================*/
 Draw draw;
+Replay replay;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -141,6 +142,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         makeTempButton(hWnd, hInst);
     }
+    break;
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -194,6 +196,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case ID_ERASER:
             break;
         case ID_REPLAY:
+        {
+            replay.startReplay(draw, hWnd);
+        }
             break;
         case ID_SAVE_FILE:
         {
