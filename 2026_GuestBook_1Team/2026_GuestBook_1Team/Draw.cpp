@@ -1,16 +1,17 @@
 #include "Draw.h"
 
+
 /**
 * @file
 * @brief 그리기 기능을 구현하는 파일.
 * @details 그리기 기능을 구현한 파일. Draw.h의 함수들이 구현되어 있다.
 * @author challenjoy01
-* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는 
+* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는
 * 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 */
-#define COLOR1 25
+#define COLOR1 255
 #define COLOR2 255
-#define COLOR3 0
+#define COLOR3 255
 #define COLOR4 0
 
 
@@ -22,32 +23,30 @@ void Draw::drawWindowLines(HWND hWnd, HDC hdc)
 	Gdiplus::Bitmap dwl_bitmap(temp_rect.right, temp_rect.bottom, PixelFormat32bppARGB); // 비트맵 생성
 	Gdiplus::Graphics bitmap_graphics(&dwl_bitmap); //비트맵용 grapgics 생성
 
-	Gdiplus::Pen dwl_pen(Gdiplus::Color(COLOR1, COLOR2, COLOR3, COLOR4), 15.0f);
-	dwl_pen.SetStartCap(Gdiplus::LineCapRound);
-	dwl_pen.SetEndCap(Gdiplus::LineCapRound);
+	Gdiplus::Pen* pen_pointer = pen_style->getPen();
 
 	bitmap_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 	for (size_t line_num = 0; line_num < drawn_lines.size(); line_num++)
 	{
 		for (size_t point_num = 1; point_num < drawn_lines[line_num].size(); point_num++)
 		{
-			bitmap_graphics.DrawLine(&dwl_pen, 
-									(INT)drawn_lines[line_num][point_num - 1].point.x, 
-									(INT)drawn_lines[line_num][point_num - 1].point.y,
-									(INT)drawn_lines[line_num][point_num].point.x,
-									(INT)drawn_lines[line_num][point_num].point.y
-									);
+			bitmap_graphics.DrawLine(pen_pointer,
+				(INT)drawn_lines[line_num][point_num - 1].point.x,
+				(INT)drawn_lines[line_num][point_num - 1].point.y,
+				(INT)drawn_lines[line_num][point_num].point.x,
+				(INT)drawn_lines[line_num][point_num].point.y
+			);
 		}
 	}
-	
+
 	for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
 	{
-		bitmap_graphics.DrawLine(&dwl_pen, 
-								(INT)drawn_line[point_num - 1].point.x,
-								(INT)drawn_line[point_num - 1].point.y,
-								(INT)drawn_line[point_num].point.x,
-								(INT)drawn_line[point_num].point.y
-								);
+		bitmap_graphics.DrawLine(pen_pointer,
+			(INT)drawn_line[point_num - 1].point.x,
+			(INT)drawn_line[point_num - 1].point.y,
+			(INT)drawn_line[point_num].point.x,
+			(INT)drawn_line[point_num].point.y
+		);
 	}
 	hdc_graphics.DrawImage(&dwl_bitmap, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 }
@@ -56,10 +55,17 @@ void Draw::gdiPlusStart()
 {
 	Gdiplus::GdiplusStartupInput gdi_plus_start_up_input;
 	Gdiplus::GdiplusStartup(&drawing_token, &gdi_plus_start_up_input, NULL);
+
+	/// pen_style 테스트
+	pen_style = new PenStyle();
 }
 
 void Draw::gdiPlusEnd()
 {
+	/// pen_style 테스트
+	delete pen_style;
+	pen_style = nullptr;
+
 	Gdiplus::GdiplusShutdown(drawing_token);
 }
 
@@ -81,7 +87,7 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	start_time = GetTickCount64(); //윈도우 창이 켜진 시점부터 흐르는 시간
 
 	//현재 좌표를 선의 시작점으로 저장
-	drawn_line.push_back({ { previous_x, previous_y }, 0, true});
+	drawn_line.push_back({ { previous_x, previous_y }, 0, true });
 
 	//그리는 중이라고 플래그 표시
 	is_drawing = true;
@@ -90,32 +96,31 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 
 void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 {
-	if(is_drawing)
+	if (is_drawing)
 	{
-	/*------------------임시 펜 조작-----------------------*/
-	Gdiplus::Pen pen(Gdiplus::Color(COLOR1, COLOR2, COLOR3, COLOR4), 15.0f);
-	pen.SetStartCap(Gdiplus::LineCapRound);
-	pen.SetEndCap(Gdiplus::LineCapRound);
 
-	//이동 후 현재 위치를 저장
-	current_x = LOWORD(lParam);
-	current_y = HIWORD(lParam);
+		/// pen_style 테스트
+		Gdiplus::Pen* pen_pointer = pen_style->getPen();
 
-	ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
+		//이동 후 현재 위치를 저장
+		current_x = LOWORD(lParam);
+		current_y = HIWORD(lParam);
 
-	//현재 위치 좌표를 벡터에 저장
-	drawn_line.push_back({ { current_x, current_y }, elapsed_time, true});
+		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
-	/*--------------비트맵에 그리기--------------*/
-	draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
-	draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
-	draw_bmp_graphics->DrawLine(&pen, previous_x, previous_y, current_x, current_y);	// 선 긋기 함수 실행
+		//현재 위치 좌표를 벡터에 저장
+		drawn_line.push_back({ { current_x, current_y }, elapsed_time, true });
 
-	previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
-	previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+		/*--------------비트맵에 그리기--------------*/
+		draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
+		draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
+		draw_bmp_graphics->DrawLine(pen_pointer, previous_x, previous_y, current_x, current_y);	// 선 긋기 함수 실행
 
-	draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-	draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
+		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+
+		draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+		draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	}
 }
 

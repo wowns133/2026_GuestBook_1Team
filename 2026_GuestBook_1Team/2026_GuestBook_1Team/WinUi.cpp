@@ -5,7 +5,7 @@
 void makeTempButton(HWND hWnd, HINSTANCE hInst)
 {
     // --- PEN STYLE (1 ~ 5) ---
-    CreateWindowW(L"BUTTON", L"S1", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"solid", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         10, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE1, hInst, nullptr);
     CreateWindowW(L"BUTTON", L"S2", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         50, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE2, hInst, nullptr);
@@ -17,15 +17,15 @@ void makeTempButton(HWND hWnd, HINSTANCE hInst)
         170, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE5, hInst, nullptr);
 
     // --- PEN COLOR (1 ~ 5) ---
-    CreateWindowW(L"BUTTON", L"C1", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"black", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         210, 10, 30, 30, hWnd, (HMENU)ID_PEN_COLOR1, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"C2", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"red", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         250, 10, 30, 30, hWnd, (HMENU)ID_PEN_COLOR2, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"C3", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"green", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         290, 10, 30, 30, hWnd, (HMENU)ID_PEN_COLOR3, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"C4", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"blue", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         330, 10, 30, 30, hWnd, (HMENU)ID_PEN_COLOR4, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"C5", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"yellow", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         370, 10, 30, 30, hWnd, (HMENU)ID_PEN_COLOR5, hInst, nullptr);
 
     // ---기능 버튼들 ---

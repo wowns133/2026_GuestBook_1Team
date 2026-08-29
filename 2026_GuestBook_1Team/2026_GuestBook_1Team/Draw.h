@@ -6,12 +6,14 @@
 #pragma comment(lib, "gdiplus.lib")
 #include <vector>
 
+/// 펜 스타일 임시 헤더파일 
+#include "PenStyle.h"
 
 /**
 * @file
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
-* @todo 
+* @todo
 * 1. 화면 안에서 클릭한 후 화면 밖에서 땠을 때 다시 화면 안으로 돌아오면 화면 밖에서 생긴 이벤트를 감지할 수 없는 문제 해결
 * 2. 그릴 때 시간 측정하는 기능 추가
 * 3. drawingLine에는 임시 펜이 적용되어 있음. 추후 수정
@@ -19,7 +21,7 @@
 * 5. drawWindowLines 함수 더블 버퍼링 버전으로 변경
 * 6. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기
 * 7. 상하 크기조절 시 이상현상
-* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는 
+* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는
 * 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 * @author challenjoy01
 */
@@ -30,7 +32,7 @@
 
 /**
 * @brief 점의 데이터를 저장하기 위한 구조체
-* @details 
+* @details
 * @author challenjoy01
 */
 struct DrawPointData
@@ -56,7 +58,7 @@ private:
 
 	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
 
-	
+
 	//------------------------GDI+---------------------//
 	ULONG_PTR drawing_token; ///< GDI 토큰 핸들
 
@@ -68,9 +70,14 @@ private:
 	RECT client_rect; ///< 작업 영역의 크기를 저장하기 위한 RECT. right가 너미, bottom이 높이.
 
 
+
+
 protected:
 
 public:
+	/// pen_style 테스트
+	PenStyle* pen_style;
+
 	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
 	ULONGLONG start_time; ///< 
@@ -90,7 +97,7 @@ public:
 	* 7. 그리는 중이라고 플래그 표시
 	* @param[in] hWnd 창 고유 핸들
 	* @param[in] lParam x, y 좌표가 담긴 변수(마우스 메시지가 아닐 경우 lParam 값이 다를 수 있음)
-	* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는 
+	* @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는
 	* 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 	* @author challenjoy01
 	*/
@@ -151,7 +158,7 @@ public:
 	*/
 	void gdiPlusEnd();
 
-	
+
 
 
 };

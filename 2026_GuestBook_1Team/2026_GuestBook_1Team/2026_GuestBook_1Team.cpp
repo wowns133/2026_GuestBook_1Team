@@ -21,10 +21,13 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+/*=============================== test ===============================*/
+Draw draw;
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
@@ -37,7 +40,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MyRegisterClass(hInstance);
 
     // 애플리케이션 초기화를 수행합니다:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
@@ -45,7 +48,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MY2026GUESTBOOK1TEAM));
 
     MSG msg;
-
+    draw.gdiPlusStart();
     // 기본 메시지 루프입니다:
     while (GetMessage(&msg, nullptr, 0, 0))
     {
@@ -55,8 +58,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
-
-    return (int) msg.wParam;
+    draw.gdiPlusEnd();
+    return (int)msg.wParam;
 }
 
 
@@ -72,17 +75,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY2026GUESTBOOK1TEAM));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_MY2026GUESTBOOK1TEAM);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MY2026GUESTBOOK1TEAM));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_MY2026GUESTBOOK1TEAM);
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
@@ -99,20 +102,20 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
+    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+    if (!hWnd)
+    {
+        return FALSE;
+    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-   return TRUE;
+    return TRUE;
 }
 
 //
@@ -125,77 +128,95 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
 //
 //
-Draw draw;
+//Draw draw;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
     switch (message)
     {
     case WM_CREATE:
-        {
-            makeTempButton(hWnd, hInst);
-        }
+    {
+        makeTempButton(hWnd, hInst);
+    }
     case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+
+        //임시 버튼 이벤트 처리를 모아 놓은 switch문 입니다. 임시 버튼의 이벤트 처리는 모두 여기서 담당합니다.
+        //충돌을 방지하기 위해 이 부분을 사용하여 테스트한 후에는 반드시 원상태로 복구해야 합니다.
+        //원상태의 예시는 아래와 같습니다.
+        //case ID_PEN_STYLE1:
+        //(TAB)break;
+        switch (wmId)
         {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다:
-
-            //임시 버튼 이벤트 처리를 모아 놓은 switch문 입니다. 임시 버튼의 이벤트 처리는 모두 여기서 담당합니다.
-            //충돌을 방지하기 위해 이 부분을 사용하여 테스트한 후에는 반드시 원상태로 복구해야 합니다.
-            //원상태의 예시는 아래와 같습니다.
-            //case ID_PEN_STYLE1:
-            //(TAB)break;
-            switch (wmId)
-            {
-            case ID_PEN_STYLE1:
-                break;
-            case ID_PEN_STYLE2:
-                break;
-            case ID_PEN_STYLE3:
-                break;
-            case ID_PEN_STYLE4:
-                break;
-            case ID_PEN_STYLE5:
-                break;
-            case ID_PEN_COLOR1:
-                break;
-            case ID_PEN_COLOR2:
-                break;
-            case ID_PEN_COLOR3:
-                break;
-            case ID_PEN_COLOR4:
-                break;
-            case ID_PEN_COLOR5:
-                break;
-            case ID_ERASER:
-                break;
-            case ID_REPLAY:
-                break;
-            case ID_SAVE_FILE:
-                break;
-            case ID_LOAD_FILE:
-                break;
-            }
-
-
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
+        case ID_PEN_STYLE1:
+        {
+            draw.pen_style->solidPen();
         }
         break;
-    case WM_LBUTTONDOWN:
+        case ID_PEN_STYLE2:
+            break;
+        case ID_PEN_STYLE3:
+            break;
+        case ID_PEN_STYLE4:
+            break;
+        case ID_PEN_STYLE5:
+            break;
+        case ID_PEN_COLOR1:
         {
+            draw.pen_style->selectPenColor(BLACK);
+        }
+        break;
+        case ID_PEN_COLOR2:
+        {
+            draw.pen_style->selectPenColor(RED);
+        }
+        break;
+        case ID_PEN_COLOR3:
+        {
+            draw.pen_style->selectPenColor(GREEN);
+        }
+        break;
+        case ID_PEN_COLOR4:
+        {
+            draw.pen_style->selectPenColor(BLUE);
+        }
+        break;
+        case ID_PEN_COLOR5:
+        {
+            draw.pen_style->selectPenColor(YELLOW);
+        }
+        break;
+        case ID_ERASER:
+            break;
+        case ID_REPLAY:
+            break;
+        case ID_SAVE_FILE:
+            break;
+        case ID_LOAD_FILE:
+            break;
+        }
+
+
+        switch (wmId)
+        {
+        case IDM_ABOUT:
+            DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+            break;
+        case IDM_EXIT:
+            DestroyWindow(hWnd);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+    }
+    break;
+    case WM_LBUTTONDOWN:
+    {
         draw.startDrawingLine(hWnd, lParam);
         break;
-        }
+    }
     case WM_MOUSEMOVE:
     {
         draw.drawingLine(hWnd, lParam);
@@ -207,17 +228,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            draw.drawWindowLines(hWnd, hdc);
-            EndPaint(hWnd, &ps);
-        }
-        break;
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        draw.drawWindowLines(hWnd, hdc);
+        EndPaint(hWnd, &ps);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+    case WM_MOUSEWHEEL:
+    {
+
+        int mouse_wheel_data = GET_WHEEL_DELTA_WPARAM(wParam);
+
+        if (mouse_wheel_data > 0)
+        {
+            /// 휠을 위로 올렸을 때의 처리
+            draw.pen_style->settingPenThicknessUp();
+        }
+        else
+        {
+            // 휠을 아래로 내렸을 때의 처리
+            draw.pen_style->settingPenThicknessDown();
+        }
+        break;
+    }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
