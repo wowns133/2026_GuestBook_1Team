@@ -98,6 +98,8 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 {
 	if (is_drawing)
 	{
+		//창 벗어남을 추적하기 위해 마우스 추적 시작
+		setTrackMouseEvent(hWnd);
 
 		/// pen_style 테스트
 		Gdiplus::Pen* pen_pointer = pen_style->getPen();
@@ -131,6 +133,11 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 	is_drawing = false; //그리기 끝났으므로 플래그를 false로 변경
 
 
+	//-------------------마우스 추적 완료 처리------------------//
+	is_tracking_mouse = false;
+	//delete track_mouse;
+
+
 	/*--------------------포인터 처리-------------------*/
 	delete draw_bmp_graphics;
 	delete draw_bmp;
@@ -143,7 +150,22 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 	draw_hdc_graphics = nullptr;
 }
 
+void Draw::setTrackMouseEvent(HWND hWnd)
+{
+	if (!is_tracking_mouse)
+	{
+		track_mouse = new TRACKMOUSEEVENT; //구조체 초기화
+		track_mouse->cbSize = sizeof(TRACKMOUSEEVENT);
+		track_mouse->dwFlags = TME_LEAVE; //창 벗어남을 감시함
+		track_mouse->hwndTrack = hWnd;
 
+		if (TrackMouseEvent(track_mouse)) //TrackMouseEvent 함수는 마우스 이벤트 추적을 시작하는 함수
+		{
+			is_tracking_mouse = true; //추척을 시작했을 경우 플래그 true
+		}
+		delete track_mouse;
+	}
+}
 
 // 더블 버퍼링을 적용하지 않은 단순 선 그리기 함수들
 // void startDrawingLine(HWND hWnd, LPARAM lParam);
