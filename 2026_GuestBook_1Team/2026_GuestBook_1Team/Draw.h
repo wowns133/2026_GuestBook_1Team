@@ -14,13 +14,12 @@
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
 * @todo
-* 1. 화면 안에서 클릭한 후 화면 밖에서 땠을 때 다시 화면 안으로 돌아오면 화면 밖에서 생긴 이벤트를 감지할 수 없는 문제 해결
-* 2. 그릴 때 시간 측정하는 기능 추가
-* 3. drawingLine에는 임시 펜이 적용되어 있음. 추후 수정
-* 4. 빠르게 그렸을 때 선이 각지게 그려지는 문제 해결
-* 5. drawWindowLines 함수 더블 버퍼링 버전으로 변경
-* 6. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기
-* 7. 상하 크기조절 시 이상현상
+* 1. 빠르게 그렸을 때 선이 각지게 그려지는 문제 해결
+* draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); 가 WM_MOUSEMOVE 이벤트를 지연시키는 것 같음
+* 3. 서명 시작, 끝 함수 추가
+* 4. drawWindowLines 함수 최적화
+* 5. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기
+* 6. 상하 크기조절 시 이상현상
 * @warning startDrawingLine 내부에는 객체 생성 등 자원 해제가 필요한 부분이 존재합니다. startDrawingLine 실행 후에는
 * 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 * @author challenjoy01
@@ -58,6 +57,8 @@ private:
 
 	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
 
+	ULONGLONG start_time; ///< 선을 그릴 때 시작이 되는 지점(기준점)
+
 
 	//------------------------GDI+---------------------//
 	ULONG_PTR drawing_token; ///< GDI 토큰 핸들
@@ -70,17 +71,29 @@ private:
 	RECT client_rect; ///< 작업 영역의 크기를 저장하기 위한 RECT. right가 너미, bottom이 높이.
 
 
+	//--------------국소 부위 화면 갱신을 위한 변수-------------//
+	int draw_image_area_start_x = 0; ///< 화면을 갱신할 범위의 좌상단 x좌표
+	int draw_image_area_start_y = 0; ///< 화면을 갱신할 범위의 좌상단 y좌표
+	int draw_image_area_width = 0; ///< 화면을 갱신할 범위의 너비
+	int draw_image_area_height = 0; ///< 화면을 갱신할 범위의 높이
+	int pen_width = 15; ///< 현재 펜의 반지름 + 5
 
 
+	//------------마우스 추적------------//
+	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
+	TRACKMOUSEEVENT* track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
+
+
+	//----------------------------Pen-----------------------------//
+	Gdiplus::Pen* pen_pointer;
+	
 protected:
 
 public:
-	/// pen_style 테스트
-	PenStyle* pen_style;
-
+	PenStyle* pen_style; ///< 펜 스타일 
 	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
-	ULONGLONG start_time; ///< 
+	
 
 
 
@@ -159,6 +172,13 @@ public:
 	void gdiPlusEnd();
 
 
-
+	//-------------------------마우스 추적 세팅 메서드-----------------//
+	/**
+	* @brief 마우스가 창을 벗어나는 이벤트 감지를 시작하는 이벤트
+	* @details GDI+ 사용을 종료하는 함수이다.
+	* GdiplusShutDown를 실행한다. 프로그램 종료 전 한 번 사용한다.
+	* @author challenjoy01
+	*/
+	void setTrackMouseEvent(HWND hWnd);
 
 };

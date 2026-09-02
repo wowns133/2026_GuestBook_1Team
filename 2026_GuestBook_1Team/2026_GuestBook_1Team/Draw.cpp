@@ -75,9 +75,13 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	//그리기 환경 제작
 	draw_hdc = GetDC(hWnd); //hdc 발행. 사용 후 회수해야 함
 	draw_hdc_graphics = new Gdiplus::Graphics(draw_hdc); //화면 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+	draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
 	GetClientRect(hWnd, &client_rect); //client_rect에 현재 작업영역 크기 구하기
 	draw_bmp = new Gdiplus::Bitmap(client_rect.right, client_rect.bottom, PixelFormat32bppARGB); //더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
 	draw_bmp_graphics = new Gdiplus::Graphics(draw_bmp); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+	draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
+
 
 	//선을 그리기 시작하는 좌표를 현재 좌표로 초기화
 	previous_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장 
@@ -91,6 +95,13 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 
 	//그리는 중이라고 플래그 표시
 	is_drawing = true;
+
+	//창 벗어남을 추적하기 위해 마우스 추적 시작
+	setTrackMouseEvent(hWnd);
+
+	/// pen_style 테스트
+	pen_pointer = pen_style->getPen();
+
 }
 
 
@@ -98,10 +109,6 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 {
 	if (is_drawing)
 	{
-
-		/// pen_style 테스트
-		Gdiplus::Pen* pen_pointer = pen_style->getPen();
-
 		//이동 후 현재 위치를 저장
 		current_x = LOWORD(lParam);
 		current_y = HIWORD(lParam);
@@ -111,16 +118,42 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 		//현재 위치 좌표를 벡터에 저장
 		drawn_line.push_back({ { current_x, current_y }, elapsed_time, true });
 
-		/*--------------비트맵에 그리기--------------*/
+		//--------------비트맵에 그리기--------------//
 		draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
-		draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
 		draw_bmp_graphics->DrawLine(pen_pointer, previous_x, previous_y, current_x, current_y);	// 선 긋기 함수 실행
+
+		//-----------------국소 범위 화면 갱신-----------------//
+		pen_width = 15;
+
+		draw_image_area_start_x = min(previous_x, current_x) - pen_width;
+		draw_image_area_start_y = min(previous_y, current_y) - pen_width;
+		draw_image_area_width = max(previous_x, current_x) - draw_image_area_start_x + pen_width;
+		draw_image_area_height = max(previous_y, current_y)- draw_image_area_start_y + pen_width;
+
+		// 시작점이 0보다 적게 될 경우 0으로 설정
+		if (draw_image_area_start_x < 0)
+		{
+			draw_image_area_start_x = 0;
+		}
+		if (draw_image_area_start_y < 0)
+		{
+			draw_image_area_start_y = 0;
+		}
+
+		// draw_bmp의 새로 그을 선의 좌상단부터 width x height 크기만큼만 화면에 그리기
+		draw_hdc_graphics->DrawImage(
+			draw_bmp,	// 가져올 화면(비트맵)
+			draw_image_area_start_x,		// 화면에 그려질 시작점(좌상단) x좌표
+			draw_image_area_start_y,      // 화면에 그려질 시작점(좌상단) y좌표
+			draw_image_area_start_x,		// 비트맵에서 가져올 시작점(좌상단) x좌표
+			draw_image_area_start_y,      // 비트맵에서 가져올 시작점(좌상단) y좌표
+			draw_image_area_width,		// 가져올 너비
+			draw_image_area_height,     // 가져올 높이
+			Gdiplus::UnitPixel // 단위(픽셀)
+		);
 
 		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
 		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
-
-		draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-		draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	}
 }
 
@@ -129,6 +162,11 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 	drawn_lines.push_back(drawn_line); //다 그린 선을 선을 모아놓은 벡터에 저장
 	drawn_line.clear(); //선 벡터 비우기
 	is_drawing = false; //그리기 끝났으므로 플래그를 false로 변경
+
+
+	//-------------------마우스 추적 완료 처리------------------//
+	is_tracking_mouse = false;
+	//delete track_mouse;
 
 
 	/*--------------------포인터 처리-------------------*/
@@ -143,7 +181,22 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
 	draw_hdc_graphics = nullptr;
 }
 
+void Draw::setTrackMouseEvent(HWND hWnd)
+{
+	if (!is_tracking_mouse)
+	{
+		track_mouse = new TRACKMOUSEEVENT; //구조체 초기화
+		track_mouse->cbSize = sizeof(TRACKMOUSEEVENT);
+		track_mouse->dwFlags = TME_LEAVE; //창 벗어남을 감시함
+		track_mouse->hwndTrack = hWnd;
 
+		if (TrackMouseEvent(track_mouse)) //TrackMouseEvent 함수는 마우스 이벤트 추적을 시작하는 함수
+		{
+			is_tracking_mouse = true; //추척을 시작했을 경우 플래그 true
+		}
+		delete track_mouse;
+	}
+}
 
 // 더블 버퍼링을 적용하지 않은 단순 선 그리기 함수들
 // void startDrawingLine(HWND hWnd, LPARAM lParam);
