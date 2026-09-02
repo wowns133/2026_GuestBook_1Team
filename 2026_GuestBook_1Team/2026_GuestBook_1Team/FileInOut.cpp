@@ -1,131 +1,135 @@
-#include "FileInOut.h"
+ï»¿#include "FileInOut.h"
 #include <commdlg.h>
 #include <fstream>
 #include "Draw.h"
 
 /**
- * @brief À©µµ¿ì ÆÄÀÏ Å½»ö±â Ã¢À» ¶ç¿öÁÖ´Â ÇÔ¼ö
- * @details ÀúÀå/ºÒ·¯¿À±â¸¦ À§ÇÑ ÆÄÀÏ ¼±ÅÃ Ã¢À» ÄÔ
- * @return Á¤»óÀûÀ¸·Î ¼±ÅÃ ½Ã true, Ãë¼Ò ½Ã false ¹İÈ¯
+ * @brief ìœˆë„ìš° íŒŒì¼ íƒìƒ‰ê¸° ì°½ì„ ë„ì›Œì£¼ëŠ” í•¨ìˆ˜
+ * @details ì €ì¥/ë¶ˆëŸ¬ì˜¤ê¸°ë¥¼ ìœ„í•œ íŒŒì¼ ì„ íƒ ì°½ì„ ì¼¬
+ * @return ì •ìƒì ìœ¼ë¡œ ì„ íƒ ì‹œ true, ì·¨ì†Œ ì‹œ false ë°˜í™˜
  */
 bool FileInOut::OpenFileDialog(HWND hWnd, wchar_t* filePath, bool isSave) {
     OPENFILENAME ofn;
-    ZeroMemory(&ofn, sizeof(OPENFILENAME)); // ±¸Á¶Ã¼ ÃÊ±âÈ­
+    ZeroMemory(&ofn, sizeof(OPENFILENAME)); ///< êµ¬ì¡°ì²´ 0ê°’ìœ¼ë¡œ ì´ˆê¸°í™”
 
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = hWnd;
-    ofn.lpstrFile = filePath;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrInitialDir = L"..\\file\\"; // ±âº» Æú´õ
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST; // Àß¸øµÈ °æ·Î ¹æÁö
+    ofn.lpstrFile = filePath;                ///< íŒŒì¼ ê²½ë¡œ ì €ì¥
+    ofn.nMaxFile = MAX_PATH;                 ///< íŒŒì¼ ê²½ë¡œì˜ ìµœëŒ€ ê¸¸ì´ MAX_PATHëŠ” 260ìê¹Œì§€ 
+    ofn.lpstrInitialDir = L"..\\2026_Draw_Data";    ///< íŒŒì¼ íƒìƒ‰ê¸° ì—´ë¦´ë•Œ ê²½ë¡œ ì„¤ì •
+    ofn.Flags = OFN_PATHMUSTEXIST;           ///< ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ê²½ë¡œ ì°¨ë‹¨
 
     if (isSave) {
-        return GetSaveFileName(&ofn) != 0;
+        ofn.Flags |= OFN_OVERWRITEPROMPT;   ///< ì¤‘ë³µëœ ì´ë¦„ì´ë©´ ë®ì–´ ì“¸ì§€ ê²½ê³ ì°½ ë„ìš°ëŠ” ì˜µì…˜
+        return GetSaveFileName(&ofn) != 0;  ///< ìœˆë„ìš° ê¸°ë³¸ ì €ì¥í•˜ê¸° ì°½ í˜¸ì¶œ. ì‚¬ìš©ìê°€ 'ì €ì¥' ëˆ„ë¥´ë©´ true, 'ì·¨ì†Œ' ëˆ„ë¥´ë©´ false ë°˜í™˜
     }
     else {
-        return GetOpenFileName(&ofn) != 0;
+        ofn.Flags |= OFN_FILEMUSTEXIST;     ///< ì´ë¯¸ ì¡´ì¬í•˜ëŠ” íŒŒì¼ë§Œ ê³ ë¥¼ ìˆ˜ ìˆê²Œ í•˜ëŠ” ì˜µì…˜
+        return GetOpenFileName(&ofn) != 0;  ///< ì—´ê¸° ì°½ í˜¸ì¶œ, ì—´ê¸° true, ì·¨ì†Œ false
     }
 }
 
 /**
- * @brief ±×¸² µ¥ÀÌÅÍ¸¦ ÆÄÀÏ·Î ÀúÀåÇÏ´Â ÇÔ¼ö
+ * @brief ê·¸ë¦¼ ë°ì´í„°ë¥¼ ë°”ì´ë„ˆë¦¬ ë©”ëª¨ë¦¬ ë¤í”„ ë°©ì‹ìœ¼ë¡œ ì €ì¥ (íƒìƒ‰ê¸° + ì €ì¥ í†µí•©)
  */
-bool FileInOut::SaveFile(HWND hWnd, const wchar_t* path, Draw& drawObj) {
-    std::wofstream outFile(path);
+bool FileInOut::SaveFile(HWND hWnd, Draw& drawObj) {
+    wchar_t filePath[MAX_PATH] = L"";
 
-    if (!outFile.is_open()) {
-        MessageBox(hWnd, L"ÆÄÀÏÀ» ÀúÀåÇÒ ¼ö ¾ø½À´Ï´Ù.", L"¿¡·¯", MB_OK);
+    // 1. ì €ì¥ìš© íƒìƒ‰ê¸° ì°½ì„ ë„ìš°ê³  ì·¨ì†Œí•˜ë©´ ë°”ë¡œ ì¢…ë£Œ
+    if (!OpenFileDialog(hWnd, filePath, true)) {
         return false;
     }
 
-    // ¸Ç À­ÁÙ¿¡ ÀüÃ¼ ¼±ÀÇ °³¼ö ±â·Ï
-    outFile << drawObj.drawn_lines.size() << L"\n";
+    // 2. ë°”ì´ë„ˆë¦¬ ì“°ê¸° ëª¨ë“œ(std::ios::binary)ë¡œ íŒŒì¼ ìƒì„± ë° ì—´ê¸°
+    std::ofstream outFile(filePath, std::ios::binary); ///< 2ì§„ìˆ˜ ë°ì´í„° ë¤í”„ ì €ì¥ ëª¨ë“œë¡œ ìƒì„±
 
-    // ÀüÃ¼ ¼±À» ¼øÈ¸ÇÏ¸ç ±â·Ï
+    if (!outFile.is_open()) {                          ///< ê¶Œí•œì´ë‚˜ ê²½ë¡œ ë¬¸ì œë¡œ íŒŒì¼ ì•ˆ ì—´ë¦¬ë©´
+        MessageBox(hWnd, L"íŒŒì¼ì„ ì €ì¥í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", L"ì—ëŸ¬", MB_OK);
+        return false;                                  ///< ì €ì¥ ì‹¤íŒ¨ ì²˜ë¦¬
+    }
+
+    // 3. ë§¨ ì•ë¶€ë¶„ì— ì „ì²´ ì„ ì˜ ê°œìˆ˜ ê¸°ë¡ (size_t í¬ê¸° ë°”ì´íŠ¸ ë©”ëª¨ë¦¬ ë¤í”„)
+    size_t lineCount = drawObj.drawn_lines.size();     ///< ì „ì²´ ì„  ê°œìˆ˜ ì¶”ì¶œ
+    outFile.write((char*)&lineCount, sizeof(lineCount));    ///< ì„  ê°œìˆ˜ë¥¼ 2ì§„ìˆ˜ ë°”ì´íŠ¸ ë‹¨ìœ„ë¡œ ë°”ì´ë„ˆë¦¬ ì €ì¥
+
+    // 4. ì „ì²´ ì„ ì„ ìˆœíšŒí•˜ë©° ë°ì´í„° ë¸”ë¡ ê¸°ë¡
     for (const auto& line : drawObj.drawn_lines) {
 
-        // ÇØ´ç ¼±ÀÇ Á¡ °³¼ö ±â·Ï
-        outFile << line.size() << L"\n";
+        // í•´ë‹¹ ì„ ì˜ ì  ê°œìˆ˜ ê¸°ë¡
+        size_t pointCount = line.size();               ///< í˜„ì¬ ì„ ì— ì†í•œ ì ì˜ ê°œìˆ˜ ì¶”ì¶œ
+        outFile.write((char*)&pointCount, sizeof(pointCount)); ///< ì  ê°œìˆ˜ë¥¼ ë°”ì´ë„ˆë¦¬ë¡œ ì €ì¥
 
-        // Á¡ µ¥ÀÌÅÍ ±â·Ï (X, Y, ½Ã°£, Ææ»óÅÂ)
-        for (const auto& ptData : line) {
-            outFile << ptData.point.x << L" "
-                << ptData.point.y << L" "
-                << ptData.elapsed_time << L" "
-                << ptData.is_pen << L"\n";
+        if (pointCount > 0) {
+            // ğŸ’¡ forë¬¸ ì—†ì´ ì  Nê°œì˜ ë©”ëª¨ë¦¬ ì£¼ì†Œ(line.data())ë¥¼ í†µì§¸ë¡œ íƒ•! í•œ ë°©ì— ë¤í”„ ì €ì¥
+            outFile.write((char*)line.data(), sizeof(DrawPointData) * pointCount); ///< ì  ë°ì´í„° ë©ì–´ë¦¬ ì „ì²´ ë¤í”„
         }
     }
 
-    outFile.close();
-    return true;
+    outFile.close();                                   ///< íŒŒì¼ ìŠ¤íŠ¸ë¦¼ ë‹«ê¸°
+    return true;                                       ///< ì €ì¥ ì™„ë£Œ ë°˜í™˜
 }
 
 /**
- * @brief ÆÄÀÏ¿¡¼­ ±×¸² µ¥ÀÌÅÍ¸¦ ºÒ·¯¿À´Â ÇÔ¼ö
- * @details ¿¡·¯ ¹ß»ı ½Ã ±âÁ¸ ±×¸²À» º¸È£ÇÏ°í ºÒ·¯¿À±â¸¦ Ãë¼ÒÇÔ
+ * @brief ë°”ì´ë„ˆë¦¬ íŒŒì¼ì—ì„œ ê·¸ë¦¼ ë°ì´í„°ë¥¼ í•œ ë°©ì— ë¶ˆëŸ¬ì˜¤ëŠ” í•¨ìˆ˜ (íƒìƒ‰ê¸° + ë¶ˆëŸ¬ì˜¤ê¸° í†µí•©)
  */
-bool FileInOut::LoadFile(HWND hWnd, const wchar_t* path, Draw& drawObj) {
-    std::wifstream inFile(path);
+bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
+    wchar_t filePath[MAX_PATH] = L"";
 
-    if (!inFile.is_open()) {
-        MessageBox(hWnd, L"ÆÄÀÏÀ» ÀĞÀ» ¼ö ¾ø½À´Ï´Ù.", L"¿¡·¯", MB_OK);
+    // 1. ë¶ˆëŸ¬ì˜¤ê¸°ìš© íƒìƒ‰ê¸° ì°½ì„ ë„ìš°ê³  ì·¨ì†Œí•˜ë©´ ë°”ë¡œ ì¢…ë£Œ
+    if (!OpenFileDialog(hWnd, filePath, false)) {
         return false;
     }
 
-    std::vector<std::vector<DrawPointData>> temp_lines; // ÀÓ½Ã ÀúÀå¼Ò
-    size_t line_count = 0;
+    // 2. ë°”ì´ë„ˆë¦¬ ì½ê¸° ëª¨ë“œ(std::ios::binary)ë¡œ íŒŒì¼ ì—´ê¸°
+    std::ifstream inFile(filePath, std::ios::binary);  ///< ì„ íƒí•œ ê²½ë¡œì˜ ë°”ì´ë„ˆë¦¬ íŒŒì¼ ì—´ê¸°
 
-    // ÀüÃ¼ ¼± °³¼ö ÀĞ±â
-    inFile >> line_count;
+    if (!inFile.is_open()) {                           ///< íŒŒì¼ì´ ì•ˆ ì—´ë¦´ ê²½ìš° ì˜ˆì™¸ ì²˜ë¦¬
+        MessageBox(hWnd, L"íŒŒì¼ì„ ì½ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.", L"ì—ëŸ¬", MB_OK);
+        return false;
+    }
 
-    // ¿¹¿ÜÃ³¸®: ÆÄÀÏÀÌ ºñ¾ú°Å³ª ¼ıÀÚ°¡ ¾Æ´Ï¸é Áß´Ü
-    if (inFile.fail()) {
-        MessageBox(hWnd, L"ÆÄÀÏ Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù.", L"ºÒ·¯¿À±â ½ÇÆĞ", MB_ICONERROR);
+    std::vector<std::vector<DrawPointData>> temp_lines; ///< íŒŒì¼ ë°ì´í„°ë¥¼ ì„ì‹œë¡œ ì½ì–´ì˜¬ ë²¡í„° ìƒì„±
+    size_t lineCount = 0;                              ///< ì „ì²´ ì„  ê°œìˆ˜ë¥¼ ë‹´ì„ ë³€ìˆ˜
+
+    // 3. ë§¨ ì•ë¶€ë¶„ì˜ ì „ì²´ ì„  ê°œìˆ˜ ì½ê¸°
+    inFile.read((char*)&lineCount, sizeof(lineCount));   ///< ì €ì¥í–ˆë˜ ì„  ê°œìˆ˜ë¥¼ 2ì§„ìˆ˜ ë°”ì´íŠ¸ ë‹¨ìœ„ë¡œ ì½ìŒ
+    if (inFile.fail()) {                               ///< íŒŒì¼ ì½ê¸° ì‹¤íŒ¨ ì‹œ ê²½ê³ 
+        MessageBox(hWnd, L"íŒŒì¼ í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.", L"ë¶ˆëŸ¬ì˜¤ê¸° ì‹¤íŒ¨", MB_ICONERROR);
         inFile.close();
         return false;
     }
 
-    temp_lines.resize(line_count);
+    temp_lines.resize(lineCount);                      ///< ì„  ê°œìˆ˜ë§Œí¼ ë²¡í„° ê³µê°„ ì‚¬ì „ í™•ë³´
 
-    // ¼± °³¼ö¸¸Å­ ¹İº¹
-    for (size_t i = 0; i < line_count; ++i) {
-        size_t point_count = 0;
+    // 4. ì„  ê°œìˆ˜ë§Œí¼ ìˆœíšŒí•˜ë©° ì  ë©ì–´ë¦¬ ì½ê¸°
+    for (size_t i = 0; i < lineCount; ++i) {
+        size_t pointCount = 0;                         ///< ì½ì–´ì˜¬ ì  ê°œìˆ˜ ë³€ìˆ˜
+        inFile.read((char*)&pointCount, sizeof(pointCount)); ///< ì  ê°œìˆ˜ ë°”ì´ë„ˆë¦¬ë¡œ ì½ê¸°
 
-        // ÇöÀç ¼±ÀÇ Á¡ °³¼ö ÀĞ±â
-        inFile >> point_count;
-
-        // ¿¹¿ÜÃ³¸®: Á¡ °³¼ö ÀĞ±â ½ÇÆĞ ½Ã Áß´Ü
         if (inFile.fail()) {
-            MessageBox(hWnd, L"µ¥ÀÌÅÍ¸¦ ÀĞ´Â Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.", L"ºÒ·¯¿À±â ½ÇÆĞ", MB_ICONERROR);
+            MessageBox(hWnd, L"ë°ì´í„°ë¥¼ ì½ëŠ” ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.", L"ë¶ˆëŸ¬ì˜¤ê¸° ì‹¤íŒ¨", MB_ICONERROR);
             inFile.close();
             return false;
         }
 
-        temp_lines[i].resize(point_count);
+        temp_lines[i].resize(pointCount);              ///< ì  ê°œìˆ˜ë§Œí¼ ë‚´ë¶€ ë²¡í„° ë©”ëª¨ë¦¬ ê³µê°„ í™•ë³´
 
-        // Á¡ °³¼ö¸¸Å­ µ¥ÀÌÅÍ ÀĞ±â
-        for (size_t j = 0; j < point_count; ++j) {
-            inFile >> temp_lines[i][j].point.x
-                >> temp_lines[i][j].point.y
-                >> temp_lines[i][j].elapsed_time
-                >> temp_lines[i][j].is_pen;
+        if (pointCount > 0) {
+            // ğŸ’¡ ì  Nê°œ ë°ì´í„° ë©”ëª¨ë¦¬(data())ë¥¼ í•œ ë°©ì— íƒ•! í†µì§¸ë¡œ ë¶ˆëŸ¬ì™€ ì±„ì›€
+            inFile.read((char*)temp_lines[i].data(), sizeof(DrawPointData) * pointCount); ///< ì  ë©ì–´ë¦¬ ë¡œë“œ
 
-            // ¿¹¿ÜÃ³¸®: µ¥ÀÌÅÍ¿¡ ¹®ÀÚ°¡ ¼¯ÀÌ°Å³ª ²÷±â¸é Áß´Ü
             if (inFile.fail()) {
-                MessageBox(hWnd, L"±×¸² µ¥ÀÌÅÍ°¡ ¼Õ»óµÇ¾ú½À´Ï´Ù.", L"ºÒ·¯¿À±â ½ÇÆĞ", MB_ICONERROR);
+                MessageBox(hWnd, L"ê·¸ë¦¼ ë°ì´í„°ê°€ ì†ìƒë˜ì—ˆìŠµë‹ˆë‹¤.", L"ë¶ˆëŸ¬ì˜¤ê¸° ì‹¤íŒ¨", MB_ICONERROR);
                 inFile.close();
                 return false;
             }
         }
     }
 
-    inFile.close();
+    inFile.close();                                    ///< íŒŒì¼ ìŠ¤íŠ¸ë¦¼ ë‹«ê¸°
 
-    // ¿¡·¯ ¾øÀÌ Åë°úÇÏ¸é ½ÇÁ¦ °´Ã¼¿¡ µ¤¾î¾²±â
-    drawObj.drawn_lines = temp_lines;
+    drawObj.drawn_lines = temp_lines;                  ///< ì½ì–´ì˜¨ ì„ì‹œ ë°ì´í„°ë¥¼ ì›ë³¸ ê°ì²´ì— ì €ì¥
+    InvalidateRect(hWnd, NULL, TRUE);                  ///< í™”ë©´ ë‹¤ì‹œ ê·¸ë¦¬ê¸° ìš”ì²­ (í™”ë©´ ê°±ì‹ )
 
-    // È­¸é »õ·Î°íÄ§ ¿äÃ»
-    InvalidateRect(hWnd, NULL, TRUE);
-
-    return true;
+    return true;                                       ///< ë¶ˆëŸ¬ì˜¤ê¸° ì„±ê³µ ë°˜í™˜
 }
