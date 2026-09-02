@@ -26,7 +26,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 /*=============================== test ===============================*/
 Draw draw;
-FileInOut flie;
+FileInOut file;
 Replay replay;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -134,6 +134,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 //Draw draw;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 
