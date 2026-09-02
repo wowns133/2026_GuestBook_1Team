@@ -26,6 +26,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 /*=============================== test ===============================*/
 Draw draw;
+FileInOut flie;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -195,32 +196,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case ID_REPLAY:
             break;
-        case ID_SAVE_FILE:
-        {
-            FileInOut fileIo;
-            wchar_t filePath[MAX_PATH] = L"";
+        case ID_SAVE_FILE: {
 
-            // 저장용 탐색기 창을 띄우고 (true = 저장 모드), 경로가 지정되면 저장 함수 실행
-            if (fileIo.OpenFileDialog(hWnd, filePath, true))
-            {
-                fileIo.SaveFile(hWnd, filePath, draw);
-            }
+            file.SaveFile(hWnd, draw);
             break;
         }
-        break;
         case ID_LOAD_FILE:
         {
-            FileInOut fileIo;
-            wchar_t filePath[MAX_PATH] = L"";
-
-            // 불러오기용 탐색기 창을 띄우고 (false = 불러오기 모드), 경로가 선택되면 불러오기 함수 실행
-            if (fileIo.OpenFileDialog(hWnd, filePath, false))
-            {
-                fileIo.LoadFile(hWnd, filePath, draw);
-            }
+            file.LoadFile(hWnd, draw);
             break;
         }
-        break;
         }
 
 
