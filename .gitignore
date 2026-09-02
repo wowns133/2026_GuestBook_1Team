@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# 2026_Draw_Data 폴더 관리 대상에서 제외2026.09.02
+2026_Draw_Data/
+
+
 # User-specific files
 *.rsuser
 *.suo
