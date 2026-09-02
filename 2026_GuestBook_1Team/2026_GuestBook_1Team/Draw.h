@@ -57,6 +57,8 @@ private:
 
 	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
 
+	ULONGLONG start_time; ///< 선을 그릴 때 시작이 되는 지점(기준점)
+
 
 	//------------------------GDI+---------------------//
 	ULONG_PTR drawing_token; ///< GDI 토큰 핸들
@@ -67,22 +69,31 @@ private:
 	Gdiplus::Graphics* draw_bmp_graphics = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 Graphics. Bitmap를 삭제하기 전 반드시 파괴해야 한다.
 
 	RECT client_rect; ///< 작업 영역의 크기를 저장하기 위한 RECT. right가 너미, bottom이 높이.
+
+
+	//--------------국소 부위 화면 갱신을 위한 변수-------------//
+	int draw_image_area_start_x = 0; ///< 화면을 갱신할 범위의 좌상단 x좌표
+	int draw_image_area_start_y = 0; ///< 화면을 갱신할 범위의 좌상단 y좌표
+	int draw_image_area_width = 0; ///< 화면을 갱신할 범위의 너비
+	int draw_image_area_height = 0; ///< 화면을 갱신할 범위의 높이
+	int pen_width = 15; ///< 현재 펜의 반지름 + 5
+
+
 	//------------마우스 추적------------//
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
 	TRACKMOUSEEVENT* track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
 
 
-
-
+	//----------------------------Pen-----------------------------//
+	Gdiplus::Pen* pen_pointer;
+	
 protected:
 
 public:
-	/// pen_style 테스트
-	PenStyle* pen_style;
-
+	PenStyle* pen_style; ///< 펜 스타일 
 	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
-	ULONGLONG start_time; ///< 
+	
 
 
 
