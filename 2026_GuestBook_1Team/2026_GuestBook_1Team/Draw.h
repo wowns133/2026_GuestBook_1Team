@@ -14,8 +14,8 @@
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
 * @todo
-* 1. 빠르게 그렸을 때 선이 각지게 그려지는 문제 해결
-* draw_hdc_graphics->DrawImage(draw_bmp, 0, 0); 가 WM_MOUSEMOVE 이벤트를 지연시키는 것 같음
+* 1. main에 마우스 화면에서 나갔을 때의 처리 요청
+* 2. drawWindowLines 선마다 적절한 스타일 적용되도록 만들기, DrawPointData 구조체 정보 추가하기
 * 3. 서명 시작, 끝 함수 추가
 * 4. drawWindowLines 함수 최적화
 * 5. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기

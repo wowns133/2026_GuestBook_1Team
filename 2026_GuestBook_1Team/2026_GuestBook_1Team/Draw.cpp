@@ -18,6 +18,7 @@
 void Draw::drawWindowLines(HWND hWnd, HDC hdc)
 {
 	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
+
 	RECT temp_rect; //창 크기 구할 RECT 생성
 	GetClientRect(hWnd, &temp_rect); //temp_rect에 현재 작업영역 크기 구하기
 	Gdiplus::Bitmap dwl_bitmap(temp_rect.right, temp_rect.bottom, PixelFormat32bppARGB); // 비트맵 생성
@@ -102,6 +103,8 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	/// pen_style 테스트
 	pen_pointer = pen_style->getPen();
 
+	// 시작점 그리기
+	draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x+0.001f, (float)previous_y);
 }
 
 
@@ -123,7 +126,7 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam)
 		draw_bmp_graphics->DrawLine(pen_pointer, previous_x, previous_y, current_x, current_y);	// 선 긋기 함수 실행
 
 		//-----------------국소 범위 화면 갱신-----------------//
-		pen_width = 15;
+		pen_width = (int)pen_style->getRadius() + 5;
 
 		draw_image_area_start_x = min(previous_x, current_x) - pen_width;
 		draw_image_area_start_y = min(previous_y, current_y) - pen_width;
