@@ -6,22 +6,26 @@
 #pragma comment(lib, "gdiplus.lib")
 
 /// selectPenColor()함수에서 사용되는 상수 
-#define BLACK					1		///< 검은색
-#define RED						2		///< 빨간색
-#define GREEN					3		///< 초록색
-#define BLUE					4		///< 파랑색
-#define YELLOW					5		///< 노란색
+#define BLACK					1		///< 펜 색상 검은색
+#define RED						2		///< 펜 색상 빨간색
+#define GREEN					3		///< 펜 색상 초록색
+#define BLUE					4		///< 펜 색상 파랑색
+#define YELLOW					5		///< 펜 색상 노란색
 
 /// 펜 스타일을 정하는데 사용되는 상수
-#define SOLIDPEN				101		///< 기본펜
-#define SPRAYPEN				102		///< 스프레이
-#define BRUSHPEN				103		///< 붓 펜
-#define HIGHLIGHTERPEN			104		///< 형광펜
+#define SOLIDPEN				101		///< 펜 스타일 기본펜
+#define SPRAYPEN				102		///< 펜 스타일 스프레이
+#define BRUSHPEN				103		///< 펜 스타일 붓 펜
+#define HIGHLIGHTERPEN			104		///< 펜 스타일 형광펜
 
+/**
+* @file
+* @brief 펜 색상을 선택하는 클래스
+*/
 class PenColor 
 {
 public:
-	int select_color;
+	int select_color;			///< 펜 색깔 매크로 상수 저장 변수
 	BYTE color_a;				///< 펜 색깔 alpha값 조정 변수
 	BYTE color_r;				///< 펜 색깔 red값 조정 변수
 	BYTE color_g;				///< 펜 색깔 green값 조정 변수
@@ -39,9 +43,8 @@ class PenStyle
 private:
 	int select_pen;				///< 펜 스타일 선택 변수
 	float radius;				///< 펜 두께 반지름 변수
-	PenColor pen_color;
+	PenColor pen_color;			///< 펜 색깔 클래스 변수
 	Gdiplus::Pen pen;			///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
-	
 
 public:
 	/// PenStyle 생성자
@@ -61,8 +64,9 @@ public:
 
 	/// 펜 스타일에 따라 두께와 색깔 모두 한번에 지정하는 함수
 	void settingPenStyle(	int parameter_select_pen,	///< pen의 스타일 값을 전달한다. (select_pen변수의 값)
-							int parameter_radius,		///< pen의 반지름을 전달한다. (radius변수의 값)
-							int pen_color);				///< pen의 색상 클래스 변수를 전달한다. (pen_color 변수의 값)
+							float parameter_radius,		///< pen의 반지름을 전달한다. (radius변수의 값)
+							int pen_color				///< pen의 색상 클래스 변수를 전달한다. (pen_color 변수의 값)
+						);
 
 	/// 기본 펜 함수
 	void solidPen();
@@ -76,8 +80,6 @@ public:
 	/// 형광펜 함수
 	void highlighterPen();
 
-	
-
 	/// 펜 포인터 getter
 	Gdiplus::Pen* getPen();
 
@@ -89,6 +91,7 @@ public:
 
 	/// 펜 색상 getter 
 	int getPenColor();
+
 
 	/*/// 펜 각 색상 별 getter
 	BYTE getColorA();

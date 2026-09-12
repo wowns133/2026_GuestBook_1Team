@@ -2,6 +2,8 @@
 
 #include "PenStyle.h"
 
+
+
 PenColor::PenColor()
 {
 	color_a = 255;
@@ -215,13 +217,13 @@ void PenStyle::highlighterPen()
 {
 
 	/// 형광펜 처럼 각지도록 나오게 변경
-	/*pen.SetStartCap(Gdiplus::LineCapFlat);
-	pen.SetEndCap(Gdiplus::LineCapFlat);*/
-	pen.SetDashStyle(Gdiplus::DashStyleDot);
+	pen.SetStartCap(Gdiplus::LineCapSquare);		///< LineCapSquare : 끝을 더 연장시켜서 끝이 직각으로 나오도록함.
+	pen.SetEndCap(Gdiplus::LineCapSquare);
+	pen.SetLineJoin(Gdiplus::LineJoinBevel);
 
 	/// 색 변경 
-	pen.SetColor(Gdiplus::Color((pen_color.color_a/10), pen_color.color_r, pen_color.color_g, pen_color.color_b));
-
+	pen.SetColor(Gdiplus::Color((pen_color.color_a/8), pen_color.color_r, pen_color.color_g, pen_color.color_b));
+	
 	/// 두께 변경
 	pen.SetWidth((radius * 2));
 }
@@ -279,7 +281,7 @@ int PenStyle::getPenColor()
 */
 void PenStyle::settingPenStyle
 (	int parameter_select_pen,			
-	int parameter_radius,				
+	float parameter_radius,				
 	int pen_color					
 ) 
 {
