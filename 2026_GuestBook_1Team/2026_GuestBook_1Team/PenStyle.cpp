@@ -25,8 +25,8 @@ PenStyle::PenStyle()
 	radius(5.0f),
 	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2))
 {
-	pen.SetStartCap(Gdiplus::LineCapRoundAnchor);
-	pen.SetEndCap(Gdiplus::LineCapRoundAnchor);
+	pen.SetStartCap(Gdiplus::LineCapRound);
+	pen.SetEndCap(Gdiplus::LineCapRound);
 }
 
 /**
@@ -178,8 +178,8 @@ void PenStyle::settingPenThicknessDown()
 void PenStyle::solidPen() 
 {
 	/// 펜 끝 둥글게 만들기
-	pen.SetStartCap(Gdiplus::LineCapRoundAnchor);
-	pen.SetEndCap(Gdiplus::LineCapRoundAnchor);
+	pen.SetStartCap(Gdiplus::LineCapRound);
+	pen.SetEndCap(Gdiplus::LineCapRound);
 
 	/// 색 변경 
 	pen.SetColor(Gdiplus::Color(pen_color.color_a, pen_color.color_r, pen_color.color_g, pen_color.color_b));
