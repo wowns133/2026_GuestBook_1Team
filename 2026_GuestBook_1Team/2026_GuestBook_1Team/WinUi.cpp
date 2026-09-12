@@ -7,11 +7,11 @@ void makeTempButton(HWND hWnd, HINSTANCE hInst)
     // --- PEN STYLE (1 ~ 5) ---
     CreateWindowW(L"BUTTON", L"solid", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         10, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE1, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"S2", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"spray", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         50, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE2, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"S3", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"brush", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         90, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE3, hInst, nullptr);
-    CreateWindowW(L"BUTTON", L"S4", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+    CreateWindowW(L"BUTTON", L"highlighter", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         130, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE4, hInst, nullptr);
     CreateWindowW(L"BUTTON", L"S5", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         170, 10, 30, 30, hWnd, (HMENU)ID_PEN_STYLE5, hInst, nullptr);
