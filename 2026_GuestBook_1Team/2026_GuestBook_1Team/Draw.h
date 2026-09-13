@@ -52,6 +52,9 @@ struct DrawPointData
 	POINT point; ///< 좌표를 저장하는 변수
 	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
 	bool is_pen = TRUE;///< 그리는 중인지 지우개 쓰는 중인지 판별. 그리기 TRUE, 지우개 FALSE
+	int select_pen_style;
+	int select_color;
+	int radious;
 };
 
 
@@ -76,12 +79,15 @@ private:
 	//------------------------GDI+---------------------//
 	ULONG_PTR drawing_token; ///< GDI 토큰 핸들
 
+	// 화면 출력용
 	HDC draw_hdc; ///< Draw 클래스 멤버 변수로 선언된 HDC
 	Gdiplus::Graphics* draw_hdc_graphics = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 Graphics. hdc를 삭제하기 전 반드시 파괴해야 한다.
 
+	// 선 그리기용
 	Gdiplus::Bitmap* draw_bmp = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 Bitmap. 실시간으로 그리는 도중 버퍼 용도로 사용된다 
 	Gdiplus::Graphics* draw_bmp_graphics = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 실시간 버퍼용 Graphics. Bitmap를 삭제하기 전 반드시 파괴해야 한다.
 
+	// 전체 그림 보관용
 	Gdiplus::Bitmap* drawn_bmp = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 Bitmap. 지금까지 그려진 완성된 선 전체를 온전히 보관하는 비트맵
 	Gdiplus::Graphics* drawn_bmp_graphics = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 지금까지 그려진 완성된 선 전체를 온전히 보관하는 비트맵용 Graphics. Bitmap를 삭제하기 전 반드시 파괴해야 한다.
 
@@ -103,15 +109,20 @@ private:
 
 	//----------------------------Pen-----------------------------//
 	Gdiplus::Pen* pen_pointer;
+
 	
 protected:
 
 public:
 	PenStyle* pen_style; ///< 펜 스타일 
+
+	bool is_pen = true; ///< 펜인지 지우개인지 구별하기 위한 변수. true일때 펜, false일때 지우개
 	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
 	
 	Gdiplus::GraphicsPath* line_path; ///< DrawPath로 그리기 위한 점들의 정보를 담은 GraphicsPath 클래스 객체. 점 좌표와 역할에 대한 정보가 들어간다.
+
+	int select_drawStyle = 1;            ///< 그리기 상수 정하는 변수 (PenStyle test 진행중...)
 
 
 	/**
@@ -131,7 +142,7 @@ public:
 	* 반드시 EndDrawingLine이 실행될 수 있도록 주의해야 합니다.
 	* @author challenjoy01
 	*/
-	void startDrawingLine(HWND hWnd, LPARAM lParam);
+	void startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode);
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 함수. startDrawingLine 함수가 선행되어야 정상 작동한다. 실행 후 반드시 endDrawingLine 함수를 실행해야 한다.
 	* @details 선을 그리고 그린 선에 대한 좌표값을 저장하는 함수. 그리기 동작에는 더블 버퍼링 기법이 적용되어 있다. 마우스 관련 메시지 식별자에서 사용하는 함수이다.
@@ -210,6 +221,7 @@ public:
 
 	void drawSectionImage(Gdiplus::Graphics* output_graphics, Gdiplus::Bitmap* input_bitmap, int previous_x, int previous_y, int current_x, int current_y);
 
+
 	//-------------------------마우스 추적 세팅 메서드-----------------//
 	/**
 	* @brief 마우스가 창을 벗어나는 이벤트 감지를 시작하는 이벤트
@@ -218,5 +230,20 @@ public:
 	* @author challenjoy01
 	*/
 	void setTrackMouseEvent(HWND hWnd);
+
+
+
+	void setIsPen(bool is_pen);
+
+	/**
+	* @brief 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
+	*/
+	void selectDrawStyle();
+
+	/// select_drawStyle변수와 pen_width 변수 초기값 설정 (PenStyle test 진행중..)
+	//Draw();
+
+	/// pen_width 변수를 펜 클래스 변수의 radius값에 따라 변경되도록 하는 함수(PenStyle test 진행중..)
+	//void penWidthChange();
 
 };

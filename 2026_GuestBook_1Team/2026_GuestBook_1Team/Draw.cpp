@@ -17,7 +17,7 @@
 
 
 
-void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
+void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
 	//그리기 환경 제작
 	draw_hdc = GetDC(hWnd); //hdc 발행. 사용 후 회수해야 함
@@ -38,7 +38,7 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	start_time = GetTickCount64(); //윈도우 창이 켜진 시점부터 흐르는 시간
 
 	//현재 좌표를 선의 시작점으로 저장
-	drawn_line.push_back({ { previous_x, previous_y }, 0, true });
+	drawn_line.push_back({ { previous_x, previous_y }, 0, is_pen });
 
 	//그리는 중이라고 플래그 표시
 	is_drawing = true;
@@ -53,7 +53,7 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
 	draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x+0.001f, (float)previous_y);
 
 	// 선의 점 정보를 담는 클래스 생성
-	pen_pointer->SetLineJoin(Gdiplus::LineJoinRound);
+	//pen_pointer->SetLineJoin(Gdiplus::LineJoinRound);
 	line_path = new Gdiplus::GraphicsPath();
 }
 
@@ -99,7 +99,7 @@ void Draw::drawingLineRGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 		//현재 위치 좌표를 벡터에 저장
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, true });
+		drawn_line.push_back({ { current_x, current_y }, elapsed_time, is_pen });
 
 		//--------------비트맵에 그리기--------------//
 		draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
@@ -125,7 +125,7 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, true }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
+		drawn_line.push_back({ { current_x, current_y }, elapsed_time, is_pen }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
 		line_path->AddLine(previous_x, previous_y, current_x, current_y); // 이번에 그릴 부분을 그리기용 path에 저장
 
 		//--------------비트맵에 그리기--------------//
@@ -316,6 +316,159 @@ void Draw::setTrackMouseEvent(HWND hWnd)
 		delete track_mouse;
 	}
 }
+
+
+void Draw::setIsPen(bool is_pen)
+{
+	this->is_pen = is_pen;
+	return;
+}
+
+/// 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
+void Draw::selectDrawStyle()
+{
+	if (/*is_Pen ==*/ true) {
+		/// select_pen 변수 받아오기
+		switch (pen_style->getSelectPen()) {
+		case SOLIDPEN:
+		{
+			select_drawStyle = PEN_MODE_NORMAL_PEN;
+		}
+		break;
+		case SPRAYPEN:
+		{
+
+		}
+		break;
+		case BRUSHPEN:
+		{
+
+		}
+		break;
+		case HIGHLIGHTERPEN:
+		{
+			select_drawStyle = PEN_MODE_ARGB_PEN;
+		}
+		break;
+		}
+	}
+	else {
+		select_drawStyle = PEN_MODE_ER;
+	}
+
+
+	/// 변수 값 확인용
+	/*wchar_t buffer[100];
+	swprintf_s(buffer, L"getSelectPen = %d\nselect_drawStyle = %d\n", pen_style->getSelectPen(), select_drawStyle);
+	OutputDebugString(buffer);*/
+}
+
+/// select_drawStyle변수와 pen_width 변수 초기값 설정 (PenStyle test 진행중..)
+//Draw::Draw()
+//{
+//	select_drawStyle = 1;
+//	//pen_width = 15;
+//}
+
+/// pen_width 변수를 펜 클래스 변수의 radius값에 따라 변경되도록 하는 함수(PenStyle test 진행중..)
+//void Draw::penWidthChange()
+//{
+//	int radius = (int)pen_style->getRadius();
+//	pen_width = radius + 5;
+//	
+//
+//	/// 변수 값 확인용
+//	/*wchar_t buffer[100];
+//	swprintf_s(buffer, L"getRadius = %d\npen_width = %d\n", radius, pen_width);
+//	OutputDebugString(buffer);*/
+//}
+
+
+
+
+
+// 더블 버퍼링을 적용하지 않은 단순 선 그리기 함수들
+// void startDrawingLine(HWND hWnd, LPARAM lParam);
+// void drawingLine(HWND hWnd, LPARAM lParam);
+// void endDrawingLine(HWND hWnd, LPARAM lParam);
+// void Draw::drawWindowLines(HWND hWnd, HDC hdc)
+// 위 네 함수의 이전 버전입니다.
+/*
+void Draw::startDrawingLine(HWND hWnd, LPARAM lParam)
+{
+	//선을 그리기 시작하는 좌표를 현재 좌표로 초기화
+	previous_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장
+	previous_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
+
+	//현재 좌표를 선의 시작점으로 저장
+	drawn_line.push_back({ previous_x, previous_y });
+
+	//그리는 중이라고 플래그 표시
+	is_drawing = true;
+}
+
+void Draw::drawingLine(HWND hWnd, LPARAM lParam)
+{
+	if (is_drawing)
+	{
+		HDC hdc = GetDC(hWnd); //HDC 발행
+
+		//이동 후 현재 위치를 저장
+		current_x = LOWORD(lParam);
+		current_y = HIWORD(lParam);
+
+		//현재 위치 좌표를 벡터에 저장
+		drawn_line.push_back({ current_x, current_y });
+
+		MoveToEx(hdc, previous_x, previous_y, NULL); //이전 좌표로 이동
+		LineTo(hdc, current_x, current_y); //현재 좌표로 선 긋기
+
+		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+
+		ReleaseDC(hWnd, hdc); //HDC 반납
+	}
+}
+
+void Draw::endDrawingLine(HWND hWnd, LPARAM lParam)
+{
+	drawn_lines.push_back(drawn_line); //다 그린 선을 선을 모아놓은 벡터에 저장
+	drawn_line.clear(); //선 벡터 비우기
+	is_drawing = false; //그리기 끝났으므로 플래그를 false로 변경
+}
+void Draw::drawWindowLines(HWND hWnd, HDC hdc)
+{
+	for (size_t line_num = 0; line_num < drawn_lines.size(); line_num++)
+	{
+		for (size_t point_num = 1; point_num < drawn_lines[line_num].size(); point_num++)
+		{
+			MoveToEx(hdc, drawn_lines[line_num][point_num - 1].x, drawn_lines[line_num][point_num - 1].y, NULL);
+			LineTo(hdc, drawn_lines[line_num][point_num].x, drawn_lines[line_num][point_num].y);
+		}
+	}
+
+	for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
+	{
+		MoveToEx(hdc, drawn_line[point_num - 1].x, drawn_line[point_num - 1].y, NULL);
+		LineTo(hdc, drawn_line[point_num].x, drawn_line[point_num].y);
+	}
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 더블 버퍼링을 적용하지 않은 단순 선 그리기 함수들
 // void startDrawingLine(HWND hWnd, LPARAM lParam);
