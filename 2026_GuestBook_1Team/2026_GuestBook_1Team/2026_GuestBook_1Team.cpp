@@ -159,17 +159,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
         case ID_PEN_STYLE1:
         {
-            draw.pen_style->solidPen();
+            /// SOLIDPEN 
+            draw.pen_style->selectPen(SOLIDPEN);
         }
         break;
         case ID_PEN_STYLE2:
-            break;
+        {
+            /// SPRAYPEN
+            draw.pen_style->selectPen(SPRAYPEN);
+        }
+        break;
         case ID_PEN_STYLE3:
-            break;
+        {
+            /// BRUSHPEN
+            draw.pen_style->selectPen(BRUSHPEN);
+        }
+        break;
         case ID_PEN_STYLE4:
-            break;
+        {
+            /// HIGHLIGHTERPEN
+            draw.pen_style->selectPen(HIGHLIGHTERPEN);
+        }
+        break;
         case ID_PEN_STYLE5:
-            break;
+        {
+            // 전체 지우개
+        }
+        break;
         case ID_PEN_COLOR1:
         {
             draw.pen_style->selectPenColor(BLACK);
@@ -196,12 +212,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
         case ID_ERASER:
-            break;
+        {
+            /// 획 지우개
+        }
+        break;
         case ID_REPLAY:
         {
             replay.startReplay(draw, hWnd);
         }
-            break;
+        break;
         case ID_SAVE_FILE: {
 
             file.SaveFile(hWnd, draw);
@@ -230,17 +249,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_LBUTTONDOWN:
     {
-        draw.startDrawingLine(hWnd, lParam);
+        /// 펜 스타일에 따라 그리기 스타일 변경 ( penStyle 테스트 진행중 ... )
+        draw.selectDrawStyle();
+        draw.startDrawingLine(hWnd, lParam, draw.select_drawStyle);
         break;
     }
     case WM_MOUSEMOVE:
     {
-        draw.drawingLine(hWnd, lParam);
+        draw.drawingLine(hWnd, lParam, draw.select_drawStyle);
         break;
     }
     case WM_LBUTTONUP:
     {
-        draw.endDrawingLine(hWnd, lParam);
+        draw.endDrawingLine(hWnd, lParam, draw.select_drawStyle);
+        break;
+    }
+    case WM_MOUSELEAVE:
+    {
+        draw.endDrawingLine(hWnd, lParam, draw.select_drawStyle);
         break;
     }
     case WM_PAINT:
