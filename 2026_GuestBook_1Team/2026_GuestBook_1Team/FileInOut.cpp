@@ -39,33 +39,33 @@ bool FileInOut::SaveFile(HWND hWnd, Draw& drawObj) {
     if (!OpenFileDialog(hWnd, filePath, true)) {
         return false;
     }
-
-    // 2. 바이너리 쓰기 모드(std::ios::binary)로 파일 생성 및 열기
-    std::ofstream outFile(filePath, std::ios::binary); ///< 2진수 데이터 덤프 저장 모드로 생성
-
+  
+    std::ofstream outFile(filePath, std::ios::binary);
     if (!outFile.is_open()) {                          ///< 권한이나 경로 문제로 파일 안 열리면
         MessageBox(hWnd, L"파일을 저장할 수 없습니다.", L"에러", MB_OK);
-        return false;                                  ///< 저장 실패 처리
+        return false;                                       ///< 저장 실패 처리
     }
 
-    // 3. 맨 앞부분에 전체 선의 개수 기록 (size_t 크기 바이트 메모리 덤프)
-    size_t lineCount = drawObj.drawn_lines.size();     ///< 전체 선 개수 추출
+    // 3. 맨 앞부분에 전체 선의 개수 기록
+    size_t lineCount = drawObj.drawn_lines.size();             ///< 전체 선 개수 추출
     outFile.write((char*)&lineCount, sizeof(lineCount));    ///< 선 개수를 2진수 바이트 단위로 바이너리 저장
 
     // 4. 전체 선을 순회하며 데이터 블록 기록
-    for (const auto& line : drawObj.drawn_lines) {
+    for (size_t i = 0; i < lineCount; ++i) {
 
         // 해당 선의 점 개수 기록
-        size_t pointCount = line.size();               ///< 현재 선에 속한 점의 개수 추출
+        size_t pointCount = drawObj.drawn_lines[i].size();               ///< 현재 선에 속한 점의 개수 추출
         outFile.write((char*)&pointCount, sizeof(pointCount)); ///< 점 개수를 바이너리로 저장
 
         if (pointCount > 0) {
-            // 💡 for문 없이 점 N개의 메모리 주소(line.data())를 통째로 탕! 한 방에 덤프 저장
-            outFile.write((char*)line.data(), sizeof(DrawPointData) * pointCount); ///< 점 데이터 덩어리 전체 덤프
+            outFile.write((char*)drawObj.drawn_lines[i].data(), sizeof(DrawPointData) * pointCount);
         }
     }
 
-    outFile.close();                                   ///< 파일 스트림 닫기
+    outFile.close();
+
+    drawObj.ac_lines();
+    InvalidateRect(hWnd, NULL, TRUE);                  ///< 화면 초기화
     return true;                                       ///< 저장 완료 반환
 }
 
@@ -112,11 +112,10 @@ bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
             return false;
         }
 
-        temp_lines[i].resize(pointCount);              ///< 점 개수만큼 내부 벡터 메모리 공간 확보
+        temp_lines[i].resize(pointCount);
 
         if (pointCount > 0) {
-            // 💡 점 N개 데이터 메모리(data())를 한 방에 탕! 통째로 불러와 채움
-            inFile.read((char*)temp_lines[i].data(), sizeof(DrawPointData) * pointCount); ///< 점 덩어리 로드
+            inFile.read((char*)temp_lines[i].data(), sizeof(DrawPointData) * pointCount); ///< 점 데이터 로드
 
             if (inFile.fail()) {
                 MessageBox(hWnd, L"그림 데이터가 손상되었습니다.", L"불러오기 실패", MB_ICONERROR);
@@ -126,10 +125,11 @@ bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
         }
     }
 
-    inFile.close();                                    ///< 파일 스트림 닫기
+    inFile.close();                                     ///< 파일 스트림 닫기
 
-    drawObj.drawn_lines = temp_lines;                  ///< 읽어온 임시 데이터를 원본 객체에 저장
-    InvalidateRect(hWnd, NULL, TRUE);                  ///< 화면 다시 그리기 요청 (화면 갱신)
+    drawObj.drawn_lines = temp_lines;                  ///< 1. 좌표 데이터 복원
+    drawObj.redrawAllLines(hWnd);                        ///< 2. 복원된 좌표를 비트맵(도화지)에 다시 그리기
+    InvalidateRect(hWnd, NULL, TRUE);                  ///< 3. 화면 갱신 요청 (WM_PAINT 호출)
 
-    return true;                                       ///< 불러오기 성공 반환
+    return true;                                        ///< 불러오기 성공 반환
 }
