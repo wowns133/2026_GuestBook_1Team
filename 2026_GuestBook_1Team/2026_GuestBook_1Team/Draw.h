@@ -19,9 +19,10 @@
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
 * @todo
-* 1. main에 마우스 화면에서 나갔을 때의 처리 요청
+* 1. 수정된 자료 구조에 맞게 저장하는 부분 등 수정
 * 2. drawWindowLines 선마다 적절한 스타일 적용되도록 만들기, DrawPointData 구조체 정보 추가하기
 * 3. 서명 시작, 끝 함수 추가
+* 4. pen 담당자에게 질문 : pen_pointer 없애는 코드 없어도 문제 없는지, pen_pointer에 주소 넘기는 건 한번만 하면 되는지
 * 4. drawWindowLines 함수 최적화
 * 5. 포인터와 new로 객체 생성하는 부분이 다수 존재하므로 스마트 포인터 사용을 고려해보기
 * 6. 상하 크기조절 시 이상현상
@@ -51,10 +52,19 @@ struct DrawPointData
 {
 	POINT point; ///< 좌표를 저장하는 변수
 	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
+	int radious;
+};
+/**
+* @brief 선의 데이터를 저장하기 위한 구조체
+* @details
+* @author challenjoy01
+*/
+struct DrawLineData
+{
 	bool is_pen = TRUE;///< 그리는 중인지 지우개 쓰는 중인지 판별. 그리기 TRUE, 지우개 FALSE
 	int select_pen_style;
 	int select_color;
-	int radious;
+	std::vector<DrawPointData> point_data;
 };
 
 
@@ -119,31 +129,34 @@ public:
 	bool is_pen = true; ///< 펜인지 지우개인지 구별하기 위한 변수. true일때 펜, false일때 지우개
 	std::vector<std::vector<DrawPointData>> drawn_lines; ///< 선들의 집합을 저장하는 vector. 즉 모든 선을 저장하는 vector
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
+
+	std::vector<DrawLineData> drawn_lines_data;
 	
 	Gdiplus::GraphicsPath* line_path; ///< DrawPath로 그리기 위한 점들의 정보를 담은 GraphicsPath 클래스 객체. 점 좌표와 역할에 대한 정보가 들어간다.
 
 	int select_drawStyle = 1;            ///< 그리기 상수 정하는 변수 (PenStyle test 진행중...)
 
-	//-------------------------데이터 관리-----------------//
+	//-------------------------데이터 관리 함수---------------------//
 	/**
 	* @brief 화면에 그려진 모든 선 데이터를 초기화 시킴
 	* @details 누적된 벡터(drawn_lines, drawn_line)를 완전히 비워 화면을 지운 상태로 되돌림
 	*/
 	void ac_lines();
-
 	/**
 	* @brief 화면에 그려진 모든 선 데이터를 가져옴
 	* @details 누적된 벡터(drawn_lines)에 저장된 모든 선 데이터를 참조 형태로 반환함.
 	* 원본 데이터를 복사하지 않고 가져와 메모리 사용을 줄임.
 	*/
 	const std::vector<std::vector<DrawPointData>>& getDrawnLines();
-
 	/**
 	* @brief 지정한 번호의 선을 삭제함
 	* @details 전달받은 인덱스(index)에 해당하는 선 데이터를 drawn_lines에서 삭제함
 	*/
 	void sc_line(int index);
 
+
+	//------------------------------그리기 함수----------------------//
+	void redrawAllLines(HWND hWnd);
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 시작 함수. 선 그리기에 필요한 각종 값 설정 및 객체 생성을 맡는다.
 	* @details 선 그리기를 시작할 때 시작하는 시점에 실행되는 함수. 마우스 관련 메시지 식별자에서 사용하는 함수이다.
@@ -218,8 +231,8 @@ public:
 	*/
 	void drawWindowLines(HWND hWnd, HDC hdc);
 
-	//------------------------GDI+ START, END 함수---------------------//
 
+	//------------------------GDI+ START, END 함수---------------------//
 	/**
 	* @brief GDI+ 사용 시작하는 함수. 또한 그려진 그림 전체를 보관하는 버퍼와 펜 객체를 생성한다.
 	* @details GDI+ 사용을 시작하는 함수이다. 동시에 그려진 그림 전체를 보관하는 버퍼와 펜 객체를 생성한다.
@@ -227,7 +240,6 @@ public:
 	* @author challenjoy01
 	*/
 	void gdiPlusStart();
-
 	/**
 	* @brief GDI+ 사용 종료하는 함수. 또한 gdiPlusStart 함수에서 생성한 버퍼, 펜 객체를 해제한다.
 	* @details GDI+ 사용을 종료하는 함수이다. 또한 gdiPlusStart 함수에서 생성한 버퍼, 펜 객체를 해제한다.
@@ -236,12 +248,13 @@ public:
 	*/
 	void gdiPlusEnd();
 
+
 	//-------------------------화면 국소 범위 출력 함수----------------//
 
 	void drawSectionImage(Gdiplus::Graphics* output_graphics, Gdiplus::Bitmap* input_bitmap, int previous_x, int previous_y, int current_x, int current_y);
 
 
-	//-------------------------마우스 추적 세팅 메서드-----------------//
+	//-------------------------마우스 추적 세팅 함수-----------------//
 	/**
 	* @brief 마우스가 창을 벗어나는 이벤트 감지를 시작하는 이벤트
 	* @details GDI+ 사용을 종료하는 함수이다.
@@ -251,9 +264,8 @@ public:
 	void setTrackMouseEvent(HWND hWnd);
 
 
-
+	//------------------------멤버 변수 값 세팅 함수--------------------------------//
 	void setIsPen(bool is_pen);
-
 	/**
 	* @brief 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
 	*/
