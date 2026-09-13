@@ -14,7 +14,28 @@
 #define COLOR3 255
 #define COLOR4 0
 
+void Draw::ac_lines()
+{
+	drawn_lines.clear(); //drawn_lines의 값을 비움(clear)
+	drawn_line.clear();  //darawn_line의 값을 비움(clear)
+}
 
+const std::vector<std::vector<DrawPointData>>& Draw::getDrawnLines()
+{
+	return drawn_lines; //클래스 내부에 저장 된 데이터 원본의 주소 값(참조)을 반환
+	//복사본을 만들지 않고 &(참조)를 넘겨 메모리 효율성을 올리기 위함
+}
+
+void Draw::sc_line(int index)
+{
+	if (index < drawn_lines.size()) //매개변수(index)가 배열의 총 크기보다 작은지 확인
+		//sizeof()사용하면 배열의 갯수가 아닌 총 크기        .size()사용 해야 총 개수가 나옴
+	{
+		drawn_line.erase(drawn_line.begin() + index); //벡터의 시작점(begin) ~ 매개변수(index)만큼 이동 시키는
+		//반복자(위치를 가르켜주는 객체or도구)를 구함
+		//.erase를 사용해 해당 위치의 데이터를 삭제 시킴
+	}
+}
 
 
 void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)

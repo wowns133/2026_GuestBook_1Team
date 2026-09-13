@@ -124,6 +124,25 @@ public:
 
 	int select_drawStyle = 1;            ///< 그리기 상수 정하는 변수 (PenStyle test 진행중...)
 
+	//-------------------------데이터 관리-----------------//
+	/**
+	* @brief 화면에 그려진 모든 선 데이터를 초기화 시킴
+	* @details 누적된 벡터(drawn_lines, drawn_line)를 완전히 비워 화면을 지운 상태로 되돌림
+	*/
+	void ac_lines();
+
+	/**
+	* @brief 화면에 그려진 모든 선 데이터를 가져옴
+	* @details 누적된 벡터(drawn_lines)에 저장된 모든 선 데이터를 참조 형태로 반환함.
+	* 원본 데이터를 복사하지 않고 가져와 메모리 사용을 줄임.
+	*/
+	const std::vector<std::vector<DrawPointData>>& getDrawnLines();
+
+	/**
+	* @brief 지정한 번호의 선을 삭제함
+	* @details 전달받은 인덱스(index)에 해당하는 선 데이터를 drawn_lines에서 삭제함
+	*/
+	void sc_line(int index);
 
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 시작 함수. 선 그리기에 필요한 각종 값 설정 및 객체 생성을 맡는다.
