@@ -1,24 +1,69 @@
+#include "Draw.h"
 #include "Delete.h"
-#pragma comment(lib, "Gdiplus.lib")
-using namespace Gdiplus;
 
-void Delete::setDeleteMode(bool state)
+void AllDelete::all_clear(HWND hWnd, Draw& draw)
 {
-	delete_mode = state;
+	draw.ac_lines();
+	InvalidateRect(hWnd, NULL, TRUE);
 }
 
-bool Delete::getDeleteMode()
+void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 {
-	return delete_mode;
-}
+	int erase_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장
+	int erase_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
 
-Gdiplus::Color Delete::getDeleteColor()
-{
-	return Gdiplus::Color(255, 0, 255, 0);
-}
+	int erase_hit = 10; //지우개 인식 반경 설정
 
+	const std::vector<std::vector<DrawPointData>>& lines = draw.getDrawnLines();
+	/*
+		const = 원본 데이터 값을 바꾸지 못하도록 선언
+		& = 선 데이터들을 복제가 아닌 참조하도록 하여 메모리 효율성을 올리기 위함
 
-Gdiplus::Pen* Delete::getEraserPen()
-{
-	return new Gdiplus::Pen(Gdiplus::Color(0, 0, 0, 0), 14.0f);
+	*/
+	int target_index = -1;
+	/*
+		target_index = 지워버릴 대상 선의 인덱스 넘버 저장용 변수
+		배열의 시작은 0부터 이기 때문에 아직 지울 대상이 없다는 의미로 유효하지 않은 상태의 초기 값을 넣어줌
+	*/
+
+	for (int i = (int)lines.size() - 1;i >= 0;i--)	///0부터 시작이라 -1 해줘야 배열크기에 맞춰서 시작함(배열은 0부터 시작임)
+	{
+		bool sc_hit = false;
+		for (int j = 1; j < draw.drawn_lines[i].size();j++)	/// 0부터 시작하면 -1이 될 수도 있음(범위 오류)
+		{
+			int m_X1 = draw.drawn_lines[i][j - 1].point.x; /// 이전 점의 X 좌표를 가져 옴
+			int m_Y1 = draw.drawn_lines[i][j - 1].point.y; /// 이전 점의 Y 좌표를 가져 옴
+
+			int m_X2 = draw.drawn_lines[i][j].point.x;   /// 현재 점의 X 좌표를 가져 옴
+			int m_Y2 = draw.drawn_lines[i][j].point.y;   /// 현재 점의 Y 좌표를 가져 옴
+
+			int min_X = m_X1;
+			int max_X = m_X2;
+
+			if (m_X1 > m_X2)
+			{
+				min_X = m_X2;
+				max_X = m_X1;
+			}
+
+			int min_Y = m_Y1;
+			int max_Y = m_Y2;
+
+			if (m_Y1 > m_Y2)
+			{
+				min_Y = m_Y2;
+				max_Y = m_Y1;
+			}
+
+			if (erase_x >= min_X - 10 && erase_x <= max_X + 10 &&
+				erase_y >= min_Y - 10 && erase_y <= max_Y + 10)
+			{
+				draw.drawn_lines.erase(draw.drawn_lines.begin() + i);
+
+				draw.redrawAllLines(hWnd);
+
+				break;
+			}
+		}
+	}
 }
