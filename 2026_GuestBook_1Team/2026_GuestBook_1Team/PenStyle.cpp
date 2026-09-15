@@ -6,6 +6,7 @@
 
 PenColor::PenColor()
 {
+	select_color = 1;
 	color_a = 255;
 	color_r = 0;
 	color_g = 0;

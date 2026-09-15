@@ -52,7 +52,7 @@ struct DrawPointData
 {
 	POINT point; ///< 좌표를 저장하는 변수
 	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
-	int radious;
+	float radious;
 };
 /**
 * @brief 선의 데이터를 저장하기 위한 구조체

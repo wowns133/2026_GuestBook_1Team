@@ -28,6 +28,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 Draw draw;
 FileInOut file;
 Replay replay;
+AllDelete ac;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -159,66 +160,91 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
         case ID_PEN_STYLE1:
         {
+            draw.setIsPen(true);
             /// SOLIDPEN 
             draw.pen_style->selectPen(SOLIDPEN);
         }
         break;
         case ID_PEN_STYLE2:
         {
+            draw.setIsPen(true);
             /// SPRAYPEN
             draw.pen_style->selectPen(SPRAYPEN);
         }
         break;
         case ID_PEN_STYLE3:
         {
+            draw.setIsPen(true);
             /// BRUSHPEN
             draw.pen_style->selectPen(BRUSHPEN);
         }
         break;
         case ID_PEN_STYLE4:
         {
+            draw.setIsPen(true);
             /// HIGHLIGHTERPEN
             draw.pen_style->selectPen(HIGHLIGHTERPEN);
         }
         break;
         case ID_PEN_STYLE5:
         {
-            // 전체 지우개
+            /// 전체 지우개
+            ac.all_clear(hWnd, draw);
         }
         break;
         case ID_PEN_COLOR1:
         {
+            draw.setIsPen(true);
             draw.pen_style->selectPenColor(BLACK);
         }
         break;
         case ID_PEN_COLOR2:
         {
+            draw.setIsPen(true);
             draw.pen_style->selectPenColor(RED);
         }
         break;
         case ID_PEN_COLOR3:
         {
+            draw.setIsPen(true);
             draw.pen_style->selectPenColor(GREEN);
         }
         break;
         case ID_PEN_COLOR4:
         {
+            draw.setIsPen(true);
             draw.pen_style->selectPenColor(BLUE);
         }
         break;
         case ID_PEN_COLOR5:
         {
+            draw.setIsPen(true);
             draw.pen_style->selectPenColor(YELLOW);
         }
         break;
         case ID_ERASER:
         {
             /// 획 지우개
+            draw.setIsPen(false);
+
         }
         break;
         case ID_REPLAY:
         {
-            replay.startReplay(draw, hWnd);
+
+            /// 임시 주석 추후 적용 예정 
+            /*int state = replay.getReplayState();
+            switch (state) {
+            case replayStateStop:
+                replay.startReplay(draw, hWnd);
+                break;
+            case replayStatePlaying:
+                replay.pauseReplay();
+                break;
+            case replayStatePaused:
+                replay.startReplay(draw, hWnd);
+                break;
+            }*/
         }
         break;
         case ID_SAVE_FILE: {

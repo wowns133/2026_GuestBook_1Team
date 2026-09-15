@@ -193,7 +193,7 @@ void Draw::drawingLineRGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 		//현재 위치 좌표를 벡터에 저장
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, is_pen });
+		drawn_line.push_back({ { current_x, current_y }, elapsed_time, 10});
 
 		//--------------비트맵에 그리기--------------//
 		draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
@@ -219,7 +219,7 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, is_pen }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
+		drawn_line.push_back({ { current_x, current_y }, elapsed_time, 10 }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
 		line_path->AddLine(previous_x, previous_y, current_x, current_y); // 이번에 그릴 부분을 그리기용 path에 저장
 
 		//--------------비트맵에 그리기--------------//
