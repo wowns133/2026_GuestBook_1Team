@@ -136,6 +136,8 @@ void Draw::redrawAllLines(HWND hWnd)
 
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	ReleaseDC(hWnd, hdc); //hdc 삭제
+	InvalidateRect(hWnd, NULL, TRUE);
+
 }
 
 
@@ -146,7 +148,10 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	{
 	case PEN_MODE_ER:
 	{
+		is_drawing = true;
 
+		SingleDelete sc;
+		sc.single_clear(hWnd, *this, lParam);
 	}
 	break;
 	default:
@@ -201,6 +206,8 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 		case PEN_MODE_ER:
 		{
 			/// 지우개용 공간
+			SingleDelete sc;
+			sc.single_clear(hWnd, *this, lParam);
 		}
 		break;
 		case PEN_MODE_NORMAL_PEN:
@@ -298,7 +305,11 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	{
 	case PEN_MODE_ER:
 	{
+		SingleDelete sc;
+		sc.single_clear(hWnd, *this, lParam);
+		is_drawing = false;
 
+		return;
 	}
 	break;
 	case PEN_MODE_NORMAL_PEN:
@@ -473,7 +484,7 @@ void Draw::setIsPen(bool is_pen)
 /// 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
 void Draw::selectDrawStyle()
 {
-	if (/*is_Pen ==*/ true) {
+	if (is_Pen == true) {
 		/// select_pen 변수 받아오기
 		switch (pen_style->getSelectPen()) {
 		case SOLIDPEN:
