@@ -14,7 +14,7 @@ void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 
 	int erase_hit = 10; //지우개 인식 반경 설정
 
-	const std::vector<std::vector<DrawPointData>>& lines = draw.getDrawnLines();
+	const std::vector<DrawLineData>& lines = draw.getDrawnLines();
 	/*
 		const = 원본 데이터 값을 바꾸지 못하도록 선언
 		& = 선 데이터들을 복제가 아닌 참조하도록 하여 메모리 효율성을 올리기 위함
@@ -29,13 +29,13 @@ void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 	for (int i = (int)lines.size() - 1;i >= 0;i--)	///0부터 시작이라 -1 해줘야 배열크기에 맞춰서 시작함(배열은 0부터 시작임)
 	{
 		bool sc_hit = false;
-		for (int j = 1; j < draw.drawn_lines[i].size();j++)	/// 0부터 시작하면 -1이 될 수도 있음(범위 오류)
+		for (int j = 1; j < (int)lines[i].point_data.size();j++)	/// 0부터 시작하면 -1이 될 수도 있음(범위 오류)
 		{
-			int m_X1 = draw.drawn_lines[i][j - 1].point.x; /// 이전 점의 X 좌표를 가져 옴
-			int m_Y1 = draw.drawn_lines[i][j - 1].point.y; /// 이전 점의 Y 좌표를 가져 옴
+			int m_X1 = lines[i].point_data[j - 1].point.x; /// 이전 점의 X 좌표를 가져 옴
+			int m_Y1 = lines[i].point_data[j - 1].point.y; /// 이전 점의 Y 좌표를 가져 옴
 
-			int m_X2 = draw.drawn_lines[i][j].point.x;   /// 현재 점의 X 좌표를 가져 옴
-			int m_Y2 = draw.drawn_lines[i][j].point.y;   /// 현재 점의 Y 좌표를 가져 옴
+			int m_X2 = lines[i].point_data[j].point.x;   /// 현재 점의 X 좌표를 가져 옴
+			int m_Y2 = lines[i].point_data[j].point.y;   /// 현재 점의 Y 좌표를 가져 옴
 
 			int min_X = m_X1;
 			int max_X = m_X2;
@@ -58,11 +58,13 @@ void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 			if (erase_x >= min_X - 10 && erase_x <= max_X + 10 &&
 				erase_y >= min_Y - 10 && erase_y <= max_Y + 10)
 			{
-				draw.drawn_lines.erase(draw.drawn_lines.begin() + i);
+				target_index = i; //지울 대상 선의 인덱스 번호를 target_index에 저장
 
-				draw.redrawAllLines(hWnd);
+				draw.sc_line(target_index); //target_index에 저장된 번호의 선을 drawn_lines_data에서 삭제
 
-				break;
+				draw.redrawAllLines(hWnd); //선이 삭제된 후 남아있는 선들을 다시 그림
+
+				return; //한 개의 선을 삭제했으므로 다른 선을 추가로 삭제하지 않고 함수 종료
 			}
 		}
 	}
