@@ -39,26 +39,38 @@ bool FileInOut::SaveFile(HWND hWnd, Draw& drawObj) {
     if (!OpenFileDialog(hWnd, filePath, true)) {
         return false;
     }
-  
+
     std::ofstream outFile(filePath, std::ios::binary);
     if (!outFile.is_open()) {                          ///< 권한이나 경로 문제로 파일 안 열리면
         MessageBox(hWnd, L"파일을 저장할 수 없습니다.", L"에러", MB_OK);
         return false;                                       ///< 저장 실패 처리
     }
 
-    // 3. 맨 앞부분에 전체 선의 개수 기록
-    size_t lineCount = drawObj.drawn_lines.size();             ///< 전체 선 개수 추출
-    outFile.write((char*)&lineCount, sizeof(lineCount));    ///< 선 개수를 2진수 바이트 단위로 바이너리 저장
+    // 전체 선의 개수를 먼저 파일 맨 앞에 기록
+    size_t lineCount = drawObj.drawn_lines_data.size();
+    outFile.write((char*)&lineCount, sizeof(lineCount));
 
-    // 4. 전체 선을 순회하며 데이터 블록 기록
-    for (size_t i = 0; i < lineCount; ++i) {
+    // 선 개수만큼 하나씩 순회하며 저장 
+    for (int i = 0; i < lineCount; i++)
+    {
+        // i번째 선을 하나 가져오기
+        DrawLineData& line = drawObj.drawn_lines_data[i];
 
-        // 해당 선의 점 개수 기록
-        size_t pointCount = drawObj.drawn_lines[i].size();               ///< 현재 선에 속한 점의 개수 추출
-        outFile.write((char*)&pointCount, sizeof(pointCount)); ///< 점 개수를 바이너리로 저장
 
+        // 이 선의 펜 설정값 저장 
+
+        outFile.write((char*)&line.is_pen, sizeof(line.is_pen));                     // 펜인지 지우개인지
+        outFile.write((char*)&line.select_pen_style, sizeof(line.select_pen_style)); // 펜 모양 (실선, 점선 등)
+        outFile.write((char*)&line.select_color, sizeof(line.select_color));         // 펜 색상
+
+
+        // 이 선이 가진 점의 개수 구해서 저장
+        size_t pointCount = line.point_data.size();
+        outFile.write((char*)&pointCount, sizeof(pointCount));
+
+        // 점들의 좌표 데이터 전체 저장
         if (pointCount > 0) {
-            outFile.write((char*)drawObj.drawn_lines[i].data(), sizeof(DrawPointData) * pointCount);
+            outFile.write((char*)line.point_data.data(), sizeof(DrawPointData) * pointCount);
         }
     }
 
@@ -70,17 +82,17 @@ bool FileInOut::SaveFile(HWND hWnd, Draw& drawObj) {
 }
 
 /**
- * @brief 바이너리 파일에서 그림 데이터를 한 방에 불러오는 함수 (탐색기 + 불러오기 통합)
+ * @brief 바이너리 파일에서 그림 데이터를 불러오는 함수
  */
 bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
     wchar_t filePath[MAX_PATH] = L"";
 
-    // 1. 불러오기용 탐색기 창을 띄우고 취소하면 바로 종료
+    // 불러오기용 탐색기 창을 띄우고 취소하면 바로 종료
     if (!OpenFileDialog(hWnd, filePath, false)) {
         return false;
     }
 
-    // 2. 바이너리 읽기 모드(std::ios::binary)로 파일 열기
+    // 바이너리 읽기 모드(std::ios::binary)로 파일 열기
     std::ifstream inFile(filePath, std::ios::binary);  ///< 선택한 경로의 바이너리 파일 열기
 
     if (!inFile.is_open()) {                           ///< 파일이 안 열릴 경우 예외 처리
@@ -88,48 +100,48 @@ bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
         return false;
     }
 
-    std::vector<std::vector<DrawPointData>> temp_lines; ///< 파일 데이터를 임시로 읽어올 벡터 생성
-    size_t lineCount = 0;                              ///< 전체 선 개수를 담을 변수
-
-    // 3. 맨 앞부분의 전체 선 개수 읽기
-    inFile.read((char*)&lineCount, sizeof(lineCount));   ///< 저장했던 선 개수를 2진수 바이트 단위로 읽음
-    if (inFile.fail()) {                               ///< 파일 읽기 실패 시 경고
-        MessageBox(hWnd, L"파일 형식이 올바르지 않습니다.", L"불러오기 실패", MB_ICONERROR);
+    // 맨 앞에 저장된 전체 선 개수 읽기
+    size_t lineCount = 0;
+    inFile.read((char*)&lineCount, sizeof(lineCount));
+    if (inFile.fail()) {
         inFile.close();
         return false;
     }
 
-    temp_lines.resize(lineCount);                      ///< 선 개수만큼 벡터 공간 사전 확보
 
-    // 4. 선 개수만큼 순회하며 점 덩어리 읽기
-    for (size_t i = 0; i < lineCount; ++i) {
-        size_t pointCount = 0;                         ///< 읽어올 점 개수 변수
-        inFile.read((char*)&pointCount, sizeof(pointCount)); ///< 점 개수 바이너리로 읽기
+    std::vector<DrawLineData> temp_lines(lineCount);    /// 읽어온 선 개수만큼 임시 저장 공간 생성
 
-        if (inFile.fail()) {
-            MessageBox(hWnd, L"데이터를 읽는 중 오류가 발생했습니다.", L"불러오기 실패", MB_ICONERROR);
-            inFile.close();
-            return false;
-        }
+    // 5. 선 개수만큼 하나씩 읽기
+    for (int i = 0; i < lineCount; i++)
+    {
+        DrawLineData& line = temp_lines[i];     /// 선을 채우기 위해 가져오기
 
-        temp_lines[i].resize(pointCount);
+        // 저장했던 순서대로 펜 설정값 3개 읽기
+        inFile.read((char*)&line.is_pen, sizeof(line.is_pen));
+        inFile.read((char*)&line.select_pen_style, sizeof(line.select_pen_style));
+        inFile.read((char*)&line.select_color, sizeof(line.select_color));
+
+        // 이 선의 점 개수 읽어오기
+
+        size_t pointCount = 0;
+        inFile.read((char*)&pointCount, sizeof(pointCount));
+
+
+        // 점 개수만큼 벡터 크기를 늘린 뒤 좌표 채우기
+
+        line.point_data.resize(pointCount); // 점을 담을 공간 생성
 
         if (pointCount > 0) {
-            inFile.read((char*)temp_lines[i].data(), sizeof(DrawPointData) * pointCount); ///< 점 데이터 로드
-
-            if (inFile.fail()) {
-                MessageBox(hWnd, L"그림 데이터가 손상되었습니다.", L"불러오기 실패", MB_ICONERROR);
-                inFile.close();
-                return false;
-            }
+            inFile.read((char*)line.point_data.data(), sizeof(DrawPointData) * pointCount);
         }
     }
 
-    inFile.close();                                     ///< 파일 스트림 닫기
+    inFile.close(); // 파일 읽기 완료 후 닫기
 
-    drawObj.drawn_lines = temp_lines;                  ///< 1. 좌표 데이터 복원
-    drawObj.redrawAllLines(hWnd);                        ///< 2. 복원된 좌표를 비트맵(도화지)에 다시 그리기
-    InvalidateRect(hWnd, NULL, TRUE);                  ///< 3. 화면 갱신 요청 (WM_PAINT 호출)
+    //불러온 데이터 복원 및 화면 다시 그리기
+    drawObj.drawn_lines_data = temp_lines;
+    drawObj.redrawAllLines(hWnd);
+    InvalidateRect(hWnd, NULL, TRUE);
 
-    return true;                                        ///< 불러오기 성공 반환
+    return true;
 }
