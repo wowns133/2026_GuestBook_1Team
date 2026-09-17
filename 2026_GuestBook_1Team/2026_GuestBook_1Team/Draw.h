@@ -19,8 +19,8 @@
 * @brief 그리기 기능을 구현하는 헤더 파일.
 * @details 그리기 기능을 구현한 헤더 파일.
 * @todo
-* 1. 수정된 자료 구조에 맞게 저장하는 부분 등 수정
-* 2. drawWindowLines 선마다 적절한 스타일 적용되도록 만들기, DrawPointData 구조체 정보 추가하기
+* 1. 수정된 자료 구조에 맞게 저장하는 부분 등 수정, 점 하나일 때 그리는 거 제대로 작동 안함. end쪽으로 옮기는거 검토
+* 2. redrawAllLines함수 선마다 적절한 스타일 적용되도록 만들기, DrawPointData 구조체 정보 추가하기
 * 3. 서명 시작, 끝 함수 추가
 * 4. pen 담당자에게 질문 : pen_pointer 없애는 코드 없어도 문제 없는지, pen_pointer에 주소 넘기는 건 한번만 하면 되는지
 * 4. drawWindowLines 함수 최적화
@@ -52,7 +52,7 @@ struct DrawPointData
 {
 	POINT point; ///< 좌표를 저장하는 변수
 	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
-	float radious;
+	float radius; ///< 반지름을 저장하는 변수
 };
 /**
 * @brief 선의 데이터를 저장하기 위한 구조체
@@ -61,9 +61,9 @@ struct DrawPointData
 */
 struct DrawLineData
 {
-	bool is_pen = TRUE;///< 그리는 중인지 지우개 쓰는 중인지 판별. 그리기 TRUE, 지우개 FALSE
-	int select_pen_style;
-	int select_color;
+	bool is_pen = TRUE; ///< 그리는 중인지 지우개 쓰는 중인지 판별. 그리기 TRUE, 지우개 FALSE
+	int select_pen_style; ///< 펜 스타일 정보를 저장하는 변수
+	int select_color; ///< 펜 색 정보를 저장하는 변수
 	std::vector<DrawPointData> point_data;
 };
 
@@ -120,7 +120,7 @@ private:
 	//----------------------------Pen-----------------------------//
 	Gdiplus::Pen* pen_pointer;
 
-	
+
 protected:
 
 public:
@@ -131,7 +131,7 @@ public:
 	std::vector<DrawPointData> drawn_line; ///< 그려진 점들의 집합을 저장하는 vector. 즉 하나의 선을 저장하는 vector
 
 	std::vector<DrawLineData> drawn_lines_data;
-	
+
 	Gdiplus::GraphicsPath* line_path; ///< DrawPath로 그리기 위한 점들의 정보를 담은 GraphicsPath 클래스 객체. 점 좌표와 역할에 대한 정보가 들어간다.
 
 	int select_drawStyle = 1;            ///< 그리기 상수 정하는 변수 (PenStyle test 진행중...)
@@ -147,7 +147,7 @@ public:
 	* @details 누적된 벡터(drawn_lines)에 저장된 모든 선 데이터를 참조 형태로 반환함.
 	* 원본 데이터를 복사하지 않고 가져와 메모리 사용을 줄임.
 	*/
-	const std::vector<std::vector<DrawPointData>>& getDrawnLines();
+	const std::vector<DrawLineData>& getDrawnLines();
 	/**
 	* @brief 지정한 번호의 선을 삭제함
 	* @details 전달받은 인덱스(index)에 해당하는 선 데이터를 drawn_lines에서 삭제함

@@ -16,25 +16,25 @@
 
 void Draw::ac_lines()
 {
-	drawn_lines.clear(); //drawn_lines의 값을 비움(clear)
+	drawn_lines_data.clear(); //drawn_lines의 값을 비움(clear)
 	drawn_line.clear();  //darawn_line의 값을 비움(clear)
 	if (drawn_bmp_graphics != nullptr) {
 		drawn_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
 	}
 }
 
-const std::vector<std::vector<DrawPointData>>& Draw::getDrawnLines()
+const std::vector<DrawLineData>& Draw::getDrawnLines()
 {
-	return drawn_lines; //클래스 내부에 저장 된 데이터 원본의 주소 값(참조)을 반환
+	return drawn_lines_data; //클래스 내부에 저장 된 데이터 원본의 주소 값(참조)을 반환
 	//복사본을 만들지 않고 &(참조)를 넘겨 메모리 효율성을 올리기 위함
 }
 
 void Draw::sc_line(int index)
 {
-	if (index < drawn_lines.size()) //매개변수(index)가 배열의 총 크기보다 작은지 확인
+	if (index < drawn_lines_data.size()) //매개변수(index)가 배열의 총 크기보다 작은지 확인
 		//sizeof()사용하면 배열의 갯수가 아닌 총 크기        .size()사용 해야 총 개수가 나옴
 	{
-		drawn_line.erase(drawn_line.begin() + index); //벡터의 시작점(begin) ~ 매개변수(index)만큼 이동 시키는
+		drawn_lines_data.erase(drawn_lines_data.begin() + index); //벡터의 시작점(begin) ~ 매개변수(index)만큼 이동 시키는
 		//반복자(위치를 가르켜주는 객체or도구)를 구함
 		//.erase를 사용해 해당 위치의 데이터를 삭제 시킴
 	}
@@ -44,40 +44,75 @@ void Draw::redrawAllLines(HWND hWnd)
 {
 	HDC hdc = GetDC(hWnd); //hdc 생성
 	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
-	
+
 	//모니터 청소
 	hdc_graphics.Clear(Gdiplus::Color(255, 255, 255, 255));
 	//세번째 버퍼 청소
 	drawn_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
 
-	
-	//세 번째 버퍼에 불러온 모든 데이터를 그리기
-	for (size_t line_num = 0; line_num < drawn_lines.size(); line_num++)
-	{
-		//pen_style->settingPenStyle(스타일, 반지름, 색);
-		if (drawn_lines[line_num].size() == 1) //점이 하나 뿐일 경우
-		{
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(float)drawn_lines[line_num][0].point.x,
-				(float)drawn_lines[line_num][0].point.y,
-				(float)drawn_lines[line_num][0].point.x + 0.001f,
-				(float)drawn_lines[line_num][0].point.y
-			);
-			continue;
-		}
-		for (size_t point_num = 1; point_num < drawn_lines[line_num].size(); point_num++)
-		{
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(INT)drawn_lines[line_num][point_num - 1].point.x,
-				(INT)drawn_lines[line_num][point_num - 1].point.y,
-				(INT)drawn_lines[line_num][point_num].point.x,
-				(INT)drawn_lines[line_num][point_num].point.y
-			);
-		}
-	}
 
+	//세 번째 버퍼에 불러온 모든 데이터를 그리기
+	for (size_t line_num = 0; line_num < drawn_lines_data.size(); line_num++)
+	{
+		pen_style->settingPenStyle(drawn_lines_data[line_num].select_pen_style, drawn_lines_data[line_num].point_data[0].radius, drawn_lines_data[line_num].select_color);
+
+		if (drawn_lines_data[line_num].select_pen_style == SOLIDPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.size() == 1) //점이 하나 뿐일 경우
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer,
+					(float)drawn_lines_data[line_num].point_data[0].point.x,
+					(float)drawn_lines_data[line_num].point_data[0].point.y,
+					(float)drawn_lines_data[line_num].point_data[0].point.x + 0.001f,
+					(float)drawn_lines_data[line_num].point_data[0].point.y
+				);
+				continue;
+			}//if
+			else
+			{
+				for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+				{
+					drawn_bmp_graphics->DrawLine(pen_pointer,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.y
+					);
+				}//for
+			}//else
+		}//if
+		else if (drawn_lines_data[line_num].select_pen_style == HIGHLIGHTERPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer,
+					(float)drawn_lines_data[line_num].point_data[0].point.x,
+					(float)drawn_lines_data[line_num].point_data[0].point.y,
+					(float)drawn_lines_data[line_num].point_data[0].point.x + 0.001f,
+					(float)drawn_lines_data[line_num].point_data[0].point.y
+				);
+			}
+			else
+			{
+				Gdiplus::GraphicsPath temp_path;
+				for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+				{
+					temp_path.AddLine(
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.y
+					);
+				}//for
+				drawn_bmp_graphics->DrawPath(pen_pointer, &temp_path);
+			}
+		}
+	}//for
+
+	//실제로 동작하지 말아야 할 코드
 	if (drawn_line.size() == 1) //점이 하나 뿐일 경우
 	{
+		MessageBox(hWnd, L"실행됨 1번", L"실행됨 1번", MB_OK); //실행되는지 체크
 		drawn_bmp_graphics->DrawLine(pen_pointer,
 			(float)drawn_line[0].point.x,
 			(float)drawn_line[0].point.y,
@@ -85,17 +120,24 @@ void Draw::redrawAllLines(HWND hWnd)
 			(float)drawn_line[0].point.y
 		);
 	}
-	for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
+	else
 	{
-		drawn_bmp_graphics->DrawLine(pen_pointer,
-			(INT)drawn_line[point_num - 1].point.x,
-			(INT)drawn_line[point_num - 1].point.y,
-			(INT)drawn_line[point_num].point.x,
-			(INT)drawn_line[point_num].point.y
-		);
+		for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
+		{
+			MessageBox(hWnd, L"실행됨 2번", L"실행됨 2번", MB_OK); //실행되는지 체크
+			drawn_bmp_graphics->DrawLine(pen_pointer,
+				(INT)drawn_line[point_num - 1].point.x,
+				(INT)drawn_line[point_num - 1].point.y,
+				(INT)drawn_line[point_num].point.x,
+				(INT)drawn_line[point_num].point.y
+			);
+		}
 	}
+
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	ReleaseDC(hWnd, hdc); //hdc 삭제
+	InvalidateRect(hWnd, NULL, TRUE);
+
 }
 
 
@@ -104,51 +146,54 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
 	switch (pen_mode)
 	{
-		case PEN_MODE_ER:
-		{
+	case PEN_MODE_ER:
+	{
+		is_drawing = true;
 
-		}
-		break;
-		default:
-		{
-			//그리기 환경 제작
-			draw_hdc = GetDC(hWnd); //hdc 발행. 사용 후 회수해야 함
-			draw_hdc_graphics = new Gdiplus::Graphics(draw_hdc); //화면 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
-			draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+		SingleDelete sc;
+		sc.single_clear(hWnd, *this, lParam);
+	}
+	break;
+	default:
+	{
+		//그리기 환경 제작
+		draw_hdc = GetDC(hWnd); //hdc 발행. 사용 후 회수해야 함
+		draw_hdc_graphics = new Gdiplus::Graphics(draw_hdc); //화면 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+		draw_hdc_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-			GetClientRect(hWnd, &client_rect); //client_rect에 현재 작업영역 크기 구하기
-			draw_bmp = new Gdiplus::Bitmap(client_rect.right, client_rect.bottom, PixelFormat32bppARGB); //더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
-			draw_bmp_graphics = new Gdiplus::Graphics(draw_bmp); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
-			draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
-
-
-			//선을 그리기 시작하는 좌표를 현재 좌표로 초기화
-			previous_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장 
-			previous_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
+		GetClientRect(hWnd, &client_rect); //client_rect에 현재 작업영역 크기 구하기
+		draw_bmp = new Gdiplus::Bitmap(client_rect.right, client_rect.bottom, PixelFormat32bppARGB); //더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+		draw_bmp_graphics = new Gdiplus::Graphics(draw_bmp); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+		draw_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
 
 
-			start_time = GetTickCount64(); //윈도우 창이 켜진 시점부터 흐르는 시간
-
-			//현재 좌표를 선의 시작점으로 저장
-			drawn_line.push_back({ { previous_x, previous_y }, 0, 5 });
-
-			//그리는 중이라고 플래그 표시
-			is_drawing = true;
-
-			//창 벗어남을 추적하기 위해 마우스 추적 시작
-			setTrackMouseEvent(hWnd);
+		//선을 그리기 시작하는 좌표를 현재 좌표로 초기화
+		previous_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장 
+		previous_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
 
 
-			// 시작점 그리기
-			draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+		start_time = GetTickCount64(); //윈도우 창이 켜진 시점부터 흐르는 시간
 
-			// 선의 점 정보를 담는 클래스 생성
-			//pen_pointer->SetLineJoin(Gdiplus::LineJoinRound);
-			line_path = new Gdiplus::GraphicsPath();
-		}
-		break;
+		//시작할 선의 스타일을 저장
+		drawn_lines_data.push_back({ TRUE, pen_style->getSelectPen(), pen_style->getPenColor() });
+		//현재 좌표를 선의 시작점으로 저장
+		drawn_lines_data.back().point_data.push_back({ {previous_x, previous_y}, 0, pen_style->getRadius() });
+
+		//그리는 중이라고 플래그 표시
+		is_drawing = true;
+
+		//창 벗어남을 추적하기 위해 마우스 추적 시작
+		setTrackMouseEvent(hWnd);
+
+
+
+		// 선의 점 정보를 담는 클래스 생성
+		//pen_pointer->SetLineJoin(Gdiplus::LineJoinRound);
+		line_path = new Gdiplus::GraphicsPath();
+	}
+	break;
 	}//switch(pen_mode)
-	
+
 }
 
 
@@ -158,25 +203,27 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	{
 		switch (pen_mode)
 		{
-			case PEN_MODE_ER:
-			{
-				/// 지우개용 공간
-			}
+		case PEN_MODE_ER:
+		{
+			/// 지우개용 공간
+			SingleDelete sc;
+			sc.single_clear(hWnd, *this, lParam);
+		}
+		break;
+		case PEN_MODE_NORMAL_PEN:
+		{
+			drawingLineRGB(hWnd, lParam);
+		}
+		break;
+		case PEN_MODE_ARGB_PEN:
+		{
+			drawingLineARGB(hWnd, lParam);
+		}
+		break;
+		default:
+		{
 			break;
-			case PEN_MODE_NORMAL_PEN:
-			{
-				drawingLineRGB(hWnd, lParam);
-			}
-			break;
-			case PEN_MODE_ARGB_PEN:
-			{
-				drawingLineARGB(hWnd, lParam);
-			}
-			break;
-			default:
-			{
-				break;
-			}
+		}
 		}
 	}
 }
@@ -193,7 +240,7 @@ void Draw::drawingLineRGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 		//현재 위치 좌표를 벡터에 저장
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, 10});
+		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getRadius() });
 
 		//--------------비트맵에 그리기--------------//
 		draw_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
@@ -219,7 +266,7 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 
-		drawn_line.push_back({ { current_x, current_y }, elapsed_time, 10 }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
+		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getRadius() }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
 		line_path->AddLine(previous_x, previous_y, current_x, current_y); // 이번에 그릴 부분을 그리기용 path에 저장
 
 		//--------------비트맵에 그리기--------------//
@@ -228,7 +275,7 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 		draw_bmp_graphics->DrawPath(pen_pointer, line_path);	// 이번 선을 그리기용 버퍼에 그리기
 
 		//-----------------국소 범위 화면 출력-----------------//
-		drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y); //그리기용 버퍼에사 국소 범위만을 화면에 출력
+		drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y); //그리기용 버퍼에서 국소 범위만을 화면에 출력
 
 		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
 		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
@@ -243,40 +290,55 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 
 void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
-	switch (pen_mode)
+	// 점 하나였을 경우 시작점 그리기
+	if (is_drawing)
 	{
-		case PEN_MODE_ER:
+		if (drawn_lines_data.back().point_data.size() == 1)
 		{
-
-		}
-		break;
-		case PEN_MODE_NORMAL_PEN:
-		{
-			for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
-			{
-				drawn_bmp_graphics->DrawLine(pen_pointer,
-					(INT)drawn_line[point_num - 1].point.x,
-					(INT)drawn_line[point_num - 1].point.y,
-					(INT)drawn_line[point_num].point.x,
-					(INT)drawn_line[point_num].point.y
-				);
-			}
-		}
-		break;
-		case PEN_MODE_ARGB_PEN:
-		{
-			drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
-		}
-		break;
-		default:
-		{
-			break;
+			drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+			draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
 		}
 	}
 
 
-	drawn_lines.push_back(drawn_line); //다 그린 선을 선을 모아놓은 벡터에 저장
-	drawn_line.clear(); //선 벡터 비우기
+	switch (pen_mode) //선을 다 그린 후 새로 그린 선을 전체 그림 저장하는 비트맵에 저장
+	{
+	case PEN_MODE_ER:
+	{
+		SingleDelete sc;
+		sc.single_clear(hWnd, *this, lParam);
+		is_drawing = false;
+
+		return;
+	}
+	break;
+	case PEN_MODE_NORMAL_PEN:
+	{
+		for (size_t point_num = 1; point_num < drawn_lines_data.back().point_data.size(); point_num++)
+		{
+			drawn_bmp_graphics->DrawLine(pen_pointer,
+				(INT)drawn_lines_data.back().point_data[point_num - 1].point.x,
+				(INT)drawn_lines_data.back().point_data[point_num - 1].point.y,
+				(INT)drawn_lines_data.back().point_data[point_num].point.x,
+				(INT)drawn_lines_data.back().point_data[point_num].point.y
+			);
+		}
+	}
+	break;
+	case PEN_MODE_ARGB_PEN:
+	{
+		drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
+	}
+	break;
+	default:
+	{
+		break;
+	}
+	}
+
+
+	//drawn_lines.push_back(drawn_line); //다 그린 선을 선을 모아놓은 벡터에 저장
+	//drawn_line.clear(); //선 벡터 비우기
 	is_drawing = false; //그리기 끝났으므로 플래그를 false로 변경
 
 
@@ -299,11 +361,11 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	draw_hdc_graphics = nullptr;
 	ReleaseDC(hWnd, draw_hdc); //hdc 파괴
 
-	
-	
-	
 
-	
+
+
+
+
 }
 
 
@@ -422,7 +484,7 @@ void Draw::setIsPen(bool is_pen)
 /// 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
 void Draw::selectDrawStyle()
 {
-	if (/*is_Pen ==*/ true) {
+	if (is_Pen == true) {
 		/// select_pen 변수 받아오기
 		switch (pen_style->getSelectPen()) {
 		case SOLIDPEN:
