@@ -1,5 +1,5 @@
 #include "Draw.h"
-
+#include "Delete.h"
 
 /**
 * @file
@@ -484,7 +484,7 @@ void Draw::setIsPen(bool is_pen)
 /// 펜 스타일에 따라 그리기 스타일 정하는 함수 (PenStyle test 진행중..)
 void Draw::selectDrawStyle()
 {
-	if (is_Pen == true) {
+	if (is_pen == true) {
 		/// select_pen 변수 받아오기
 		switch (pen_style->getSelectPen()) {
 		case SOLIDPEN:
