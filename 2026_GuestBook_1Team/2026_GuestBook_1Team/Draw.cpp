@@ -45,10 +45,8 @@ void Draw::redrawAllLines(HWND hWnd)
 	HDC hdc = GetDC(hWnd); //hdc 생성
 	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
 
-	//모니터 청소
-	hdc_graphics.Clear(Gdiplus::Color(255, 255, 255, 255));
 	//세번째 버퍼 청소
-	drawn_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
+	drawn_bmp_graphics->Clear(Gdiplus::Color(255, 255, 255, 255));
 
 
 	//세 번째 버퍼에 불러온 모든 데이터를 그리기
@@ -109,34 +107,9 @@ void Draw::redrawAllLines(HWND hWnd)
 		}
 	}//for
 
-	//실제로 동작하지 말아야 할 코드
-	if (drawn_line.size() == 1) //점이 하나 뿐일 경우
-	{
-		MessageBox(hWnd, L"실행됨 1번", L"실행됨 1번", MB_OK); //실행되는지 체크
-		drawn_bmp_graphics->DrawLine(pen_pointer,
-			(float)drawn_line[0].point.x,
-			(float)drawn_line[0].point.y,
-			(float)drawn_line[0].point.x + 0.001f,
-			(float)drawn_line[0].point.y
-		);
-	}
-	else
-	{
-		for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
-		{
-			MessageBox(hWnd, L"실행됨 2번", L"실행됨 2번", MB_OK); //실행되는지 체크
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(INT)drawn_line[point_num - 1].point.x,
-				(INT)drawn_line[point_num - 1].point.y,
-				(INT)drawn_line[point_num].point.x,
-				(INT)drawn_line[point_num].point.y
-			);
-		}
-	}
 
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	ReleaseDC(hWnd, hdc); //hdc 삭제
-	InvalidateRect(hWnd, NULL, TRUE);
 
 }
 
@@ -283,24 +256,8 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 }
 
 
-
-
-
-
-
 void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
-	// 점 하나였을 경우 시작점 그리기
-	if (is_drawing)
-	{
-		if (drawn_lines_data.back().point_data.size() == 1)
-		{
-			drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
-			draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
-		}
-	}
-
-
 	switch (pen_mode) //선을 다 그린 후 새로 그린 선을 전체 그림 저장하는 비트맵에 저장
 	{
 	case PEN_MODE_ER:
@@ -314,20 +271,43 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	break;
 	case PEN_MODE_NORMAL_PEN:
 	{
-		for (size_t point_num = 1; point_num < drawn_lines_data.back().point_data.size(); point_num++)
+		// 점 하나였을 경우 시작점 그리기
+		if (is_drawing)
 		{
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(INT)drawn_lines_data.back().point_data[point_num - 1].point.x,
-				(INT)drawn_lines_data.back().point_data[point_num - 1].point.y,
-				(INT)drawn_lines_data.back().point_data[point_num].point.x,
-				(INT)drawn_lines_data.back().point_data[point_num].point.y
-			);
+			if (drawn_lines_data.back().point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+				draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+			}
+			else
+			{
+				for (size_t point_num = 1; point_num < drawn_lines_data.back().point_data.size(); point_num++)
+				{
+					drawn_bmp_graphics->DrawLine(pen_pointer,
+						(INT)drawn_lines_data.back().point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data.back().point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data.back().point_data[point_num].point.x,
+						(INT)drawn_lines_data.back().point_data[point_num].point.y
+					);
+				}
+			}
 		}
 	}
 	break;
 	case PEN_MODE_ARGB_PEN:
 	{
-		drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
+		if (is_drawing)
+		{
+			if (drawn_lines_data.back().point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+				draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+			}
+			else
+			{
+				drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
+			}
+		}
 	}
 	break;
 	default:
@@ -374,22 +354,6 @@ void Draw::drawWindowLines(HWND hWnd, HDC hdc)
 	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 전체 선 비트맵을 출력
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
