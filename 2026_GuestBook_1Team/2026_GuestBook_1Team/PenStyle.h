@@ -41,10 +41,11 @@ public:
 class PenStyle 
 {
 private:
-	int select_pen;				///< 펜 스타일 선택 변수
-	float radius;				///< 펜 두께 반지름 변수
-	PenColor pen_color;			///< 펜 색깔 클래스 변수
-	Gdiplus::Pen pen;			///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
+	int select_pen;						///< 펜 스타일 선택 변수
+	float radius;						///< 펜 두께 반지름 변수
+	PenColor pen_color;					///< 펜 색깔 클래스 변수
+	Gdiplus::Pen pen;					///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
+	Gdiplus::SolidBrush spray_brush;	///< gdiplus 브러시 스프레이 색상 정하는 클래스 변수
 
 public:
 	/// PenStyle 생성자
@@ -82,6 +83,9 @@ public:
 
 	/// 펜 포인터 getter
 	Gdiplus::Pen* getPen();
+
+	/// 브러시 포인터 getter
+	Gdiplus::SolidBrush* getBrush();
 
 	/// 펜 스타일 getter
 	int getSelectPen();
