@@ -45,10 +45,8 @@ void Draw::redrawAllLines(HWND hWnd)
 	HDC hdc = GetDC(hWnd); //hdc 생성
 	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
 
-	//모니터 청소
-	hdc_graphics.Clear(Gdiplus::Color(255, 255, 255, 255));
 	//세번째 버퍼 청소
-	drawn_bmp_graphics->Clear(Gdiplus::Color(0, 0, 0, 0));
+	drawn_bmp_graphics->Clear(Gdiplus::Color(255, 255, 255, 255));
 
 
 	//세 번째 버퍼에 불러온 모든 데이터를 그리기
@@ -107,36 +105,45 @@ void Draw::redrawAllLines(HWND hWnd)
 				drawn_bmp_graphics->DrawPath(pen_pointer, &temp_path);
 			}
 		}
+		/// 스프레이 그리기
+		else if (drawn_lines_data[line_num].select_pen_style == SPRAYPEN)
+		{
+			/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
+			srand((unsigned)time(NULL));
+
+			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+			{
+				/// 반지름 받아오기
+				int radius = pen_style->getRadius();
+				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+				for (int i = 0; i < (radius * 4); i++)
+				{
+					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+					int rand_x = rand() % (radius * 2 + 1) - radius;
+					int rand_y = rand() % (radius * 2 + 1) - radius;
+
+					/// 원형 범위 밖이면 제외
+					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+					{
+						continue;
+					}
+
+					/// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+					int x = (INT)drawn_lines_data[line_num].point_data[point_num].point.x + rand_x;
+					int y = (INT)drawn_lines_data[line_num].point_data[point_num].point.y + rand_y;
+
+					/// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+					//draw_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+					drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+				}//for
+			}//for
+		}
 	}//for
 
-	//실제로 동작하지 말아야 할 코드
-	if (drawn_line.size() == 1) //점이 하나 뿐일 경우
-	{
-		MessageBox(hWnd, L"실행됨 1번", L"실행됨 1번", MB_OK); //실행되는지 체크
-		drawn_bmp_graphics->DrawLine(pen_pointer,
-			(float)drawn_line[0].point.x,
-			(float)drawn_line[0].point.y,
-			(float)drawn_line[0].point.x + 0.001f,
-			(float)drawn_line[0].point.y
-		);
-	}
-	else
-	{
-		for (size_t point_num = 1; point_num < drawn_line.size(); point_num++)
-		{
-			MessageBox(hWnd, L"실행됨 2번", L"실행됨 2번", MB_OK); //실행되는지 체크
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(INT)drawn_line[point_num - 1].point.x,
-				(INT)drawn_line[point_num - 1].point.y,
-				(INT)drawn_line[point_num].point.x,
-				(INT)drawn_line[point_num].point.y
-			);
-		}
-	}
 
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	ReleaseDC(hWnd, hdc); //hdc 삭제
-	InvalidateRect(hWnd, NULL, TRUE);
 
 }
 
@@ -220,6 +227,11 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 			drawingLineARGB(hWnd, lParam);
 		}
 		break;
+		case PEN_MODE_SPRAY_BRUSH:
+		{
+			drawingBrush(hWnd, lParam);
+		}
+		break;
 		default:
 		{
 			break;
@@ -282,25 +294,66 @@ void Draw::drawingLineARGB(HWND hWnd, LPARAM lParam)
 	}
 }
 
+/// 스프레이 그리기 (penStyle 테스트 진행중..)
+void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
+{
+	if (is_drawing)
+	{
+		//이동 후 현재 위치를 저장
+		current_x = LOWORD(lParam);
+		current_y = HIWORD(lParam);
+
+		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
 
+		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getRadius() }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
+		line_path->AddLine(previous_x, previous_y, current_x, current_y); // 이번에 그릴 부분을 그리기용 path에 저장
+
+		//--------------비트맵에 그리기--------------//
+		draw_bmp_graphics->Clear(Gdiplus::Color(255, 255, 255, 255)); //그리기용 버퍼를 초기화
+		drawSectionImage(draw_bmp_graphics, drawn_bmp, previous_x, previous_y, current_x, current_y); // 이번 선 전까지 그어진 모든 선을 그리기용 버퍼에 그리기
+
+		/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
+		srand((unsigned)time(NULL));
+
+		/// 반지름 받아오기
+		int radius = pen_style->getRadius();
+
+		/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+		for (int i = 0; i < (radius * 4); i++)
+		{
+			/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+			int rand_x = rand() % (radius * 2 + 1) - radius;
+			int rand_y = rand() % (radius * 2 + 1) - radius;
+
+			/// 원형 범위 밖이면 제외
+			if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+			{
+				continue;
+			}
+
+			/// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+			int x = current_x + rand_x;
+			int y = current_y + rand_y;
+
+			/// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+			draw_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+			drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+		}
 
 
+		//-----------------국소 범위 화면 출력-----------------//
+		drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y); //그리기용 버퍼에서 국소 범위만을 화면에 출력
+
+		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+	}
+}
 
 
 void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
-	// 점 하나였을 경우 시작점 그리기
-	if (is_drawing)
-	{
-		if (drawn_lines_data.back().point_data.size() == 1)
-		{
-			drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
-			draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
-		}
-	}
-
-
 	switch (pen_mode) //선을 다 그린 후 새로 그린 선을 전체 그림 저장하는 비트맵에 저장
 	{
 	case PEN_MODE_ER:
@@ -314,22 +367,78 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	break;
 	case PEN_MODE_NORMAL_PEN:
 	{
-		for (size_t point_num = 1; point_num < drawn_lines_data.back().point_data.size(); point_num++)
+		// 점 하나였을 경우 시작점 그리기
+		if (is_drawing)
 		{
-			drawn_bmp_graphics->DrawLine(pen_pointer,
-				(INT)drawn_lines_data.back().point_data[point_num - 1].point.x,
-				(INT)drawn_lines_data.back().point_data[point_num - 1].point.y,
-				(INT)drawn_lines_data.back().point_data[point_num].point.x,
-				(INT)drawn_lines_data.back().point_data[point_num].point.y
-			);
+			if (drawn_lines_data.back().point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+				draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+			}
+			else
+			{
+				for (size_t point_num = 1; point_num < drawn_lines_data.back().point_data.size(); point_num++)
+				{
+					drawn_bmp_graphics->DrawLine(pen_pointer,
+						(INT)drawn_lines_data.back().point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data.back().point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data.back().point_data[point_num].point.x,
+						(INT)drawn_lines_data.back().point_data[point_num].point.y
+					);
+				}
+			}
 		}
 	}
 	break;
 	case PEN_MODE_ARGB_PEN:
 	{
-		drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
+		if (is_drawing)
+		{
+			if (drawn_lines_data.back().point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+				draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+			}
+			else
+			{
+				drawn_bmp_graphics->DrawPath(pen_pointer, line_path);	// 전체 그림 버퍼에 선 긋기 함수 실행
+			}
+		}
 	}
 	break;
+	// endDrawingLine 스프레이 주석
+	// 현재 이 코드 없이 작동은 되고있음. 추후 문제 발생 시 코드 사용 예정
+	//case PEN_MODE_SPRAY_BRUSH:
+	//{
+	//	/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
+	//	srand((unsigned)time(NULL));
+
+	//	/// 반지름 받아오기
+	//	int radius = pen_style->getRadius();
+
+	//	/// 두께의 5배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 50개 찍음.)
+	//	for (int i = 0; i < (radius * 5); i++)
+	//	{
+	//		/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+	//		int rand_x = rand() % (radius * 2 + 1) - radius;
+	//		int rand_y = rand() % (radius * 2 + 1) - radius;
+
+	//		/// 원형 범위 밖이면 제외
+	//		if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+	//		{
+	//			continue;
+	//		}
+
+	//		/// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+	//		int x = current_x + rand_x;
+	//		int y = current_y + rand_y;
+
+	//		/// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+	//		/*drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);*/
+	//	}
+	//}
+	//break;
 	default:
 	{
 		break;
@@ -378,22 +487,6 @@ void Draw::drawWindowLines(HWND hWnd, HDC hdc)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void Draw::gdiPlusStart()
 {
 	/// Gdi+ 시작
@@ -408,6 +501,7 @@ void Draw::gdiPlusStart()
 	/// pen_style 테스트
 	pen_style = new PenStyle();
 	pen_pointer = pen_style->getPen();
+	brush_pointer = pen_style->getBrush();
 }
 
 void Draw::gdiPlusEnd()
@@ -494,7 +588,7 @@ void Draw::selectDrawStyle()
 		break;
 		case SPRAYPEN:
 		{
-
+			select_drawStyle = PEN_MODE_SPRAY_BRUSH;
 		}
 		break;
 		case BRUSHPEN:

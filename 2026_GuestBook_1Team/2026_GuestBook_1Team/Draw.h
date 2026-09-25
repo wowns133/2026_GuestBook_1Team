@@ -8,11 +8,14 @@
 
 /// 펜 스타일 임시 헤더파일 
 #include "PenStyle.h"
+/// 스프레이 난수 생성용 헤더파일
+#include <random>
 
 ///펜 모드 define
 #define PEN_MODE_ER 0
 #define PEN_MODE_NORMAL_PEN 1
 #define PEN_MODE_ARGB_PEN 2
+#define PEN_MODE_SPRAY_BRUSH 3
 
 /**
 * @file
@@ -118,8 +121,8 @@ private:
 
 
 	//----------------------------Pen-----------------------------//
-	Gdiplus::Pen* pen_pointer;
-
+	Gdiplus::Pen* pen_pointer;				///< 펜 그리기에 사용 될 펜 포인터
+	Gdiplus::SolidBrush* brush_pointer;		///< 스프레이 그리기에 사용 될 브러시 포인터
 
 protected:
 
@@ -209,6 +212,8 @@ public:
 	void drawingLineRGB(HWND hWnd, LPARAM lParam);
 
 	void drawingLineARGB(HWND hWnd, LPARAM lParam);
+	/// 스프레이 그리기 (penStyle 테스트 진행중..)
+	void drawingBrush(HWND hWnd, LPARAM lParam);
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 종료 함수
 	* @details 선 그리기를 종료하고, 그린 선을 저장하며, 사용이 끝난 객체를 삭제한다. 마우스 관련 메시지 식별자에서 사용하는 함수이다.
