@@ -45,25 +45,23 @@ void makeTempButton(HWND hWnd, HINSTANCE hInst)
 WinUi* WinUi::static_winui = nullptr;
 bool WinUi::is_winui_created = false;
 
-WinUi::WinUi(HINSTANCE hInst)
+WinUi::WinUi(HINSTANCE hInst, Draw* draw)
 {
     // WinUi 클래스 객체는 하나만 존재해야 하므로 경고창 띄우고 return
     if (is_winui_created)
     {
-        MessageBox(canvus_hwnd, L"WinUi 클래스 객체가 이미 생성되었습니다. WinUi 클래스는 반드시 하나만 존재해야 합니다.", L"클래스 생성 오류", MB_OK);
+        MessageBox(canvas_hwnd, L"WinUi 클래스 객체가 이미 생성되었습니다. WinUi 클래스는 반드시 하나만 존재해야 합니다.", L"클래스 생성 오류", MB_OK);
         return;
     }
     is_winui_created = true; //객체 생성되었다고 표시
 
     static_winui = this; // 이 객체의 주소를 저장
+    this->draw = draw;
     this->hInst = hInst; // 인스턴스 핸들 초기화
-    main_ui_background = CreateSolidBrush(RGB(253, 253, 255)); // 배경 색 설정s
+    main_ui_background = CreateSolidBrush(RGB(253, 253, 255)); // 배경 색 설정
+    canvus_background = CreateSolidBrush(RGB(255, 255, 255)); // 배경 색 설정
 }
 
-void WinUi::setCanvusHWND(HWND canvus_hWnd)
-{
-    this->canvus_hwnd = canvus_hWnd;
-}
 
 void WinUi::createWinUIWindows(HWND hWnd)
 {
@@ -82,13 +80,30 @@ void WinUi::createWinUIWindows(HWND hWnd)
         hInst,                                      // 프로그램의 인스턴스 핸들 
         nullptr                                     // 추가 파라미터 
     );
+
+    canvas_hwnd = CreateWindowExW(
+        0,
+        L"CanvasWindowClassType",                   // RegisterClass에서 등록한 클래스 이름
+        nullptr, // 창 상단 타이틀 바에 표시될 텍스트. 
+        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, // 윈도우 스타일 (최소화/최대화/닫기 버튼이 있는 일반 창) 
+        0, 100, // 창이 나타날 처음 화면 위치 (X, Y) - OS가 알아서 지정 
+        rect.right, rect.bottom - 100, // 창의 처음 가로, 세로 크기 (Width, Height) - OS가 알아서 지정 
+        hWnd, // 부모 윈도우 핸들 (메인 창이므로 없음) 
+        (HMENU)CANVAS_ID, // 메뉴 핸들 
+        hInst, // 이 창을 만드는 프로그램의 인스턴스 핸들 
+        nullptr // 추가 파라미터 
+    );
 }
 
-void WinUi::showWinUIWindows(int nCmdShow)
+void WinUi::resizeWinUIWindows(LPARAM lParam)
 {
-    ShowWindow(main_ui_hwnd, nCmdShow);
-    UpdateWindow(main_ui_hwnd);
+    int client_width = LOWORD(lParam);
+    int client_height = HIWORD(lParam);
+    int main_ui_height = client_height * 0.2;
+    MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
+    MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 }
+
 
 
 
@@ -143,72 +158,72 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
         case ID_PEN_STYLE1:
         {
-            draw.setIsPen(true);
+            draw->setIsPen(true);
             /// SOLIDPEN 
-            draw.pen_style->selectPen(SOLIDPEN);
+            draw->pen_style->selectPen(SOLIDPEN);
         }
         break;
         case ID_PEN_STYLE2:
         {
-            draw.setIsPen(true);
+            draw->setIsPen(true);
             /// SPRAYPEN
-            draw.pen_style->selectPen(SPRAYPEN);
+            draw->pen_style->selectPen(SPRAYPEN);
         }
         break;
         case ID_PEN_STYLE3:
         {
-            draw.setIsPen(true);
+            draw->setIsPen(true);
             /// BRUSHPEN
-            draw.pen_style->selectPen(BRUSHPEN);
+            draw->pen_style->selectPen(BRUSHPEN);
         }
         break;
         case ID_PEN_STYLE4:
         {
-            draw.setIsPen(true);
+            draw->setIsPen(true);
             /// HIGHLIGHTERPEN
-            draw.pen_style->selectPen(HIGHLIGHTERPEN);
+            draw->pen_style->selectPen(HIGHLIGHTERPEN);
         }
         break;
         case ID_PEN_STYLE5:
         {
             /// 전체 지우개
-            ac.all_clear(canvus_hwnd, draw);
+            ac.all_clear(canvas_hwnd, *draw);
         }
         break;
         case ID_PEN_COLOR1:
         {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(BLACK);
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(BLACK);
         }
         break;
         case ID_PEN_COLOR2:
         {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(RED);
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(RED);
         }
         break;
         case ID_PEN_COLOR3:
         {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(GREEN);
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(GREEN);
         }
         break;
         case ID_PEN_COLOR4:
         {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(BLUE);
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(BLUE);
         }
         break;
         case ID_PEN_COLOR5:
         {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(YELLOW);
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(YELLOW);
         }
         break;
         case ID_ERASER:
         {
             /// 획 지우개
-            draw.setIsPen(false);
+            draw->setIsPen(false);
 
         }
         break;
@@ -231,12 +246,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         break;
         case ID_SAVE_FILE: {
 
-            file.SaveFile(hWnd, draw);
+            file.SaveFile(hWnd, *draw);
             break;
         }
         case ID_LOAD_FILE:
         {
-            file.LoadFile(hWnd, draw);
+            file.LoadFile(canvas_hwnd, *draw);
             break;
         }
         }
@@ -265,9 +280,106 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
 
 
+ATOM WinUi::CanvasRegisterClass(HINSTANCE hInstance)
+{
+    WNDCLASSEXW wcex = { 0 };
 
 
+    wcex.cbSize = sizeof(WNDCLASSEX); // 구조체의 크기 설정 
+    wcex.style = CS_HREDRAW | CS_VREDRAW; // 창의 크기가 변하면 다시 그리기, 입력 메시지 관련 설정
+    wcex.lpfnWndProc = StaticCanvasWndProc; // 이 창에서 실행될 메시지 처리 함수 지정 
+    wcex.cbClsExtra = 0; // 클래스 여유 메모리. 보통은 0
+    wcex.cbWndExtra = 0; // 윈도우 여유 메모리. 보통은 0 
+    wcex.hInstance = hInstance; // 인스턴스 핸들 
+
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW); // 마우스 커서 스타일 
+    wcex.hbrBackground = canvus_background; // 창 배경색 
+    wcex.lpszClassName = L"CanvasWindowClassType"; // 이 윈도우 창 이름 
+
+    return RegisterClassExW(&wcex);
+}
 
 
+LRESULT CALLBACK WinUi::StaticCanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return static_winui->CanvasWndProc(hWnd, message, wParam, lParam);
+}
 
 
+LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_CREATE:
+    {
+
+    }
+    break;
+    case WM_COMMAND:
+    {
+        int wmId = LOWORD(wParam);
+        // 메뉴 선택을 구문 분석합니다:
+
+        switch (wmId)
+        {
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+    }
+    break;
+    case WM_LBUTTONDOWN:
+    {
+        /// 펜 스타일에 따라 그리기 스타일 변경 ( penStyle 테스트 진행중 ... )
+        draw->selectDrawStyle();
+        draw->startDrawingLine(hWnd, lParam, draw->select_drawStyle);
+        break;
+    }
+    case WM_MOUSEMOVE:
+    {
+        draw->drawingLine(hWnd, lParam, draw->select_drawStyle);
+        break;
+    }
+    case WM_LBUTTONUP:
+    {
+        draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
+        break;
+    }
+    case WM_MOUSELEAVE:
+    {
+        draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
+        break;
+    }
+    case WM_MOUSEWHEEL:
+    {
+
+        int mouse_wheel_data = GET_WHEEL_DELTA_WPARAM(wParam);
+
+        if (mouse_wheel_data > 0)
+        {
+            /// 휠을 위로 올렸을 때의 처리
+            draw->pen_style->settingPenThicknessUp();
+        }
+        else
+        {
+            // 휠을 아래로 내렸을 때의 처리
+            draw->pen_style->settingPenThicknessDown();
+        }
+        break;
+    }
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        draw->drawWindowLines(hWnd, hdc);
+        EndPaint(hWnd, &ps);
+    }
+    break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
