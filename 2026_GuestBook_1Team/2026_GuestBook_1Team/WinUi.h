@@ -6,6 +6,7 @@
 #include "FileInOut.h"
 #include "Delete.h"
 #include "Replay.h"
+#include "Button.h"
 
 ///임시 버튼 define
 #define ID_PEN_STYLE1 3001
@@ -57,7 +58,7 @@ private:
 	FileInOut file; ///< 파일입출력 클래스
 	Replay replay; ///< 서명 재생 클래스
 	AllDelete ac; ///< 지우기 클래스
-
+	Button button;
 	//--------------------------------MainUI용 변수들--------------------------------------//
 	HBRUSH main_ui_background = nullptr; ///< MainUI 창 배경색 브러시 저장용 변수
 	HBRUSH canvus_background = nullptr; ///< Canvus 창 배경색 브러시 저장용 변수

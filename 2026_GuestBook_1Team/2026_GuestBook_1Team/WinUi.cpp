@@ -142,6 +142,29 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     case WM_CREATE:
     {
         makeTempButton(hWnd, hInst);
+        button.setAllButtons();
+    }
+    break;
+    case WM_LBUTTONDOWN:
+    {
+        int button_id = button.trackClick(lParam);
+        switch (button_id)
+        {
+        case CUSTOM_BUTTON_RED:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(RED);
+        }
+        break;
+        case CUSTOM_BUTTON_BLACK:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(BLACK);
+        }
+        break;
+        default:
+            break;
+        }
     }
     break;
     case WM_COMMAND:
@@ -263,11 +286,17 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
     }
     break;
+    case WM_SIZE:
+    {
+        button.resizeAllButtons();
+    }
+    break;
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        button.drawAllButtons(hdc);
         EndPaint(hWnd, &ps);
     }
     break;
