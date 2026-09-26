@@ -155,6 +155,12 @@ void Button::drawAllButtons(HDC hdc)
 	}
 }
 
+void Button::resizeAllButtons()
+{
+	return;
+}
+
+
 int Button::trackClick(LPARAM lParam)
 {
 	mouse_x = LOWORD(lParam);
