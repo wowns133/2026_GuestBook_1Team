@@ -24,7 +24,8 @@ PenStyle::PenStyle()
 	:
 	select_pen(SOLIDPEN),
 	radius(5.0f),
-	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2))
+	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2)),
+	spray_brush(Gdiplus::Color(255,0,0,0))
 {
 	pen.SetStartCap(Gdiplus::LineCapRound);
 	pen.SetEndCap(Gdiplus::LineCapRound);
@@ -194,9 +195,10 @@ void PenStyle::solidPen()
 * @brief 스프레이 펜 스타일 함수
 * 스프레이펜 선택 시 스프레이로 적용된다.
 */
-void PenStyle::sprayPen() 
+void PenStyle::sprayPen()
 {
-	/// 미적용
+	/// 스프레이 색 변경
+	spray_brush.SetColor(Gdiplus::Color(pen_color.color_a, pen_color.color_r, pen_color.color_g, pen_color.color_b));
 }
 
 /**
@@ -239,6 +241,17 @@ void PenStyle::highlighterPen()
 Gdiplus::Pen* PenStyle::getPen() 
 {
 	return &pen;
+}
+
+/**
+* @file
+* @brief Gdiplus SolidBrush 포인터 getter
+* 현재 SolidBrush 클래스의 정보를 반환한다.
+* @return SolidBrush 클래스 변수의 주소를 반환한다.
+*/
+Gdiplus::SolidBrush* PenStyle::getBrush()
+{
+	return &spray_brush;
 }
 
 /**
