@@ -29,6 +29,7 @@ Draw draw;
 FileInOut file;
 Replay replay;
 AllDelete ac;
+WinUi win_ui(hInst, &draw);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -44,6 +45,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_MY2026GUESTBOOK1TEAM, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
+    win_ui.MainUIRegisterClass(hInstance); /// 메인 UI창 등록
+    win_ui.CanvasRegisterClass(hInstance); /// 캔버스 창 등록
 
     // 애플리케이션 초기화를 수행합니다:
     if (!InitInstance(hInstance, nCmdShow))
@@ -143,122 +146,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
-        makeTempButton(hWnd, hInst);
+        win_ui.createWinUIWindows(hWnd);
+        //makeTempButton(hWnd, hInst);
+    }
+    break;
+    case WM_SIZE:
+    {
+        win_ui.resizeWinUIWindows(lParam);
     }
     break;
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
         // 메뉴 선택을 구문 분석합니다:
-
-        //임시 버튼 이벤트 처리를 모아 놓은 switch문 입니다. 임시 버튼의 이벤트 처리는 모두 여기서 담당합니다.
-        //충돌을 방지하기 위해 이 부분을 사용하여 테스트한 후에는 반드시 원상태로 복구해야 합니다.
-        //원상태의 예시는 아래와 같습니다.
-        //case ID_PEN_STYLE1:
-        //(TAB)break;
-        switch (wmId)
-        {
-        case ID_PEN_STYLE1:
-        {
-            draw.setIsPen(true);
-            /// SOLIDPEN 
-            draw.pen_style->selectPen(SOLIDPEN);
-        }
-        break;
-        case ID_PEN_STYLE2:
-        {
-            draw.setIsPen(true);
-            /// SPRAYPEN
-            draw.pen_style->selectPen(SPRAYPEN);
-        }
-        break;
-        case ID_PEN_STYLE3:
-        {
-            draw.setIsPen(true);
-            /// BRUSHPEN
-            draw.pen_style->selectPen(BRUSHPEN);
-        }
-        break;
-        case ID_PEN_STYLE4:
-        {
-            draw.setIsPen(true);
-            /// HIGHLIGHTERPEN
-            draw.pen_style->selectPen(HIGHLIGHTERPEN);
-        }
-        break;
-        case ID_PEN_STYLE5:
-        {
-            /// 전체 지우개
-            ac.all_clear(hWnd, draw);
-        }
-        break;
-        case ID_PEN_COLOR1:
-        {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(BLACK);
-        }
-        break;
-        case ID_PEN_COLOR2:
-        {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(RED);
-        }
-        break;
-        case ID_PEN_COLOR3:
-        {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(GREEN);
-        }
-        break;
-        case ID_PEN_COLOR4:
-        {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(BLUE);
-        }
-        break;
-        case ID_PEN_COLOR5:
-        {
-            draw.setIsPen(true);
-            draw.pen_style->selectPenColor(YELLOW);
-        }
-        break;
-        case ID_ERASER:
-        {
-            /// 획 지우개
-            draw.setIsPen(false);
-
-        }
-        break;
-        case ID_REPLAY:
-        {
-
-            /// 임시 주석 추후 적용 예정 
-            /*int state = replay.getReplayState();
-            switch (state) {
-            case replayStateStop:
-                replay.startReplay(draw, hWnd);
-                break;
-            case replayStatePlaying:
-                replay.pauseReplay();
-                break;
-            case replayStatePaused:
-                replay.startReplay(draw, hWnd);
-                break;
-            }*/
-        }
-        break;
-        case ID_SAVE_FILE: {
-
-            file.SaveFile(hWnd, draw);
-            break;
-        }
-        case ID_LOAD_FILE:
-        {
-            file.LoadFile(hWnd, draw);
-            break;
-        }
-        }
-
 
         switch (wmId)
         {
@@ -273,57 +173,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     }
     break;
-    case WM_LBUTTONDOWN:
-    {
-        /// 펜 스타일에 따라 그리기 스타일 변경 ( penStyle 테스트 진행중 ... )
-        draw.selectDrawStyle();
-        draw.startDrawingLine(hWnd, lParam, draw.select_drawStyle);
-        break;
-    }
-    case WM_MOUSEMOVE:
-    {
-        draw.drawingLine(hWnd, lParam, draw.select_drawStyle);
-        break;
-    }
-    case WM_LBUTTONUP:
-    {
-        draw.endDrawingLine(hWnd, lParam, draw.select_drawStyle);
-        break;
-    }
-    case WM_MOUSELEAVE:
-    {
-        draw.endDrawingLine(hWnd, lParam, draw.select_drawStyle);
-        break;
-    }
     case WM_PAINT:
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        draw.drawWindowLines(hWnd, hdc);
         EndPaint(hWnd, &ps);
     }
     break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
-    case WM_MOUSEWHEEL:
-    {
-
-        int mouse_wheel_data = GET_WHEEL_DELTA_WPARAM(wParam);
-
-        if (mouse_wheel_data > 0)
-        {
-            /// 휠을 위로 올렸을 때의 처리
-            draw.pen_style->settingPenThicknessUp();
-        }
-        else
-        {
-            // 휠을 아래로 내렸을 때의 처리
-            draw.pen_style->settingPenThicknessDown();
-        }
-        break;
-    }
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
