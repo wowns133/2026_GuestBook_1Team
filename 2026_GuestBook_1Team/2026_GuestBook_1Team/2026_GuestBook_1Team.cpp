@@ -29,7 +29,7 @@ Draw draw;
 FileInOut file;
 Replay replay;
 AllDelete ac;
-WinUi win_ui(hInst, &draw);
+WinUi win_ui(&draw);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -44,6 +44,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // 전역 문자열을 초기화합니다.
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_MY2026GUESTBOOK1TEAM, szWindowClass, MAX_LOADSTRING);
+
+    win_ui.setInst(hInstance);
+
     MyRegisterClass(hInstance);
     win_ui.MainUIRegisterClass(hInstance); /// 메인 UI창 등록
     win_ui.CanvasRegisterClass(hInstance); /// 캔버스 창 등록

@@ -102,7 +102,7 @@ private:
 	LRESULT CALLBACK CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 protected:
 public:
-	WinUi(HINSTANCE hInst, Draw* draw);
+	WinUi(Draw* draw);
 	/**
 	* @brief 필요한 창들을 생성하는 함수
 	* @details 필요한 창들을 생성하는 함수
@@ -116,6 +116,8 @@ public:
 	* @author challenjoy01
 	*/
 	void deleteWinUIWindows();
+
+	void setInst(HINSTANCE hInst);
 
 
 

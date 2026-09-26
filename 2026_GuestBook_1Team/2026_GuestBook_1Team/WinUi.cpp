@@ -45,7 +45,7 @@ void makeTempButton(HWND hWnd, HINSTANCE hInst)
 WinUi* WinUi::static_winui = nullptr;
 bool WinUi::is_winui_created = false;
 
-WinUi::WinUi(HINSTANCE hInst, Draw* draw)
+WinUi::WinUi(Draw* draw)
 {
     // WinUi 클래스 객체는 하나만 존재해야 하므로 경고창 띄우고 return
     if (is_winui_created)
@@ -57,7 +57,6 @@ WinUi::WinUi(HINSTANCE hInst, Draw* draw)
 
     static_winui = this; // 이 객체의 주소를 저장
     this->draw = draw;
-    this->hInst = hInst; // 인스턴스 핸들 초기화
     main_ui_background = CreateSolidBrush(RGB(253, 253, 255)); // 배경 색 설정
     canvus_background = CreateSolidBrush(RGB(255, 255, 255)); // 배경 색 설정
 }
@@ -104,7 +103,10 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 }
 
-
+void WinUi::setInst(HINSTANCE hInst)
+{
+    this->hInst = hInst;
+}
 
 
 
