@@ -270,8 +270,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
         break;
         case ID_SAVE_FILE: {
-
-            file.SaveFile(hWnd, *draw);
+            file.SaveFile(canvas_hwnd, *draw);
             break;
         }
         case ID_LOAD_FILE:
