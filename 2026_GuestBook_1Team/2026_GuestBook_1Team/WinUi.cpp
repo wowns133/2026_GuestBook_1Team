@@ -194,19 +194,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // --- 3. 리플레이 (2종) ---
         case CUSTOM_BUTTON_PLAY:
         {
-            /*
-            int state = replay.getReplayState();
-            if (state == replayStateStop || state == replayStatePaused) {
-                replay.startReplay(draw, hWnd);
-            }
-            */
+            replay.startReplay(*draw, canvas_hwnd);
         }
         break;
         case CUSTOM_BUTTON_STOP:
         {
-            /*
-            replay.pauseReplay();
-            */
+            replay.stopReplay();
         }
         break;
         case CUSTOM_BUTTON_SAVE:
