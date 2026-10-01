@@ -66,6 +66,8 @@ void WinUi::createWinUIWindows(HWND hWnd)
 {
     RECT rect;
     GetClientRect(hWnd, &rect);
+    int main_ui_height = (rect.bottom - rect.top) * 0.15;
+    int canvus_ui_height = (rect.bottom - rect.top) - main_ui_height;
 
     main_ui_hwnd = CreateWindowExW(
         WS_EX_DLGMODALFRAME | WS_EX_TOPMOST,        // 스타일
@@ -73,7 +75,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
         nullptr,                                    // 창 상단 타이틀 바에 표시될 텍스트. 자식은 보통 없음
         WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,    // 윈도우 스타일 (최소화/최대화/닫기 버튼이 있는 일반 창) 
         0, 0,                                       // 창이 나타날 처음 화면 위치 (x, y) - OS가 알아서 지정 
-        rect.right, 100,                            // 창의 처음 가로, 세로 크기 (Width, Height) 
+        rect.right, main_ui_height,                            // 창의 처음 가로, 세로 크기 (Width, Height) 
         hWnd,                                       // 부모 윈도우 핸들 
         (HMENU)MAIN_UI_ID,                          // 자식 윈도우 ID 
         hInst,                                      // 프로그램의 인스턴스 핸들 
@@ -86,7 +88,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
         nullptr, // 창 상단 타이틀 바에 표시될 텍스트. 
         WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, // 윈도우 스타일 (최소화/최대화/닫기 버튼이 있는 일반 창) 
         0, 100, // 창이 나타날 처음 화면 위치 (X, Y) - OS가 알아서 지정 
-        rect.right, rect.bottom - 100, // 창의 처음 가로, 세로 크기 (Width, Height) - OS가 알아서 지정 
+        rect.right, canvus_ui_height, // 창의 처음 가로, 세로 크기 (Width, Height) - OS가 알아서 지정 
         hWnd, // 부모 윈도우 핸들 (메인 창이므로 없음) 
         (HMENU)CANVAS_ID, // 메뉴 핸들 
         hInst, // 이 창을 만드는 프로그램의 인스턴스 핸들 
@@ -98,7 +100,7 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
 {
     int client_width = LOWORD(lParam);
     int client_height = HIWORD(lParam);
-    int main_ui_height = client_height * 0.2;
+    int main_ui_height = client_height * 0.15;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 }
@@ -143,7 +145,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
     case WM_CREATE:
     {
-        makeTempButton(hWnd, hInst);
+        //makeTempButton(hWnd, hInst);
         button.setAllButtons();
     }
     break;
@@ -152,6 +154,72 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         int button_id = button.trackClick(lParam);
         switch (button_id)
         {
+        case CUSTOM_BUTTON_PEN_SOLID:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPen(SOLIDPEN);
+        }
+        break;
+        case CUSTOM_BUTTON_PEN_SPRAY:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPen(SPRAYPEN);
+        }
+        break;
+        case CUSTOM_BUTTON_PEN_BRUSH:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPen(BRUSHPEN);
+        }
+        break;
+        case CUSTOM_BUTTON_PEN_HIGHLIGHT:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPen(HIGHLIGHTERPEN);
+        }
+        break;
+
+        // --- 2. 지우개 종류 (2종) ---
+        case CUSTOM_BUTTON_ERASER_STROKE: // 획 지우기
+        {
+            draw->setIsPen(false);
+        }
+        break;
+        case CUSTOM_BUTTON_ERASER_ALL: // 전체 지우기
+        {
+            ac.all_clear(canvas_hwnd, *draw);
+            InvalidateRect(canvas_hwnd, NULL, TRUE); // 지운 후 캔버스 갱신
+        }
+        break;
+        // --- 3. 리플레이 (2종) ---
+        case CUSTOM_BUTTON_PLAY:
+        {
+            /*
+            int state = replay.getReplayState();
+            if (state == replayStateStop || state == replayStatePaused) {
+                replay.startReplay(draw, hWnd);
+            }
+            */
+        }
+        break;
+        case CUSTOM_BUTTON_STOP:
+        {
+            /*
+            replay.pauseReplay();
+            */
+        }
+        break;
+        case CUSTOM_BUTTON_SAVE:
+        {
+            file.SaveFile(canvas_hwnd, *draw);
+        }
+        break;
+        case CUSTOM_BUTTON_LOAD:
+        {
+            file.LoadFile(canvas_hwnd, *draw);
+            InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
+        }
+        break;
         case CUSTOM_BUTTON_RED:
         {
             draw->setIsPen(true);
@@ -162,6 +230,24 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(BLACK);
+        }
+        break;
+        case CUSTOM_BUTTON_GREEN:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(GREEN);
+        }
+        break;
+        case CUSTOM_BUTTON_BLUE:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(BLUE);
+        }
+        break;
+        case CUSTOM_BUTTON_YELLOW:
+        {
+            draw->setIsPen(true);
+            draw->pen_style->selectPenColor(YELLOW);
         }
         break;
         default:
