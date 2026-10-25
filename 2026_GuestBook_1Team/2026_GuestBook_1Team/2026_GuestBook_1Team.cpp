@@ -48,8 +48,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     win_ui.setInst(hInstance);
 
     MyRegisterClass(hInstance);
-    win_ui.MainUIRegisterClass(hInstance); /// 메인 UI창 등록
-    win_ui.CanvasRegisterClass(hInstance); /// 캔버스 창 등록
+    win_ui.setRegisterClass(hInstance); // 윈도우 창 등록
+
 
     draw.gdiPlusStart();
     // 애플리케이션 초기화를 수행합니다:

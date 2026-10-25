@@ -108,6 +108,7 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
 void WinUi::setInst(HINSTANCE hInst)
 {
     this->hInst = hInst;
+    pen_scroll.setInst(hInst);
 }
 
 
@@ -147,6 +148,8 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
         //makeTempButton(hWnd, hInst);
         button.setAllButtons(hWnd);
+        pen_scroll.createPenScrollWindows(hWnd);
+        pen_scroll.setPenStyle(draw->pen_style);
     }
     break;
     case WM_LBUTTONDOWN:
@@ -491,4 +494,11 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+void WinUi::setRegisterClass(HINSTANCE hInstance)
+{
+    MainUIRegisterClass(hInstance); /// 메인 UI창 등록
+    CanvasRegisterClass(hInstance); /// 캔버스 창 등록
+    pen_scroll.PenScrollRegisterClass(hInstance);
 }
