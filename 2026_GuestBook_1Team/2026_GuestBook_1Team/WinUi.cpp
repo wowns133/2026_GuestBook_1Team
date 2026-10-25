@@ -146,7 +146,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     case WM_CREATE:
     {
         //makeTempButton(hWnd, hInst);
-        button.setAllButtons();
+        button.setAllButtons(hWnd);
     }
     break;
     case WM_LBUTTONDOWN:
@@ -368,7 +368,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     break;
     case WM_SIZE:
     {
-        button.resizeAllButtons();
+        button.resizeAllButtons(hWnd);
     }
     break;
     case WM_PAINT:
