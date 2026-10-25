@@ -16,6 +16,7 @@
 #define PEN_MODE_NORMAL_PEN 1
 #define PEN_MODE_ARGB_PEN 2
 #define PEN_MODE_SPRAY_BRUSH 3
+#define PEN_MODE_BRUSHPEN 4
 
 /**
 * @file
@@ -83,6 +84,8 @@ private:
 	int previous_y = 0; ///< 선을 그릴 때 기준이 되는 좌표. 이전 y 좌표
 	int current_x = 0; ///< 선을 그릴 때 기준이 되는 좌표. 현재 x 좌표
 	int current_y = 0; ///< 선을 그릴 때 기준이 되는 좌표. 현재 y 좌표
+
+	double previous_speed = -1;	///< 붓 펜 이전 속도 
 
 	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
 
@@ -214,6 +217,9 @@ public:
 	void drawingLineARGB(HWND hWnd, LPARAM lParam);
 	/// 스프레이 그리기 (penStyle 테스트 진행중..)
 	void drawingBrush(HWND hWnd, LPARAM lParam);
+
+	/// 붓펜 그리기 (penStyle 테스트 진행중...)
+	void drawingBrushPen(HWND hWnd, LPARAM lParam);
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 종료 함수
 	* @details 선 그리기를 종료하고, 그린 선을 저장하며, 사용이 끝난 객체를 삭제한다. 마우스 관련 메시지 식별자에서 사용하는 함수이다.

@@ -109,7 +109,7 @@ void Draw::redrawAllLines(HWND hWnd)
 		else if (drawn_lines_data[line_num].select_pen_style == SPRAYPEN)
 		{
 			/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
-			srand((unsigned)time(NULL));
+			//srand((unsigned)time(NULL));
 
 			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
 			{
@@ -139,11 +139,61 @@ void Draw::redrawAllLines(HWND hWnd)
 				}//for
 			}//for
 		}
+		/// 붓펜 그리기
+		else if (drawn_lines_data[line_num].select_pen_style == BRUSHPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.empty())
+			{
+				continue;
+			}
+
+			if (drawn_lines_data[line_num].point_data.size() == 1)
+			{
+				float radius = drawn_lines_data[line_num].point_data[0].radius;
+
+				drawn_bmp_graphics->FillEllipse(
+					brush_pointer,
+					drawn_lines_data[line_num].point_data[0].point.x - radius,
+					drawn_lines_data[line_num].point_data[0].point.y - radius,
+					radius * 2,
+					radius * 2
+				);
+
+				continue;
+			}
+			else
+			{
+				for (size_t point_num = 1;
+					point_num < drawn_lines_data[line_num].point_data.size();
+					point_num++)
+				{
+					float radius =
+						drawn_lines_data[line_num].point_data[point_num].radius;
+
+					pen_pointer->SetWidth(radius * 2);
+
+					drawn_bmp_graphics->FillEllipse(
+						brush_pointer,
+						drawn_lines_data[line_num].point_data[point_num].point.x - radius,
+						drawn_lines_data[line_num].point_data[point_num].point.y - radius,
+						radius * 2,
+						radius * 2
+					);
+				}
+			}
+		}
 	}//for
 
+	/// 붓 펜 기본 두께로 원복
+	if (select_drawStyle == PEN_MODE_BRUSHPEN)
+	{
+		pen_style->brushPenSetMaxRadius();
+	}
 
 	hdc_graphics.DrawImage(drawn_bmp, 0, 0); // 화면에 미리 그려놓은 비트맵을 출력
 	ReleaseDC(hWnd, hdc); //hdc 삭제
+
+	
 
 }
 
@@ -163,6 +213,10 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	break;
 	default:
 	{
+		if (select_drawStyle == PEN_MODE_BRUSHPEN)
+		{
+			pen_style->brushPenSetMaxRadius();
+		}
 		//그리기 환경 제작
 		draw_hdc = GetDC(hWnd); //hdc 발행. 사용 후 회수해야 함
 		draw_hdc_graphics = new Gdiplus::Graphics(draw_hdc); //화면 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
@@ -230,6 +284,11 @@ void Draw::drawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 		case PEN_MODE_SPRAY_BRUSH:
 		{
 			drawingBrush(hWnd, lParam);
+		}
+		break;
+		case PEN_MODE_BRUSHPEN:
+		{
+			drawingBrushPen(hWnd, lParam);
 		}
 		break;
 		default:
@@ -314,7 +373,7 @@ void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
 		drawSectionImage(draw_bmp_graphics, drawn_bmp, previous_x, previous_y, current_x, current_y); // 이번 선 전까지 그어진 모든 선을 그리기용 버퍼에 그리기
 
 		/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
-		srand((unsigned)time(NULL));
+		//srand((unsigned)time(NULL));
 
 		/// 반지름 받아오기
 		int radius = pen_style->getRadius();
@@ -351,6 +410,78 @@ void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
 	}
 }
 
+/// 붓 펜 그리기 ( penStyle 테스트 진행중...)
+void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
+{
+	if (is_drawing)
+	{
+		//이동 후 현재 위치를 저장
+		current_x = LOWORD(lParam);
+		current_y = HIWORD(lParam);
+
+		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
+
+		//현재 위치 좌표를 벡터에 저장
+		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getBrushPenRadius() });
+
+		/// 선 데이터 사이즈 변수
+		int line_index = drawn_lines_data.size() - 1;
+		int point_count = drawn_lines_data[line_index].point_data.size();
+
+
+		if (point_count > 1)				///< 이전 좌표가 있을 경우
+		{
+			/// 이전 시간 변수
+			ULONGLONG previous_time = drawn_lines_data[line_index].point_data[point_count - 2].elapsed_time;
+
+			/// 현재 시간과 이전 시간의 차이 
+			ULONGLONG difference_time = elapsed_time - previous_time;
+
+			/// 이전 좌표 변수
+			int previous_x = drawn_lines_data[line_index].point_data[point_count - 2].point.x;
+			int previous_y = drawn_lines_data[line_index].point_data[point_count - 2].point.y;
+
+			/// 현재 좌표와 이전 좌표의 차이
+			int difference_x = current_x - previous_x;
+			int difference_y = current_y - previous_y;
+
+			/// 두 좌표 사이의 직선 거리 계산
+			double distance = sqrt(difference_x * difference_x + difference_y * difference_y);
+
+			/// 현재 속력 계산 ( difference_time이 0이라면 무한대 값이 나옴. )
+			double current_speed = 0;
+			if (difference_time > 0)
+			{
+				current_speed = distance / difference_time;
+				if (previous_speed != -1)
+				{
+					pen_style->brushPenThicknessChange(previous_speed, current_speed);
+				}
+			}
+
+			/// 현재 속력을 이전 속력으로 지정
+			previous_speed = current_speed;
+
+		}
+
+		//--------------비트맵에 그리기--------------//
+		int radius = (int)pen_style->getBrushPenRadius();
+		int top_left_x = current_x - radius;
+		int top_left_y = current_y - radius;
+		int right_bottom_x = radius * 2;
+		int right_bottom_y = radius * 2;
+		draw_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+		drawn_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+		
+
+		//-----------------국소 범위 화면 갱신-----------------//
+		drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y);
+
+		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+	}
+}
+
 
 void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 {
@@ -360,7 +491,7 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 	{
 		SingleDelete sc;
 		sc.single_clear(hWnd, *this, lParam);
-		is_drawing = false;
+		is_drawing = false;	
 
 		return;
 	}
@@ -406,6 +537,58 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 		}
 	}
 	break;
+	/// 붓 펜 그리기 
+	//case PEN_MODE_BRUSHPEN:
+	//{
+	//	if (is_drawing)
+	//	{
+	//		if (drawn_lines_data.back().point_data.size() == 1)
+	//		{
+	//			float radius =
+	//				drawn_lines_data.back().point_data[0].radius;
+
+	//			drawn_bmp_graphics->FillEllipse(
+	//				brush_pointer,
+	//				previous_x - radius,
+	//				previous_y - radius,
+	//				radius * 2,
+	//				radius * 2
+	//			);
+	//		}
+	//		else
+	//		{
+	//			for (size_t point_num = 1;
+	//				point_num < drawn_lines_data.back().point_data.size();
+	//				point_num++)
+	//			{
+	//				float radius =
+	//					drawn_lines_data.back().point_data[point_num].radius;
+
+	//				pen_pointer->SetWidth(radius * 2);
+
+	//				drawn_bmp_graphics->DrawLine(
+	//					pen_pointer,
+	//					(float)drawn_lines_data.back().point_data[point_num - 1].point.x,
+	//					(float)drawn_lines_data.back().point_data[point_num - 1].point.y,
+	//					(float)drawn_lines_data.back().point_data[point_num].point.x,
+	//					(float)drawn_lines_data.back().point_data[point_num].point.y
+	//				);
+
+	//				drawn_bmp_graphics->FillEllipse(
+	//					brush_pointer,
+	//					drawn_lines_data.back().point_data[point_num].point.x - radius,
+	//					drawn_lines_data.back().point_data[point_num].point.y - radius,
+	//					radius * 2,
+	//					radius * 2
+	//				);
+	//			}
+	//		}
+	//	}
+
+	//	// 붓펜 기본 두께 복원
+	//	pen_style->brushPenSetMaxRadius();
+	//}
+	//break;
 	// endDrawingLine 스프레이 주석
 	// 현재 이 코드 없이 작동은 되고있음. 추후 문제 발생 시 코드 사용 예정
 	//case PEN_MODE_SPRAY_BRUSH:
@@ -521,7 +704,17 @@ void Draw::gdiPlusEnd()
 
 void Draw::drawSectionImage(Gdiplus::Graphics* output_graphics, Gdiplus::Bitmap* input_bitmap, int previous_x, int previous_y, int current_x, int current_y)
 {
-	pen_width = (int)pen_style->getRadius() + 5;
+	/// 붓 펜일 경우 기본 두께
+	if (pen_style->getSelectPen() == BRUSHPEN)
+	{
+		pen_width = (int)pen_style->getRadius();
+	}
+	/// 붓 펜이 아닐경우 + 5
+	else
+	{
+		pen_width = (int)pen_style->getRadius() + 5;
+	}
+	
 
 	draw_image_area_start_x = min(previous_x, current_x) - pen_width;
 	draw_image_area_start_y = min(previous_y, current_y) - pen_width;
@@ -593,7 +786,7 @@ void Draw::selectDrawStyle()
 		break;
 		case BRUSHPEN:
 		{
-
+			select_drawStyle = PEN_MODE_BRUSHPEN;
 		}
 		break;
 		case HIGHLIGHTERPEN:

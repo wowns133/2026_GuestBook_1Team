@@ -43,9 +43,11 @@ class PenStyle
 private:
 	int select_pen;						///< 펜 스타일 선택 변수
 	float radius;						///< 펜 두께 반지름 변수
+	float brush_radius;					///< 붓 펜 줄어드는 두께
 	PenColor pen_color;					///< 펜 색깔 클래스 변수
 	Gdiplus::Pen pen;					///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
 	Gdiplus::SolidBrush spray_brush;	///< gdiplus 브러시 스프레이 색상 정하는 클래스 변수
+
 
 public:
 	/// PenStyle 생성자
@@ -77,6 +79,15 @@ public:
 
 	/// 붓 펜 함수
 	void brushPen();
+
+	/// 붓 펜 시간에 따른 두께 변경 함수
+	void brushPenThicknessChange(	double previous_speed,	///< 그리기 시 이전 경과시간 값을 전달한다.
+									double current_speed);	///< 그리기 시 현재 경과시간 값을 전달한다.
+	/// 붓 펜 획 시작 시 원래 두께로 원복 함수 
+	void brushPenSetMaxRadius();
+
+	/// 붓 펜 반지름 getter
+	float getBrushPenRadius();
 
 	/// 형광펜 함수
 	void highlighterPen();

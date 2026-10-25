@@ -24,6 +24,7 @@ PenStyle::PenStyle()
 	:
 	select_pen(SOLIDPEN),
 	radius(5.0f),
+	brush_radius(5.0f),
 	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2)),
 	spray_brush(Gdiplus::Color(255,0,0,0))
 {
@@ -79,7 +80,6 @@ void PenStyle::selectPenColor(int select_color)
 	{
 	case BLACK:
 	{
-	
 		pen_color.color_a = 255;
 		pen_color.color_r = 0;
 		pen_color.color_g = 0;
@@ -208,8 +208,64 @@ void PenStyle::sprayPen()
 */
 void PenStyle::brushPen() 
 {
-	/// 미적용
+	brush_radius = radius;
+	/// 색 변경 
+	spray_brush.SetColor(Gdiplus::Color(pen_color.color_a, pen_color.color_r, pen_color.color_g, pen_color.color_b));
 }
+/**
+* @file
+* @brief 붓 펜 획 시작 시 원래 두께로 원복 함수 
+* brushPenThicknessChange 함수로 두께조절 이후 획을 다시 그릴 때 원래 두께로 원복하는 함수
+*/
+void PenStyle::brushPenSetMaxRadius()
+{
+	brush_radius = radius;
+	pen.SetWidth(radius * 2);
+}
+
+/**
+* @file
+* @brief 붓 펜 두께 반환 함수
+*/
+float PenStyle::getBrushPenRadius()
+{
+	return brush_radius;
+}
+
+/**
+* @file
+* @brief 붓 펜 두께 조절하는 함수
+* 이전 속력과 현재 속력을 매개변수로 받아서
+* 현재 속력이 이전 속력보다 느리다면 두께를 늘리고, 
+* 현재 속력이 이전 속력보다 빠르다면 두께를 줄인다.
+*/
+void PenStyle::brushPenThicknessChange(	double previous_speed,
+										double current_speed)
+{
+	if (previous_speed > current_speed)
+	{
+		// 현재 속력이 이전 속력보다 느리다면 두께 늘리기
+		if (brush_radius < radius)
+		{
+			brush_radius += 1;
+
+			if (brush_radius > radius)
+				brush_radius = radius;
+		}
+	}
+	else if (previous_speed < current_speed)
+	{
+		// 현재 속력이 이전 속력보다 빠르다면 두께 줄이기
+		if (brush_radius > 2)
+		{
+			brush_radius -= 1;
+
+			if (brush_radius < 2)
+				brush_radius = 2;
+		}
+	}
+}
+
 
 /**
 * @file
