@@ -152,6 +152,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         win_ui.createWinUIWindows(hWnd);
         //makeTempButton(hWnd, hInst);
+        /// 스프레이 랜덤한 위치에 점을 생성하기 위한 난수 초기화
+        srand((unsigned)time(NULL));
         return 0;
     }
     break;

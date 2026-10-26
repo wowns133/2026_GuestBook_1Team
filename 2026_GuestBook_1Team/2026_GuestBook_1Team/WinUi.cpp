@@ -155,6 +155,27 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     case WM_LBUTTONDOWN:
     {
         int button_id = button.trackClick(lParam);
+
+        if (button_id == -1) break;
+
+        if (button_id >= CUSTOM_BUTTON_PEN_SOLID && button_id <= CUSTOM_BUTTON_PEN_HIGHLIGHT)
+        {
+            button.setSelectedPenType(button_id);
+            button.setEraserMode(false);     // ÆæÀ» °í¸£¸é Ææ ¸ðµå
+        }
+        else if (button_id >= CUSTOM_BUTTON_BLACK && button_id <= CUSTOM_BUTTON_YELLOW)
+        {
+            button.setSelectedColor(button_id);
+            button.setEraserMode(false);     // »öÀ» °í¸£¸é Ææ ¸ðµå·Î º¹±Í
+        }
+        else if (button_id == CUSTOM_BUTTON_ERASER_STROKE)
+        {
+            button.setEraserMode(true);
+        }
+
+        InvalidateRect(hWnd, NULL, TRUE);
+ 
+
         switch (button_id)
         {
         case CUSTOM_BUTTON_PEN_SOLID:
