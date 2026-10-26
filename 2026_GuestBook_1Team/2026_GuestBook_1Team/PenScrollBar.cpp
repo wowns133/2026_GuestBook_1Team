@@ -23,7 +23,7 @@ PenScrollBar::PenScrollBar()
     is_pen_scroll_created = true; //객체 생성되었다고 표시
 
     static_pen_scroll = this; // 이 객체의 주소를 저장
-    pen_scroll_background = CreateSolidBrush(RGB(0, 253, 255)); // 배경 색 설정
+    pen_scroll_background = CreateSolidBrush(RGB(253, 253, 255)); // 배경 색 설정
 }
 
 
@@ -125,11 +125,34 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+        HPEN my_pen, os_pen;
+        HBRUSH my_brush, os_brush;
+
+        my_pen = CreatePen(SOLIDPEN, 0, GetSysColor(COLOR_BTNFACE));
+        os_pen = (HPEN)SelectObject(hdc, my_pen);
+
+
+        my_brush = GetSysColorBrush(COLOR_BTNFACE);
+        os_brush = (HBRUSH)SelectObject(hdc, my_brush);
+
         Rectangle(hdc,
             pen_scroll_button_width / 2,
-            (pen_scroll_button_width - pen_scroll_bar_height) / 2,
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
             pen_scroll_button_width / 2 + pen_scroll_bar_width,
-            (pen_scroll_button_width - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+        Ellipse(hdc,
+            pen_scroll_button_width / 2 - pen_scroll_bar_height / 2,
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
+            pen_scroll_button_width / 2 - pen_scroll_bar_height / 2 + pen_scroll_bar_height,
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+        Ellipse(hdc,
+            pen_scroll_button_width / 2 + pen_scroll_bar_width - pen_scroll_bar_height / 2,
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
+            pen_scroll_button_width / 2 + pen_scroll_bar_width + pen_scroll_bar_height / 2,
+            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+
+        SelectObject(hdc, os_pen);
+        SelectObject(hdc, os_brush);
         drawScrollButton(hdc);
         EndPaint(hWnd, &ps);
     }
@@ -192,7 +215,11 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
 
 void PenScrollBar::drawScrollButton(HDC hdc)
 {
-    Ellipse(hdc, scroll_button_x, 0, scroll_button_x + pen_scroll_button_width, pen_scroll_button_width);
+    Ellipse(hdc, 
+            scroll_button_x, 
+            (pen_scroll_wnd_height - pen_scroll_button_width) / 2,
+            scroll_button_x + pen_scroll_button_width, 
+            (pen_scroll_wnd_height - pen_scroll_button_width) / 2 + pen_scroll_button_width);
 }
 
 

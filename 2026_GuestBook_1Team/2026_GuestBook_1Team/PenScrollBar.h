@@ -29,16 +29,17 @@ private:
 	HINSTANCE hInst = nullptr; ///< 인스턴스 핸들
 
 	// 스크롤바 관련 스타일 변수
-	int pen_scroll_wnd_x = 30;													///< penscroll 창 x 위치
-	int pen_scroll_wnd_y = 100;													///< penscroll 창 y 위치
+	int pen_scroll_wnd_x = 600;													///< penscroll 창 x 위치
+	int pen_scroll_wnd_y = 20;													///< penscroll 창 y 위치
+
 	int pen_scroll_bar_height = 10;												///< 스크롤바의 높이
 	int pen_max_width = 25;														///< 펜의 최대 반지름
 	int pen_scroll_bar_ratio = 8;												///< 스크롤바 비율 (50 * pen_scroll_bar_ratio 형식)
 	int pen_scroll_bar_width = pen_max_width * pen_scroll_bar_ratio;			///< 스크롤바의 너비
 	int pen_scroll_button_width = 30;											///< 스크롤바 버튼 너비
-	int pen_scroll_wnd_height = pen_scroll_button_width;						///< penscroll 창 높이
+	
+	int pen_scroll_wnd_height = 80;						///< penscroll 창 높이
 	int pen_scroll_wnd_width = pen_scroll_bar_width + pen_scroll_button_width;	///< penscroll 창 너비
-
 	int is_click = 0;
 	int scroll_button_x = 0;
 
