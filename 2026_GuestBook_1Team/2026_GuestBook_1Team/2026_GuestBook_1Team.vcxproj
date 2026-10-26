@@ -124,27 +124,33 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="2026_GuestBook_1Team.h" />
+    <ClInclude Include="Button.h" />
     <ClInclude Include="PenColor.h" />
     <ClInclude Include="Delete.h" />
     <ClInclude Include="Draw.h" />
     <ClInclude Include="FileInOut.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="PenScrollBar.h" />
     <ClInclude Include="PenSize.h" />
     <ClInclude Include="PenStyle.h" />
     <ClInclude Include="Replay.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ScreenSaver.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WinUi.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="2026_GuestBook_1Team.cpp" />
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="Delete.cpp" />
     <ClCompile Include="Draw.cpp" />
     <ClCompile Include="FileInOut.cpp" />
     <ClCompile Include="PenColor.cpp" />
+    <ClCompile Include="PenScrollBar.cpp" />
     <ClCompile Include="PenSize.cpp" />
     <ClCompile Include="PenStyle.cpp" />
     <ClCompile Include="Replay.cpp" />
+    <ClCompile Include="ScreenSaver.cpp" />
     <ClCompile Include="WinUi.cpp" />
   </ItemGroup>
   <ItemGroup>

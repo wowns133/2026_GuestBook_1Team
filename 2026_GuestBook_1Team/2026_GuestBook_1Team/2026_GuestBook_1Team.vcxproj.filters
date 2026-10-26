@@ -51,6 +51,15 @@
     <ClInclude Include="PenSize.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="PenScrollBar.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Button.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenSaver.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="2026_GuestBook_1Team.cpp">
@@ -78,6 +87,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Delete.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="PenScrollBar.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Button.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenSaver.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
