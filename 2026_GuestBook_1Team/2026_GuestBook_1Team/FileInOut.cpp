@@ -17,7 +17,11 @@ bool FileInOut::OpenFileDialog(HWND hWnd, wchar_t* filePath, bool isSave) {
     ofn.lpstrFile = filePath;                ///< 파일 경로 저장
     ofn.nMaxFile = MAX_PATH;                 ///< 파일 경로의 최대 길이 MAX_PATH는 260자까지 
     ofn.lpstrInitialDir = L"..\\2026_Draw_Data";    ///< 파일 탐색기 열릴때 경로 설정
-    ofn.Flags = OFN_PATHMUSTEXIST;           ///< 존재하지 않는 경로 차단
+    ofn.lpstrFilter = L"(*.bin)\0*.bin\0모든 파일 (*.*)\0*.*\0";
+    ofn.nFilterIndex = 1;                    ///< 기본으로 선택될 필터 번호 (1부터 시작)
+    ofn.lpstrDefExt = L"bin";                  ///< 사용자가 확장자를 안 적고 저장할 때 자동으로 붙을 확장자
+
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;           ///< 존재하지 않는 경로 차단
 
     if (isSave) {
         ofn.Flags |= OFN_OVERWRITEPROMPT;   ///< 중복된 이름이면 덮어 쓸지 경고창 띄우는 옵션
