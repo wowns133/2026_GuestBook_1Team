@@ -7,6 +7,8 @@
 #include "Delete.h"
 #include "Replay.h"
 #include "Button.h"
+#include "PenScrollBar.h"
+
 
 ///임시 버튼 define
 #define ID_PEN_STYLE1 3001
@@ -58,7 +60,8 @@ private:
 	FileInOut file; ///< 파일입출력 클래스
 	Replay replay; ///< 서명 재생 클래스
 	AllDelete ac; ///< 지우기 클래스
-	Button button;
+	Button button; ///< 버튼 클래스
+	PenScrollBar pen_scroll; ///< 펜 두께 조절 스크롤바 창 클래스
 	//--------------------------------MainUI용 변수들--------------------------------------//
 	HBRUSH main_ui_background = nullptr; ///< MainUI 창 배경색 브러시 저장용 변수
 	HBRUSH canvus_background = nullptr; ///< Canvus 창 배경색 브러시 저장용 변수
@@ -100,6 +103,21 @@ private:
 	*/
 	static LRESULT CALLBACK StaticCanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+	/**	
+	* @brief 메인 UI 윈도우 창 형태 정의 및 창 등록 함수
+	* @details 메인 UI 윈도우 창 형태 정의 및 창 등록 함수
+	* @param[in] hInstance 인스턴스 핸들
+	* @author challenjoy01
+	*/
+	ATOM MainUIRegisterClass(HINSTANCE hInstance);
+	/**
+	* @brief 그림 영역 윈도우 창 형태 정의 및 창 등록 함수
+	* @details 그림 영역 윈도우 창 형태 정의 및 창 등록 함수
+	* @param[in] hInstance 인스턴스 핸들
+	* @author challenjoy01
+	*/
+	ATOM CanvasRegisterClass(HINSTANCE hInstance);
 protected:
 public:
 	WinUi(Draw* draw);
@@ -117,29 +135,24 @@ public:
 	*/
 	void deleteWinUIWindows();
 
+	/**
+	* @brief 인스턴스 핸들 초기화 함수.
+	* @details 인스턴스 핸들 초기화 함수.
+	* @author challenjoy01
+	*/
 	void setInst(HINSTANCE hInst);
 
 
 
 
-
-
-
-
 	/**
-	* @brief 메인 UI 윈도우 창 형태 정의 및 창 등록 함수
-	* @details 메인 UI 윈도우 창 형태 정의 및 창 등록 함수
+	* @brief 모든 윈도우 창 형태 정의 및 창 등록 함수
+	* @details 모든 윈도우 창 형태 정의 및 창 등록 함수
 	* @param[in] hInstance 인스턴스 핸들
 	* @author challenjoy01
 	*/
-	ATOM MainUIRegisterClass(HINSTANCE hInstance);
-	/**
-	* @brief 그림 영역 윈도우 창 형태 정의 및 창 등록 함수
-	* @details 그림 영역 윈도우 창 형태 정의 및 창 등록 함수
-	* @param[in] hInstance 인스턴스 핸들
-	* @author challenjoy01
-	*/
-	ATOM CanvasRegisterClass(HINSTANCE hInstance);
+	void setRegisterClass(HINSTANCE hInstance);
+
 
 };
 
