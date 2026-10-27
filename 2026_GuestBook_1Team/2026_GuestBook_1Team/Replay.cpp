@@ -189,14 +189,11 @@ void Replay::runReplay()
             continue;
 
         //현재 획의 pen 확인
-        int select_pen =
-            currentLineData.select_pen_style;
+        int select_pen = currentLineData.select_pen_style;
 
-        int pen_color =
-            currentLineData.select_color;
+        int pen_color = currentLineData.select_color;
 
-        float radius =
-            points[0].radius;
+        float radius = points[0].radius;
 
 
         drawObj->pen_style->settingPenStyle(
@@ -206,8 +203,15 @@ void Replay::runReplay()
         );
 
 
-        Pen* currentPen =
-            drawObj->pen_style->getPen();
+        Pen* currentPen =drawObj->pen_style->getPen();
+
+        //펜의 끝을 둥글게 보정
+        if (currentPen != nullptr)
+        {
+            currentPen->SetLineJoin(LineJoinRound);
+            //currentPen->SetStartCap(LineCapRound);
+            //currentPen->SetEndCap(LineCapRound);
+        }
 
         SolidBrush* currentBrush =
             drawObj->pen_style->getBrush();
@@ -292,15 +296,15 @@ void Replay::runReplay()
         }
 
         //일반 Pen
+
+        //일반 Pen
         if (select_pen != SPRAYPEN && select_pen != HIGHLIGHTERPEN)
         {
             if (currentPen != nullptr)
             {
                 //현재 획을 그리기 시작할 때
                 //완료된 그림을 한 번 복사
-                replay_bmp_graphics->Clear(
-                    Color::White
-                );
+                replay_bmp_graphics->Clear(Color::White);
 
                 replay_bmp_graphics->DrawImage(
                     replay_canvas_bmp,
@@ -308,19 +312,28 @@ void Replay::runReplay()
                     0
                 );
 
+                //획이 끝났을 때 Canvas에 확정할 경로
+                GraphicsPath finalPath;
+
                 //현재 획의 점들을 하나씩 재생
                 for (size_t j = 1; j < points.size(); j++)
                 {
                     if (replayState == replayStateStop)
                         break;
 
-                    // 새로 추가된 선분 하나만 그림
-                    replay_bmp_graphics->DrawLine(
-                        currentPen,
-
+                    //현재 선분을 경로에 추가
+                    finalPath.AddLine(
                         (float)points[j - 1].point.x,
                         (float)points[j - 1].point.y,
+                        (float)points[j].point.x,
+                        (float)points[j].point.y
+                    );
 
+                    //새로 추가된 선분만 그림
+                    replay_bmp_graphics->DrawLine(
+                        currentPen,
+                        (float)points[j - 1].point.x,
+                        (float)points[j - 1].point.y,
                         (float)points[j].point.x,
                         (float)points[j].point.y
                     );
@@ -332,18 +345,18 @@ void Replay::runReplay()
                         0
                     );
 
-                    //점과 점 사이 시간
+                    //점과 점 사이 시간 계산
                     ULONGLONG timeDiff = 0;
 
                     if (points[j].elapsed_time > points[j - 1].elapsed_time)
                     {
-                        timeDiff = points[j].elapsed_time - points[j - 1].elapsed_time;
+                        timeDiff =
+                            points[j].elapsed_time -
+                            points[j - 1].elapsed_time;
                     }
-
 
                     //기존 Replay 속도 보정
                     timeDiff = (ULONGLONG)(timeDiff * 0.18);
-
 
                     if (timeDiff > 0)
                     {
@@ -355,19 +368,6 @@ void Replay::runReplay()
                     break;
 
                 //획이 끝났으므로 완료된 Canvas에 확정
-                GraphicsPath finalPath;
-
-                for (size_t j = 1; j < points.size(); j++)
-                {
-                    finalPath.AddLine(
-                        (float)points[j - 1].point.x,
-                        (float)points[j - 1].point.y,
-
-                        (float)points[j].point.x,
-                        (float)points[j].point.y
-                    );
-                }
-
                 replay_canvas_graphics->DrawPath(
                     currentPen,
                     &finalPath
@@ -377,6 +377,7 @@ void Replay::runReplay()
             continue;
         }
 
+
         //Highlighter
         // Draw.cpp와 동일한 방식으로 처리
         // 획이 끝나면 replay_canvas_bmp에 한 번 확정
@@ -385,19 +386,6 @@ void Replay::runReplay()
             if (currentPen != nullptr)
             {
                 GraphicsPath replayPath;
-
-
-                // 현재 획 시작 시
-                // 완료된 그림을 현재 프레임에 복사
-                replay_bmp_graphics->Clear(
-                    Color::White
-                );
-
-                replay_bmp_graphics->DrawImage(
-                    replay_canvas_bmp,
-                    0,
-                    0
-                );
 
                 //현재 획 Replay
                 for (size_t j = 1; j < points.size(); j++)
@@ -476,19 +464,14 @@ void Replay::runReplay()
                 if (replayState == replayStateStop)
                     break;
 
-
                 if (currentBrush != nullptr)
                 {
-                    int sprayRadius =
-                        (int)points[j].radius;
+                    int sprayRadius = (int)points[j].radius;
 
+                    // 현재 프레임 새로 구성
+                    replay_bmp_graphics->Clear(Color::White);
 
-                    //현재 프레임 새로 구성
-                    replay_bmp_graphics->Clear(
-                        Color::White
-                    );
-
-                    //지금까지 완료된 그림
+                    // 지금까지 완료된 그림
                     replay_bmp_graphics->DrawImage(
                         replay_canvas_bmp,
                         0,
@@ -499,21 +482,19 @@ void Replay::runReplay()
                     for (int k = 0; k < sprayRadius * 4; k++)
                     {
                         int rand_x = rand() % (sprayRadius * 2 + 1) - sprayRadius;
-
                         int rand_y = rand() % (sprayRadius * 2 + 1) - sprayRadius;
 
-
                         // 원 바깥 제외
-                        if (rand_x * rand_x + rand_y * rand_y > sprayRadius * sprayRadius)
+                        if (rand_x * rand_x + rand_y * rand_y
+                    > sprayRadius * sprayRadius)
                         {
                             continue;
                         }
 
                         int x = points[j].point.x + rand_x;
-
                         int y = points[j].point.y + rand_y;
 
-
+                        // 화면에 표시
                         replay_bmp_graphics->FillEllipse(
                             currentBrush,
                             x,
@@ -521,32 +502,8 @@ void Replay::runReplay()
                             2,
                             2
                         );
-                    }
 
-
-                    //현재 프레임 출력
-                    graphics.DrawImage(
-                        replay_bmp,
-                        0,
-                        0
-                    );
-
-                    // 완료된 그림에 Spray 확정
-                    for (int k = 0; k < sprayRadius * 4; k++)
-                    {
-                        int rand_x = rand() % (sprayRadius * 2 + 1) - sprayRadius;
-
-                        int rand_y = rand() % (sprayRadius * 2 + 1) - sprayRadius;
-
-                        if (rand_x * rand_x + rand_y * rand_y > sprayRadius * sprayRadius)
-                        {
-                            continue;
-                        }
-
-                        int x = points[j].point.x + rand_x;
-
-                        int y = points[j].point.y + rand_y;
-
+                        // 완료된 그림에도 동일한 점 확정
                         replay_canvas_graphics->FillEllipse(
                             currentBrush,
                             x,
@@ -555,9 +512,16 @@ void Replay::runReplay()
                             2
                         );
                     }
+
+                    // 현재 프레임 출력
+                    graphics.DrawImage(
+                        replay_bmp,
+                        0,
+                        0
+                    );
                 }
 
-                //점과 점 사이 시간
+                // 점과 점 사이 시간
                 ULONGLONG timeDiff = 0;
 
                 if (points[j].elapsed_time > points[j - 1].elapsed_time)
@@ -577,7 +541,18 @@ void Replay::runReplay()
 
     ReleaseDC(hwnd, hdc);
 
-    //Bitmap 메모리 정리
+    // Replay 비트맵의 데이터만 비우기
+    //if (replay_bmp_graphics != nullptr)
+    //{
+    //    replay_bmp_graphics->Clear(Color(0, 0, 0, 0));
+    //}
+
+    //if (replay_canvas_graphics != nullptr)
+    //{
+    //    replay_canvas_graphics->Clear(Color(0, 0, 0, 0));
+    //}
+
+    // Replay Bitmap 메모리 정리
     delete replay_bmp_graphics;
     replay_bmp_graphics = nullptr;
 
@@ -592,13 +567,10 @@ void Replay::runReplay()
 
     replayState = replayStateStop;
 
-    // 실제 Canvas의 WM_PAINT를 통해 원본 그림을 다시 표시
-    InvalidateRect(
-        hwnd,
-        NULL,
-        FALSE
-    );
+    drawObj->redrawAllLines(hwnd);
 
+    // 원본 Draw 비트맵으로 화면 복원
+    InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
 }
 
