@@ -9,10 +9,10 @@ void AllDelete::all_clear(HWND hWnd, Draw& draw)
 
 void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 {
-	int erase_x = LOWORD(lParam); //lParam의 하위 16비트를 가져와 x좌표로 저장
-	int erase_y = HIWORD(lParam); //lParam의 상위 16비트를 가져와 y좌표로 저장
+	int erase_x = LOWORD(lParam); ///< lParam의 하위 16비트를 가져와 x좌표로 저장
+	int erase_y = HIWORD(lParam); ///< lParam의 상위 16비트를 가져와 y좌표로 저장
 
-	int erase_hit = 10; //지우개 인식 반경 설정
+	int erase_hit = 10; ///< 지우개 인식 반경 설정
 
 	const std::vector<DrawLineData>& lines = draw.getDrawnLines();
 	/*
@@ -26,45 +26,66 @@ void SingleDelete::single_clear(HWND hWnd, Draw& draw, LPARAM lParam)
 		배열의 시작은 0부터 이기 때문에 아직 지울 대상이 없다는 의미로 유효하지 않은 상태의 초기 값을 넣어줌
 	*/
 
-	for (int i = (int)lines.size() - 1;i >= 0;i--)	///0부터 시작이라 -1 해줘야 배열크기에 맞춰서 시작함(배열은 0부터 시작임)
+
+
+	for (int i = (int)lines.size() - 1;i >= 0;i--)	///< 0부터 시작이라 -1 해줘야 배열크기에 맞춰서 시작함(배열은 0부터 시작임)
 	{
 		bool sc_hit = false;
-		for (int j = 1; j < (int)lines[i].point_data.size();j++)	/// 0부터 시작하면 -1이 될 수도 있음(범위 오류)
+
+		///< 점 삭제 예외처리 부분
+		if (lines[i].point_data.size() == 1) ///< 현재 검사 중인 선 데이터를 구성하는 점의 개수가 1개인지 확인
 		{
-			int m_X1 = lines[i].point_data[j - 1].point.x; /// 이전 점의 X 좌표를 가져 옴
-			int m_Y1 = lines[i].point_data[j - 1].point.y; /// 이전 점의 Y 좌표를 가져 옴
+			int dotX = lines[i].point_data[0].point.x; ///< 배열의 첫 번째 점 데이터에서 X 좌표를 추출하여 dotX에 저장
+			int dotY = lines[i].point_data[0].point.y; ///< 배열의 첫 번째 점 데이터에서 Y 좌표를 추출하여 dotY에 저장
 
-			int m_X2 = lines[i].point_data[j].point.x;   /// 현재 점의 X 좌표를 가져 옴
-			int m_Y2 = lines[i].point_data[j].point.y;   /// 현재 점의 Y 좌표를 가져 옴
-
-			int min_X = m_X1;
-			int max_X = m_X2;
-
-			if (m_X1 > m_X2)
+			if (erase_x >= dotX - erase_hit && erase_x <= dotX + erase_hit && ///< X 좌표가 점의 X 좌표 기준 인식에 포함되는지 검사합니다.
+				erase_y >= dotY - erase_hit && erase_y <= dotY + erase_hit)   ///< Y 좌표가 점의 Y 좌표 기준 인식에 포함되는지 검사합니다.
 			{
-				min_X = m_X2;
-				max_X = m_X1;
+				target_index = i;              ///< 충돌 조건을 만족하면 현재 검사 중인 인덱스를 삭제 대상 인덱스로 확정
+				draw.sc_line(target_index);    ///< 타겟 인덱스 번호를 전달하여 해당 점 데이터를 완전히 삭제
+				draw.redrawAllLines(hWnd);     ///< 윈도우 핸들을 전달하여 삭제가 반영된 상태로 화면 전체를 다시 그림
+				return;
 			}
-
-			int min_Y = m_Y1;
-			int max_Y = m_Y2;
-
-			if (m_Y1 > m_Y2)
+		}
+		///< 기존 선 지우기 부분(else속 for문 부분 부터 기존 코드와 동일)
+		else{
+			for (int j = 1; j < (int)lines[i].point_data.size();j++)	///< 0부터 시작하면 -1이 될 수도 있음(범위 오류)
 			{
-				min_Y = m_Y2;
-				max_Y = m_Y1;
-			}
+				int m_X1 = lines[i].point_data[j - 1].point.x; ///< 이전 점의 X 좌표를 가져 옴
+				int m_Y1 = lines[i].point_data[j - 1].point.y; ///< 이전 점의 Y 좌표를 가져 옴
 
-			if (erase_x >= min_X - 10 && erase_x <= max_X + 10 &&
-				erase_y >= min_Y - 10 && erase_y <= max_Y + 10)
-			{
-				target_index = i; //지울 대상 선의 인덱스 번호를 target_index에 저장
+				int m_X2 = lines[i].point_data[j].point.x;   ///< 현재 점의 X 좌표를 가져 옴
+				int m_Y2 = lines[i].point_data[j].point.y;   ///< 현재 점의 Y 좌표를 가져 옴
 
-				draw.sc_line(target_index); //target_index에 저장된 번호의 선을 drawn_lines_data에서 삭제
+				int min_X = m_X1;
+				int max_X = m_X2;
 
-				draw.redrawAllLines(hWnd); //선이 삭제된 후 남아있는 선들을 다시 그림
+				if (m_X1 > m_X2)
+				{
+					min_X = m_X2;
+					max_X = m_X1;
+				}
 
-				return; //한 개의 선을 삭제했으므로 다른 선을 추가로 삭제하지 않고 함수 종료
+				int min_Y = m_Y1;
+				int max_Y = m_Y2;
+
+				if (m_Y1 > m_Y2)
+				{
+					min_Y = m_Y2;
+					max_Y = m_Y1;
+				}
+
+				if (erase_x >= min_X - 10 && erase_x <= max_X + 10 &&
+					erase_y >= min_Y - 10 && erase_y <= max_Y + 10)
+				{
+					target_index = i; ///< 지울 대상 선의 인덱스 번호를 target_index에 저장
+
+					draw.sc_line(target_index); ///< target_index에 저장된 번호의 선을 drawn_lines_data에서 삭제
+
+					draw.redrawAllLines(hWnd); ///< 선이 삭제된 후 남아있는 선들을 다시 그림
+
+					return; ///< 한 개의 선을 삭제했으므로 다른 선을 추가로 삭제하지 않고 함수 종료
+				}
 			}
 		}
 	}
