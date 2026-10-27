@@ -166,6 +166,11 @@ void Replay::runReplay()
         0
     );
 
+    // Replay 시작 전 현재 펜 설정 저장(리플레이 전 획 설정을 변경했지만 그리지 않았을 때의 경우를 포함하기 위함) 
+    int savedPen = drawObj->pen_style->getSelectPen();
+    float savedRadius = drawObj->pen_style->getRadius();
+    int savedColor = drawObj->pen_style->getPenColor();
+
     //Spray 시드 초기화
     srand((unsigned)time(NULL));
 
@@ -205,7 +210,7 @@ void Replay::runReplay()
 
         Pen* currentPen =drawObj->pen_style->getPen();
 
-        //펜의 끝을 둥글게 보정
+        //펜의 이어짐을 둥글게 보정
         if (currentPen != nullptr)
         {
             currentPen->SetLineJoin(LineJoinRound);
@@ -569,8 +574,15 @@ void Replay::runReplay()
 
     drawObj->redrawAllLines(hwnd);
 
+    // Replay 이전의 펜 설정 복구
+    drawObj->pen_style->settingPenStyle(
+        savedPen,
+        savedRadius,
+        savedColor
+    );
+
     // 원본 Draw 비트맵으로 화면 복원
-    InvalidateRect(hwnd, NULL, TRUE);
+    InvalidateRect(hwnd, NULL, FALSE);
     UpdateWindow(hwnd);
 }
 
