@@ -520,6 +520,24 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
     }
     break;
+    case WM_TIMER:
+    {
+        /// 붓 펜 한곳에 머무를 시 두께 늘리기
+        if (wParam == BRUSH_TIMER)
+        {
+            /// 타이머 플래그 변수가 true일 시 두께 늘리기
+            if (draw->pen_style->getTimerFlag())
+            {
+                draw->pen_style->brushAnchorPointThickUp();
+                wchar_t buffer[100];
+                swprintf_s(buffer, L"현재 반지름: %lf\n", draw->pen_style->getBrushPenRadius());
+
+                OutputDebugString(buffer);
+                draw->updateBrushAnchorPoint(hWnd, lParam);
+            }
+        }
+    }
+    break;
     case WM_LBUTTONDOWN:
     {
         // 화면보호기 실행까지의 시간 초기화
@@ -544,6 +562,9 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         screen_saver.resetScreenSaverTimer();
 
         draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
+
+        /// 붓 펜 한곳에 머무른 뒤 마우스 땠을 시 플래그 변수 false 지정
+        draw->pen_style->setTimerFlag(false);
         break;
     }
     case WM_RBUTTONDOWN:
