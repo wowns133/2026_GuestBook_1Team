@@ -176,6 +176,9 @@ void ScreenSaver::screenSaverTimer()
         // 창 띄우기
         ShowWindow(screen_saver_hwnd, SW_SHOW);
         
+        //창 켜짐 표시
+        is_screen_saver_on = 1;
+
         // 타이머 삭제
         KillTimer(main_ui_hwnd, SCREEN_SAVER_TIMER_ID);
 
@@ -197,17 +200,23 @@ void ScreenSaver::resetScreenSaverTimer()
 
 void ScreenSaver::hideScreenSaver()
 {
-    // 화면 보호기 창 숨기기
-    ShowWindow(screen_saver_hwnd, SW_HIDE);
+    if (is_screen_saver_on == 1)
+    {
+        // 화면 보호기 창 숨기기
+        ShowWindow(screen_saver_hwnd, SW_HIDE);
 
-    // 타이머 재설정
-    SetTimer(main_ui_hwnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
+        // 창 꺼짐 표시
+        is_screen_saver_on = 0;
 
-    // 다음 화면보호기 실행 시 첫 WM_MOUSEMOVE를 스킵 하기 위해 is_first_mouse_move를 1로 복구
-    is_first_mouse_move = 1;
+        // 타이머 재설정
+        SetTimer(main_ui_hwnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
 
-    // 키보드 포커스를 최상위 부모 창에 돌려 주는 것으로 키보트 메시지를 최상위 부모 창이 받도록 설정
-    SetFocus(root_window_hwnd);
+        // 다음 화면보호기 실행 시 첫 WM_MOUSEMOVE를 스킵 하기 위해 is_first_mouse_move를 1로 복구
+        is_first_mouse_move = 1;
+
+        // 키보드 포커스를 최상위 부모 창에 돌려 주는 것으로 키보트 메시지를 최상위 부모 창이 받도록 설정
+        SetFocus(root_window_hwnd);
+    }
 }
 
 
