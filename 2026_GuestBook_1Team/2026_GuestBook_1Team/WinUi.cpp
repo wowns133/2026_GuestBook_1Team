@@ -70,10 +70,10 @@ void WinUi::createWinUIWindows(HWND hWnd)
     int canvus_ui_height = (rect.bottom - rect.top) - main_ui_height;
 
     main_ui_hwnd = CreateWindowExW(
-        WS_EX_DLGMODALFRAME | WS_EX_TOPMOST,        // 스타일
+        WS_EX_DLGMODALFRAME,        // 입체적인 이중 테두리를 적용한 대화 상자 형태의 프레임 스타일
         L"MainUIWindowClassType",                   // RegisterClass에서 등록한 클래스 이름
         nullptr,                                    // 창 상단 타이틀 바에 표시될 텍스트. 자식은 보통 없음
-        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN,    // 윈도우 스타일 (최소화/최대화/닫기 버튼이 있는 일반 창) 
+        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,    // 윈도우 스타일 (순서대로 -> 자식 창 지정 | 화면에 즉시 표시 | 자식 창의 영역은 제외하고 그리기 | 겹쳐진 형제 창의 영역에 그리지 못하도록 제한)
         0, 0,                                       // 창이 나타날 처음 화면 위치 (x, y) - OS가 알아서 지정 
         rect.right, main_ui_height,                            // 창의 처음 가로, 세로 크기 (Width, Height) 
         hWnd,                                       // 부모 윈도우 핸들 
@@ -86,7 +86,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
         0,
         L"CanvasWindowClassType",                   // RegisterClass에서 등록한 클래스 이름
         nullptr, // 창 상단 타이틀 바에 표시될 텍스트. 
-        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, // 윈도우 스타일 (최소화/최대화/닫기 버튼이 있는 일반 창) 
+        WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, // 윈도우 스타일 (순서대로 -> 자식 창 지정 | 화면에 즉시 표시 | 자식 창의 영역은 제외하고 그리기 | 겹쳐진 형제 창의 영역에 그리지 못하도록 제한) 
         0, 100, // 창이 나타날 처음 화면 위치 (X, Y) - OS가 알아서 지정 
         rect.right, canvus_ui_height, // 창의 처음 가로, 세로 크기 (Width, Height) - OS가 알아서 지정 
         hWnd, // 부모 윈도우 핸들 (메인 창이므로 없음) 
@@ -94,23 +94,52 @@ void WinUi::createWinUIWindows(HWND hWnd)
         hInst, // 이 창을 만드는 프로그램의 인스턴스 핸들 
         nullptr // 추가 파라미터 
     );
+    
+    // 화면 보호기 창 생성
+    screen_saver_hwnd = screen_saver.createScreenSaverWindow(hWnd);
+    // screen_saver 객체의 내부 핸들 변수 세팅
+    screen_saver.setOtherWindowsHandle(root_window_hwnd, main_ui_hwnd, canvas_hwnd);
 }
 
 void WinUi::resizeWinUIWindows(LPARAM lParam)
 {
-    int client_width = LOWORD(lParam);
-    int client_height = HIWORD(lParam);
+    // 현재 client의 크기 구하기
+    int client_width = LOWORD(lParam); // client 가로 길이
+    int client_height = HIWORD(lParam); // client 세로 길이
+
+    // 메인 UI와 캔버스를 위아래로 배치
     int main_ui_height = client_height * 0.15;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
+
+    // 화면 보호기 창의 크기를 전체 창으로 재조정
+    MoveWindow(screen_saver_hwnd, 0, 0, client_width, client_height, TRUE);
+
+    
+    // 화면 보호기 창의 z-order을 맨 위로
+    SetWindowPos(screen_saver_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    // 메인 UI 창의 z-order을 화면 보호기 창의 밑으로
+    SetWindowPos(main_ui_hwnd, screen_saver_hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    // 캔버스 창의 z-order을 맨 아래로
+    SetWindowPos(canvas_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void WinUi::resetScreenSaverTimer()
+{
+    screen_saver.resetScreenSaverTimer();
 }
 
 void WinUi::setInst(HINSTANCE hInst)
 {
     this->hInst = hInst;
     pen_scroll.setInst(hInst);
+    screen_saver.setInst(hInst);
 }
 
+void WinUi::setRootWindowHandle(HWND hWnd)
+{
+    this->root_window_hwnd = hWnd;
+}
 
 
 
@@ -148,14 +177,34 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
         //makeTempButton(hWnd, hInst);
         button.setAllButtons(hWnd);
+
+        //펜 두께 스크롤바 함수 세팅
         pen_scroll.createPenScrollWindows(hWnd);
         pen_scroll.setPenStyle(draw->pen_style);
+        
+        // 화면 보호기 타이머 최초 설정
+        SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
+    }
+    break;
+    case WM_TIMER:
+    {
+        if (wParam == SCREEN_SAVER_TIMER_ID)
+        {
+            // 타이머 처리 함수
+            screen_saver.screenSaverTimer();
+        }
     }
     break;
     case WM_LBUTTONDOWN:
     {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
+
+        // 버튼 클릭을 추적해 클릭한 버튼이 있으면 버튼 ID를 저장
         int button_id = button.trackClick(lParam);
 
+
+        // 버튼이 무엇인지에 따라 알맞게 처리
         if (button_id == -1) break;
 
         if (button_id >= CUSTOM_BUTTON_PEN_SOLID && button_id <= CUSTOM_BUTTON_PEN_HIGHLIGHT)
@@ -270,6 +319,17 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         default:
             break;
         }
+    }
+    break;
+    // 마우스 움직임이 있을 때, 화면 보호기 실행까지의 시간을 초기화
+    case WM_KEYDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_MOUSEMOVE:
+    {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
     }
     break;
     case WM_COMMAND:
@@ -462,6 +522,9 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     break;
     case WM_LBUTTONDOWN:
     {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
+
         /// 펜 스타일에 따라 그리기 스타일 변경 ( penStyle 테스트 진행중 ... )
         draw->selectDrawStyle();
         draw->startDrawingLine(hWnd, lParam, draw->select_drawStyle);
@@ -469,14 +532,28 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     }
     case WM_MOUSEMOVE:
     {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
+
         draw->drawingLine(hWnd, lParam, draw->select_drawStyle);
         break;
     }
     case WM_LBUTTONUP:
     {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
+
         draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
         break;
     }
+    case WM_RBUTTONDOWN:
+    case WM_RBUTTONUP:
+    case WM_KEYDOWN:
+    {
+        // 화면보호기 실행까지의 시간 초기화
+        screen_saver.resetScreenSaverTimer();
+    }
+    break;
     case WM_MOUSELEAVE:
     {
         draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
@@ -519,7 +596,8 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
 void WinUi::setRegisterClass(HINSTANCE hInstance)
 {
-    MainUIRegisterClass(hInstance); /// 메인 UI창 등록
-    CanvasRegisterClass(hInstance); /// 캔버스 창 등록
-    pen_scroll.PenScrollRegisterClass(hInstance);
+    MainUIRegisterClass(hInstance); // 메인 UI창 등록
+    CanvasRegisterClass(hInstance); // 캔버스 창 등록
+    screen_saver.ScreenSaverRegisterClass(hInstance); // 화면 보호기 창 등록
+    pen_scroll.PenScrollRegisterClass(hInstance); // 스크롤바 창 등록
 }
