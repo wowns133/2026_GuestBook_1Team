@@ -142,44 +142,15 @@ void Draw::redrawAllLines(HWND hWnd)
 		/// 붓펜 그리기
 		else if (drawn_lines_data[line_num].select_pen_style == BRUSHPEN)
 		{
-			if (drawn_lines_data[line_num].point_data.empty())
+			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
 			{
-				continue;
-			}
-
-			if (drawn_lines_data[line_num].point_data.size() == 1)
-			{
-				float radius = drawn_lines_data[line_num].point_data[0].radius;
-
-				drawn_bmp_graphics->FillEllipse(
-					brush_pointer,
-					drawn_lines_data[line_num].point_data[0].point.x - radius,
-					drawn_lines_data[line_num].point_data[0].point.y - radius,
-					radius * 2,
-					radius * 2
-				);
-
-				continue;
-			}
-			else
-			{
-				for (size_t point_num = 1;
-					point_num < drawn_lines_data[line_num].point_data.size();
-					point_num++)
-				{
-					float radius =
-						drawn_lines_data[line_num].point_data[point_num].radius;
-
-					pen_pointer->SetWidth(radius * 2);
-
-					drawn_bmp_graphics->FillEllipse(
-						brush_pointer,
-						drawn_lines_data[line_num].point_data[point_num].point.x - radius,
-						drawn_lines_data[line_num].point_data[point_num].point.y - radius,
-						radius * 2,
-						radius * 2
-					);
-				}
+				fillBrushLine(drawn_bmp_graphics,
+					(float)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+					(float)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+					drawn_lines_data[line_num].point_data[point_num - 1].radius,
+					(float)drawn_lines_data[line_num].point_data[point_num].point.x,
+					(float)drawn_lines_data[line_num].point_data[point_num].point.y,
+					drawn_lines_data[line_num].point_data[point_num].radius);
 			}
 		}
 	}//for
@@ -415,21 +386,21 @@ void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
 {
 	if (is_drawing)
 	{
-		//이동 후 현재 위치를 저장
+		/// 이동 후 현재 위치를 저장
 		current_x = LOWORD(lParam);
 		current_y = HIWORD(lParam);
 
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
-		//현재 위치 좌표를 벡터에 저장
+
+		/// 현재 위치 좌표를 벡터에 저장
 		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getBrushPenRadius() });
 
 		/// 선 데이터 사이즈 변수
 		int line_index = drawn_lines_data.size() - 1;
 		int point_count = drawn_lines_data[line_index].point_data.size();
 
-
-		if (point_count > 1)				///< 이전 좌표가 있을 경우
+		if (point_count > 1)				///< 이전 좌표가 있을 경우만 속력 계산
 		{
 			/// 이전 시간 변수
 			ULONGLONG previous_time = drawn_lines_data[line_index].point_data[point_count - 2].elapsed_time;
@@ -448,6 +419,50 @@ void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
 			/// 두 좌표 사이의 직선 거리 계산
 			double distance = sqrt(difference_x * difference_x + difference_y * difference_y);
 
+			/// 좌표값이 반지름을 넘지 않을 시 두께 늘리기 위한 변수값 지정 ( 한 점에 오래 있을 경우 )
+			if (distance < pen_style->getBrushPenRadius())
+			{
+				// 최초 정지 감지 시작
+				if (!pen_style->getTimerFlag())
+				{
+					/// 현재 좌표
+					Gdiplus::PointF currunt_point = { (float)current_x,(float)current_y };
+
+					/// 기준 좌표에 현재 좌표값 넣기
+					pen_style->setAnchorPoint(currunt_point);
+
+					/// 시작 시간 
+					pen_style->setStartTimer(GetTickCount64());
+
+					/// 타이머 플래그 true로 지정
+					pen_style->setTimerFlag(true);
+
+					/// 두께 변화 및 한곳에 머무르는 시간 계산용 타이머 생성 
+					SetTimer(hWnd, BRUSH_TIMER, 30, NULL);
+				}
+			}
+			/// 그렇지 않을 시 플래그 변수 false로 지정
+			else
+			{
+				/// 기준 좌표 가져오기
+				Gdiplus::PointF anchor = pen_style->getAnchorPoint();
+
+				/// 기준 좌표와 현재 좌표 사이의 거리 계산
+				double dx = current_x - anchor.X;
+				double dy = current_y - anchor.Y;
+
+				double distance = sqrt(dx * dx + dy * dy);
+
+				/// 허용 반경 초과 시 타이머 해제
+				if (distance > pen_style->getBrushPenRadius())
+				{
+					KillTimer(hWnd, BRUSH_TIMER);
+
+					pen_style->setTimerFlag(false);
+				}
+
+			}
+
 			/// 현재 속력 계산 ( difference_time이 0이라면 무한대 값이 나옴. )
 			double current_speed = 0;
 			if (difference_time > 0)
@@ -465,21 +480,134 @@ void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
 		}
 
 		//--------------비트맵에 그리기--------------//
-		int radius = (int)pen_style->getBrushPenRadius();
-		int top_left_x = current_x - radius;
-		int top_left_y = current_y - radius;
-		int right_bottom_x = radius * 2;
-		int right_bottom_y = radius * 2;
-		draw_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
-		drawn_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
-		
+		float current_radius = pen_style->getBrushPenRadius();
+
+		/// 저장된 값도 두께 변경 후 값으로 덮어쓰기 (한 칸 밀리는 문제 해결)
+		drawn_lines_data[line_index].point_data.back().radius = current_radius;
+
+		/// 이전에 저장된 점
+		float previous_point_x = (float)drawn_lines_data[line_index].point_data[point_count - 2].point.x;
+		float previous_point_y = (float)drawn_lines_data[line_index].point_data[point_count - 2].point.y;
+		float previous_radius = drawn_lines_data[line_index].point_data[point_count - 2].radius;
+
+		fillBrushLine(draw_bmp_graphics, previous_point_x, previous_point_y, previous_radius, (float)current_x, (float)current_y, current_radius);
+		fillBrushLine(drawn_bmp_graphics, previous_point_x, previous_point_y, previous_radius, (float)current_x, (float)current_y, current_radius);
 
 		//-----------------국소 범위 화면 갱신-----------------//
-		drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y);
+		drawSectionImage(draw_hdc_graphics, draw_bmp, (int)previous_point_x, (int)previous_point_y, current_x, current_y);
 
-		previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
-		previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+		previous_x = current_x;	//현재 위치를 이동 전 좌표 변수에 저장
+		previous_y = current_y;	//현재 위치를 이동 전 좌표 변수에 저장
+
+
+		/// 빈 곳 채우기 전에 사용하던 코드
+		//int radius = (int)pen_style->getBrushPenRadius();
+		//int top_left_x = current_x - radius;
+		//int top_left_y = current_y - radius;
+		//int right_bottom_x = radius * 2;
+		//int right_bottom_y = radius * 2;
+		//draw_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+		//drawn_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+		//
+
+		////-----------------국소 범위 화면 갱신-----------------//
+		//drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y);
+
+		//previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+		//previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
 	}
+}
+
+void Draw::fillBrushLine(Gdiplus::Graphics* target_graphics,
+	float start_x, float start_y, float start_radius,
+	float end_x, float end_y, float end_radius)
+{
+	/// 이전 좌표와 현재 좌표 사이의 거리계산용 x,y
+	float fill_difference_x = end_x - start_x;
+	float fill_difference_y = end_y - start_y;
+	/// 이전 좌표와 현재 좌표 사이의 거리
+	float fill_distance = sqrtf(fill_difference_x * fill_difference_x + fill_difference_y * fill_difference_y);
+
+	/// 2px 간격으로 원을 채울 개수 (최소 1개)
+	int fill_count = max(1, (int)ceilf(fill_distance / 2.0f));
+
+	/// 이전 좌표와 현재 좌표 사이에 2px 간격으로 원 채우기
+	for (int fill_index = 0; fill_index <= fill_count; fill_index++)
+	{
+		/// 0.0(이전 좌표) ~ 1.0(현재 좌표) 사이의 비율
+		float fill_ratio = (float)fill_index / fill_count;
+
+		/// 반지름 이전좌표에서 현재좌표로 조금씩 변화주기
+		float fill_x = start_x + fill_difference_x * fill_ratio;
+		float fill_y = start_y + fill_difference_y * fill_ratio;
+		float fill_radius = start_radius + (end_radius - start_radius) * fill_ratio;
+
+		/// 그리기
+		target_graphics->FillEllipse(brush_pointer,
+			fill_x - fill_radius, fill_y - fill_radius, fill_radius * 2, fill_radius * 2);
+	}
+}
+
+void Draw::updateBrushAnchorPoint(HWND hWnd, LPARAM lParam)
+{
+	/// 그래픽 포인터가 nullptr 일 시 작동 안하도록 하는 예외처리
+	if (!is_drawing || draw_bmp_graphics == nullptr || draw_hdc_graphics == nullptr
+		|| drawn_lines_data.empty() || drawn_lines_data.back().point_data.empty())
+	{
+		return;
+	}
+	/// 기준 좌표 가져오기
+	ULONGLONG elapsed_time = GetTickCount64() - start_time;
+	/// 경과 시간 계산
+	auto& point_data = drawn_lines_data.back().point_data;
+
+	/// push_back 하면 참조가 무효가 될 수 있어서 값을 먼저 복사해 둠
+	auto last_point = point_data.back().point;
+	float last_x = (float)last_point.x;
+	float last_y = (float)last_point.y;
+
+	/// 이전 좌표 가져오기
+	float previous_radius = point_data.back().radius;
+
+	/// 반지름 가져오기
+	float anchor_radius = pen_style->getBrushPenRadius();
+
+	/// 같은 위치에 두께만 바뀐 점 저장
+	point_data.push_back({ last_point, elapsed_time, anchor_radius });
+
+	/// 그리기
+	fillBrushLine(draw_bmp_graphics, last_x, last_y, previous_radius, last_x, last_y, anchor_radius);
+	fillBrushLine(drawn_bmp_graphics, last_x, last_y, previous_radius, last_x, last_y, anchor_radius);
+
+	////-----------------국소 범위 화면 갱신-----------------//
+	drawSectionImage(draw_hdc_graphics, draw_bmp, (int)last_x, (int)last_y, (int)last_x, (int)last_y);
+
+
+	/// 이전에 사용하던 코드
+	///// 기준 좌표 가져오기
+	//Gdiplus::PointF anchor = pen_style->getAnchorPoint();
+
+	//ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
+
+	///// 현재 위치 좌표를 벡터에 저장
+	//drawn_lines_data.back().point_data.push_back({ {(int)anchor.X, (int)anchor.Y}, elapsed_time, pen_style->getBrushPenRadius() });
+
+	///// 반지름 가져오기
+	//int radius = (int)pen_style->getBrushPenRadius();
+
+	///// 반지름 
+	//int top_left_x = (int)anchor.X - radius;
+	//int top_left_y = (int)anchor.Y - radius;
+	//int right_bottom_x = radius * 2;
+	//int right_bottom_y = radius * 2;
+	//draw_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+	//drawn_bmp_graphics->FillEllipse(brush_pointer, top_left_x, top_left_y, right_bottom_x, right_bottom_y);
+	////-----------------국소 범위 화면 갱신-----------------//
+	//drawSectionImage(draw_hdc_graphics, draw_bmp, previous_x, previous_y, current_x, current_y);
+
+	//previous_x = current_x; //현재 위치를 이동 전 좌표 변수에 저장
+	//previous_y = current_y; //현재 위치를 이동 전 좌표 변수에 저장
+
 }
 
 
