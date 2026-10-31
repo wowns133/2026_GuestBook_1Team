@@ -117,6 +117,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
+    // 최상위 창 생성 및 핸들에 저장
     HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
         CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
@@ -125,7 +126,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         return FALSE;
     }
 
-    ShowWindow(hWnd, nCmdShow);
+    ShowWindow(hWnd, SW_SHOWMAXIMIZED);
     UpdateWindow(hWnd);
 
     return TRUE;
@@ -150,6 +151,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
     {
+        // 최상위 창 핸들을 win_ui 객체의 맴버 변수로 저장
+        win_ui.setRootWindowHandle(hWnd);
+
+        // 자식 창들을 생성
         win_ui.createWinUIWindows(hWnd);
         //makeTempButton(hWnd, hInst);
         /// 스프레이 랜덤한 위치에 점을 생성하기 위한 난수 초기화
@@ -178,6 +183,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
+    }
+    break;
+    // 개발자가 키보드 포커스를 통제하지 않은 상황에서 키보드 포커스는 아래와 같이 동작합니다.(키보트 포커스는 키보드 메시지를 받는 창을 의미하며, 
+    // 마우스 포커스와는 별개로 동작합니다.)
+    // 1. Static 창이나 사용자 커스텀 창 등은 창을 특정 행동으로 인해(클릭 등) 포커스가 자동으로 변하지 않습니다.
+    // 2. Win32 내장 입력 컨트롤 클래스(Edit (텍스트 입력칸), Button (버튼), ListBox, ComboBox 등) 등 특정 창들은 특정 행동(좌클릭 등)을 하면 
+    // SetFocus로 자신에게 포커스를 가져옵니다. 이런 식으로 옮겨진 포커스를 돌려 받으려면 개발자의 통제가 필요합니다.
+    //
+    // 창 종류는 클래스 이름 부분에 따라 달라집니다. Win32에서 정해진 내용을 기입하면 Button, Static 등 정해진 스타일의 창이 되고, 
+    // 개발자가 정한 이름을 기입하면 커스텀 창이 됩니다.
+    // 
+    // 이 프로그램의 버튼을 포함한 모든 창들은 커스텀 창으로 만들어졌으므로 포커스 조작을 하지 않는다면 최상위 부모 창의 WndProc에서 키보드 이벤트를
+    // 받습니다.
+    case WM_KEYDOWN:
+    {
+        win_ui.resetScreenSaverTimer();
     }
     break;
     case WM_PAINT:
