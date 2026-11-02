@@ -25,6 +25,9 @@ PenStyle::PenStyle()
 	select_pen(SOLIDPEN),
 	radius(5.0f),
 	brush_radius(5.0f),
+	timer_flag(false),
+	start_timer(0),
+	anchor_point(0.0f, 0.0f),
 	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2)),
 	spray_brush(Gdiplus::Color(255,0,0,0))
 {
@@ -247,7 +250,7 @@ void PenStyle::brushPenThicknessChange(	double previous_speed,
 		// 현재 속력이 이전 속력보다 느리다면 두께 늘리기
 		if (brush_radius < radius)
 		{
-			brush_radius += 1;
+			brush_radius += 3;
 
 			if (brush_radius > radius)
 				brush_radius = radius;
@@ -269,7 +272,39 @@ void PenStyle::brushPenThicknessChange(	double previous_speed,
 
 /**
 * @file
-* @brief 형광펜 스타일 하뭇
+* @brief 붓 펜 한곳에 머무를 때 두께 늘리기 함수
+* 붓 펜이 한곳에 머무를 때 WM_TIMER에서 두께 늘리기 함수
+*/
+void PenStyle::brushAnchorPointThickUp()
+{
+	/// 현재 시간 변수
+	DWORD current_time = GetTickCount64();
+
+	/// 시작 시간에서 400ms이 지났을 시 두께 늘리기
+	if (current_time - start_timer >= 400)
+	{
+		/// 붓 펜 두께가 기본 두께보다 작을 시 두께 늘리기
+		if (brush_radius < radius)
+		{
+			brush_radius += 3.0f;
+		}
+
+		/// 붓 펜 두께가 기본 두께보다 클 시 기본 두께로 적용
+		if (brush_radius > radius)
+		{
+			brush_radius = radius;
+		}
+
+		/// 다음 두께 증가까지의 대기시간 초기화
+		start_timer = current_time;
+
+	}
+}
+
+
+/**
+* @file
+* @brief 형광펜 스타일 함수
 * 형광펜 선택 시 스프레이로 적용된다.
 */
 void PenStyle::highlighterPen() 
@@ -359,6 +394,49 @@ void PenStyle::settingPenStyle
 	radius = parameter_radius;				///< radius 멤버변수를 매개변수로 받아온 값으로 변경한다.
 
 	selectPenColor(pen_color);
+}
+
+
+/**
+* @file
+* @brief 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 플래그 변수 setter/getter
+* timer_flag의 값을 변경하는 setter , 값을 반환하는 getter
+*/
+void PenStyle::setTimerFlag(bool flag)
+{
+	timer_flag = flag;
+}
+bool PenStyle::getTimerFlag()
+{
+	return timer_flag;
+}
+
+/**
+* @file
+* @brief 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 시간 계산 변수 setter/getter
+* start_timer의 값을 변경하는 setter , 값을 반환하는 getter
+*/
+void PenStyle::setStartTimer(DWORD time)
+{
+	start_timer = time;
+}
+DWORD PenStyle::getStartTimer()
+{
+	return start_timer;
+}
+
+/**
+* @file
+* @brief 붓 펜 한곳에 멈췄을 때 기준이 되는 기준점 setter/getter
+* anchor_point의 값을 변경하는 setter , 값을 반환하는 getter
+*/
+void PenStyle::setAnchorPoint(Gdiplus::PointF point)
+{
+	anchor_point = point;
+}
+Gdiplus::PointF PenStyle::getAnchorPoint()
+{
+	return anchor_point;
 }
 
 ///**

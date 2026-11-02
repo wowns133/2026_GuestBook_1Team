@@ -18,6 +18,9 @@
 #define BRUSHPEN				103		///< 펜 스타일 붓 펜
 #define HIGHLIGHTERPEN			104		///< 펜 스타일 형광펜
 
+/// 붓 펜 한곳에 머물렀을 때 두께를 늘려주기 위한 타이머 상수
+#define BRUSH_TIMER				201		///< 붓 펜 두께 늘리기 타이머
+
 /**
 * @file
 * @brief 펜 색상을 선택하는 클래스
@@ -44,6 +47,9 @@ private:
 	int select_pen;						///< 펜 스타일 선택 변수
 	float radius;						///< 펜 두께 반지름 변수
 	float brush_radius;					///< 붓 펜 줄어드는 두께
+	bool timer_flag;					///< 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 플래그 변수
+	DWORD start_timer;					///< 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 시간 계산 변수
+	Gdiplus::PointF anchor_point;		///< 붓 펜 한곳에 멈췄을 때 기준이 되는 기준점
 	PenColor pen_color;					///< 펜 색깔 클래스 변수
 	Gdiplus::Pen pen;					///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
 	Gdiplus::SolidBrush spray_brush;	///< gdiplus 브러시 스프레이 색상 정하는 클래스 변수
@@ -83,6 +89,9 @@ public:
 	/// 붓 펜 시간에 따른 두께 변경 함수
 	void brushPenThicknessChange(	double previous_speed,	///< 그리기 시 이전 경과시간 값을 전달한다.
 									double current_speed);	///< 그리기 시 현재 경과시간 값을 전달한다.
+	/// 붓 펜 한곳에 머무를 때 두께 늘리기 함수
+	void brushAnchorPointThickUp();
+
 	/// 붓 펜 획 시작 시 원래 두께로 원복 함수 
 	void brushPenSetMaxRadius();
 
@@ -106,6 +115,20 @@ public:
 
 	/// 펜 색상 getter 
 	int getPenColor();
+
+	/// 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 플래그 변수 setter/getter
+	void setTimerFlag(bool flag);
+	bool getTimerFlag();
+
+	/// 붓 펜 한곳에 멈췄을 때 두께를 늘려주기 위한 타이머 시간 계산 변수 setter/getter
+	void setStartTimer(DWORD time);
+	DWORD getStartTimer();	
+
+	/// 붓 펜 한곳에 멈췄을 때 기준이 되는 기준점 setter/getter
+	void setAnchorPoint(Gdiplus::PointF point);
+	Gdiplus::PointF getAnchorPoint();
+
+
 
 
 	/*/// 펜 각 색상 별 getter

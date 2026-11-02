@@ -220,6 +220,20 @@ public:
 
 	/// 붓펜 그리기 (penStyle 테스트 진행중...)
 	void drawingBrushPen(HWND hWnd, LPARAM lParam);
+
+	/// 붓 펜 그리기 중간 비는 부분 채우기 (penStyle 테스트 진행중...)
+	void fillBrushLine(	Gdiplus::Graphics* target_graphics,		///< graphics 포인터
+						float start_x,							///< 이전 좌표 x
+						float start_y,							///< 이전 좌표 y
+						float start_radius,						///< 이전 좌표 반지름
+						float end_x, 							///< 현재 좌표 x
+						float end_y, 							///< 현재 좌표 y
+						float end_radius);						///< 현재 좌표 반지름
+
+	/// 붓 펜 한곳에 오래 머무를 시 두께 늘리기  (penStyle 테스트 진행중...)
+	void updateBrushAnchorPoint(HWND hWnd, LPARAM lParam);
+
+
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 종료 함수
 	* @details 선 그리기를 종료하고, 그린 선을 저장하며, 사용이 끝난 객체를 삭제한다. 마우스 관련 메시지 식별자에서 사용하는 함수이다.
