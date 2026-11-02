@@ -220,18 +220,18 @@ void Button::setAllButtons(HWND hWnd)
 		L"기본펜", 20, 40, 40, 40,
 		L"assets\\pen_solid.png"
 	);
-	setImageButton(CUSTOM_BUTTON_PEN_SPRAY, L"스프레이", 80, 40, 40, 40, L"assets/pen_spray.png");
+	setImageButton(CUSTOM_BUTTON_PEN_SPRAY, L"스프레이", 70, 40, 40, 40, L"assets/pen_spray.png");
 	setImageButton(CUSTOM_BUTTON_PEN_BRUSH, L"붓펜", 120, 40, 40, 40, L"assets/pen_brush.png");
 	setImageButton(CUSTOM_BUTTON_PEN_HIGHLIGHT, L"형광펜", 180, 40, 40, 40, L"assets/pen_highlight.png");
 
-	setImageButton(CUSTOM_BUTTON_ERASER_STROKE, L"한획지우기", 740, 40, 40, 40, L"assets/eraser_stroke.png");
-	setImageButton(CUSTOM_BUTTON_ERASER_ALL, L"전체지우기", 800, 40, 40, 40, L"assets/eraser_all.png");
+	setImageButton(CUSTOM_BUTTON_ERASER_STROKE, L"한획지우기", 1140, 40, 40, 40, L"assets/eraser_stroke.png");
+	setImageButton(CUSTOM_BUTTON_ERASER_ALL, L"전체지우기", 1200, 40, 40, 40, L"assets/eraser_all.png");
 
-	setImageButton(CUSTOM_BUTTON_PLAY, L"재생", 950, 40, 40, 40, L"assets/play.png");
-	setImageButton(CUSTOM_BUTTON_STOP, L"정지", 1000, 40, 40, 40, L"assets/stop.png");
+	setImageButton(CUSTOM_BUTTON_PLAY, L"재생", 1340, 40, 40, 40, L"assets/play.png");
+	setImageButton(CUSTOM_BUTTON_STOP, L"정지", 1400, 40, 40, 40, L"assets/stop.png");
 
-	setImageButton(CUSTOM_BUTTON_SAVE, L"저장", 1130, 40, 40, 40, L"assets/save.png");
-	setImageButton(CUSTOM_BUTTON_LOAD, L"불러오기", 1200, 40, 40, 40, L"assets/load.png");
+	setImageButton(CUSTOM_BUTTON_SAVE, L"저장", 1540, 40, 40, 40, L"assets/save.png");
+	setImageButton(CUSTOM_BUTTON_LOAD, L"불러오기", 1600, 40, 40, 40, L"assets/load.png");
 
 	// setButton으로 버튼을 등록합니다.
 	// button id는 겹치면 안됩니다.

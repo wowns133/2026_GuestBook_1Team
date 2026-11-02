@@ -250,7 +250,7 @@ void PenStyle::brushPenThicknessChange(	double previous_speed,
 		// 현재 속력이 이전 속력보다 느리다면 두께 늘리기
 		if (brush_radius < radius)
 		{
-			brush_radius += 3;
+			brush_radius += 1.5;
 
 			if (brush_radius > radius)
 				brush_radius = radius;
