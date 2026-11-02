@@ -162,8 +162,8 @@ void Replay::runReplay()
         SolidBrush* currentBrush = drawObj->pen_style->getBrush();
         if (currentPen != nullptr)
         {
-            if(select_pen != HIGHLIGHTERPEN)
-            currentPen->SetLineJoin(Gdiplus::LineJoinRound);
+            if (select_pen != HIGHLIGHTERPEN)
+                currentPen->SetLineJoin(Gdiplus::LineJoinRound);
         }
 
         // 획과 획 사이 시간 보정
@@ -286,7 +286,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.18);
+                    timeDiff = (ULONGLONG)(timeDiff * 0.1);
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
@@ -318,57 +318,48 @@ void Replay::runReplay()
         // 붓펜
         if (select_pen == BRUSHPEN)
         {
-            if (currentBrush != nullptr)
+            for (size_t j = 1; j < points.size(); j++)
             {
-                for (size_t j = 1; j < points.size(); j++)
+                if (replayState == replayStateStop)
+                    break;
+
+                float previous_x = (float)points[j - 1].point.x;
+                float previous_y = (float)points[j - 1].point.y;
+                float previous_radius = points[j - 1].radius;
+
+                float current_x = (float)points[j].point.x;
+                float current_y = (float)points[j].point.y;
+                float current_radius = points[j].radius;
+
+                replay_bmp_graphics->Clear(Color::White);
+                replay_bmp_graphics->DrawImage(replay_canvas_bmp, 0, 0);
+
+                // 이전 점과 현재 점 사이를 기존 Draw의 함수로 그리기
+                drawObj->fillBrushLine(
+                    replay_bmp_graphics,
+                    previous_x, previous_y, previous_radius,
+                    current_x, current_y, current_radius
+                );
+
+                drawObj->fillBrushLine(
+                    replay_canvas_graphics,
+                    previous_x, previous_y, previous_radius,
+                    current_x, current_y, current_radius
+                );
+
+                graphics.DrawImage(replay_bmp, 0, 0);
+
+                ULONGLONG timeDiff = 0;
+
+                if (points[j].elapsed_time > points[j - 1].elapsed_time)
                 {
-                    if (replayState == replayStateStop)
-                        break;
-
-                    int x = points[j].point.x;
-                    int y = points[j].point.y;
-                    int radius = (int)points[j].radius;
-
-                    replay_bmp_graphics->Clear(Color::White);
-
-                    replay_bmp_graphics->DrawImage(
-                        replay_canvas_bmp, 0, 0
-                    );
-
-                    // 저장된 반지름으로 원을 그림
-                    replay_bmp_graphics->FillEllipse(
-                        currentBrush,
-                        x - radius,
-                        y - radius,
-                        radius * 2,
-                        radius * 2
-                    );
-
-                    graphics.DrawImage(replay_bmp, 0, 0);
-
-                    replay_canvas_graphics->FillEllipse(
-                        currentBrush,
-                        x - radius,
-                        y - radius,
-                        radius * 2,
-                        radius * 2
-                    );
-
-                    ULONGLONG timeDiff = 0;
-
-                    if (points[j].elapsed_time >
-                        points[j - 1].elapsed_time)
-                    {
-                        timeDiff =
-                            points[j].elapsed_time -
-                            points[j - 1].elapsed_time;
-                    }
-
-                    timeDiff = (ULONGLONG)(timeDiff * 0.18);
-
-                    if (timeDiff > 0)
-                        Sleep((DWORD)timeDiff);
+                    timeDiff = points[j].elapsed_time - points[j - 1].elapsed_time;
                 }
+
+                timeDiff = (ULONGLONG)(timeDiff * 0.05);
+
+                if (timeDiff > 0)
+                    Sleep((DWORD)timeDiff);
             }
 
             continue;
@@ -415,7 +406,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.18);
+                    timeDiff = (ULONGLONG)(timeDiff * 0.05);
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
@@ -507,7 +498,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.18);
+                    timeDiff = (ULONGLONG)(timeDiff * 0.05);
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
