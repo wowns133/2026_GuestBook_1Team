@@ -205,6 +205,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // 버튼 클릭을 추적해 클릭한 버튼이 있으면 버튼 ID를 저장
         int button_id = button.trackClick(lParam);
 
+        // 리플레이 중이고, 중단 버튼이 아니라면 무시
+        if (replay.getReplayState() == replayStatePlaying &&
+            button_id != CUSTOM_BUTTON_STOP)
+        {
+            break;
+        }
 
         // 버튼이 무엇인지에 따라 알맞게 처리
         if (button_id == -1) break;
