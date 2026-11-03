@@ -122,6 +122,8 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     SetWindowPos(main_ui_hwnd, screen_saver_hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 캔버스 창의 z-order을 맨 아래로
     SetWindowPos(canvas_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    draw->resizeBitmap(client_width, client_height);
 }
 
 void WinUi::resetScreenSaverTimer()
