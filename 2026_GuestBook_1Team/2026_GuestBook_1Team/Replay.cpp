@@ -129,7 +129,7 @@ void Replay::runReplay()
 
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
 
-    graphics.DrawImage(replay_canvas_bmp, 0, 0);
+    graphics.Clear(Color::White);
 
     srand((unsigned)time(NULL));
 
@@ -198,14 +198,17 @@ void Replay::runReplay()
         // 점 하나만 있는 획
         if (points.size() == 1)
         {
-            replay_bmp_graphics->Clear(Color::White);
-
-            replay_bmp_graphics->DrawImage(
-                replay_canvas_bmp, 0, 0
-            );
-
             int x = points[0].point.x;
             int y = points[0].point.y;
+
+            replay_bmp_graphics->Clear(Color::White);
+
+            // 누적 캔버스에서 현재 점 주변만 임시 비트맵으로 복사
+            drawObj->drawSectionImage(
+                replay_bmp_graphics,
+                replay_canvas_bmp,
+                x, y, x, y
+            );
 
             if (select_pen == BRUSHPEN && currentBrush != nullptr)
             {
@@ -246,7 +249,12 @@ void Replay::runReplay()
                 );
             }
 
-            graphics.DrawImage(replay_bmp, 0, 0);
+            // 현재 점 주변만 화면에 출력
+            drawObj->drawSectionImage(
+                &graphics,
+                replay_bmp,
+                x, y, x, y
+            );
             continue;
         }
 
@@ -257,6 +265,7 @@ void Replay::runReplay()
             {
                 replay_bmp_graphics->Clear(Color::White);
 
+                // 획 시작 시점에만 전체 누적 캔버스를 복사한다.
                 replay_bmp_graphics->DrawImage(
                     replay_canvas_bmp, 0, 0
                 );
@@ -274,7 +283,14 @@ void Replay::runReplay()
                         (float)points[j].point.y
                     );
 
-                    graphics.DrawImage(replay_bmp, 0, 0);
+                    drawObj->drawSectionImage(
+                        &graphics,
+                        replay_bmp,
+                        points[j - 1].point.x,
+                        points[j - 1].point.y,
+                        points[j].point.x,
+                        points[j].point.y
+                    );
 
                     ULONGLONG timeDiff = 0;
 
@@ -286,7 +302,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.1);
+                    timeDiff = (ULONGLONG)timeDiff;
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
@@ -332,7 +348,20 @@ void Replay::runReplay()
                 float current_radius = points[j].radius;
 
                 replay_bmp_graphics->Clear(Color::White);
-                replay_bmp_graphics->DrawImage(replay_canvas_bmp, 0, 0);
+
+                // 붓펜은 좌표별 반지름이 달라질 수 있으므로 가장 큰 반지름만큼
+                // 좌표 범위를 넓혀 누적 캔버스의 필요한 부분만 복사
+                int brushMargin = (int)(previous_radius > current_radius
+                    ? previous_radius : current_radius) + 2;
+
+                drawObj->drawSectionImage(
+                    replay_bmp_graphics,
+                    replay_canvas_bmp,
+                    (int)previous_x - brushMargin,
+                    (int)previous_y - brushMargin,
+                    (int)current_x + brushMargin,
+                    (int)current_y + brushMargin
+                );
 
                 // 이전 점과 현재 점 사이를 기존 Draw의 함수로 그리기
                 drawObj->fillBrushLine(
@@ -347,7 +376,14 @@ void Replay::runReplay()
                     current_x, current_y, current_radius
                 );
 
-                graphics.DrawImage(replay_bmp, 0, 0);
+                drawObj->drawSectionImage(
+                    &graphics,
+                    replay_bmp,
+                    (int)previous_x - brushMargin,
+                    (int)previous_y - brushMargin,
+                    (int)current_x + brushMargin,
+                    (int)current_y + brushMargin
+                );
 
                 ULONGLONG timeDiff = 0;
 
@@ -356,7 +392,7 @@ void Replay::runReplay()
                     timeDiff = points[j].elapsed_time - points[j - 1].elapsed_time;
                 }
 
-                timeDiff = (ULONGLONG)(timeDiff * 0.05);
+                timeDiff = (ULONGLONG)timeDiff;
 
                 if (timeDiff > 0)
                     Sleep((DWORD)timeDiff);
@@ -386,15 +422,27 @@ void Replay::runReplay()
 
                     replay_bmp_graphics->Clear(Color::White);
 
-                    replay_bmp_graphics->DrawImage(
-                        replay_canvas_bmp, 0, 0
+                    drawObj->drawSectionImage(
+                        replay_bmp_graphics,
+                        replay_canvas_bmp,
+                        points[j - 1].point.x,
+                        points[j - 1].point.y,
+                        points[j].point.x,
+                        points[j].point.y
                     );
 
                     replay_bmp_graphics->DrawPath(
                         currentPen, &replayPath
                     );
 
-                    graphics.DrawImage(replay_bmp, 0, 0);
+                    drawObj->drawSectionImage(
+                        &graphics,
+                        replay_bmp,
+                        points[j - 1].point.x,
+                        points[j - 1].point.y,
+                        points[j].point.x,
+                        points[j].point.y
+                    );
 
                     ULONGLONG timeDiff = 0;
 
@@ -406,7 +454,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.05);
+                    timeDiff = (ULONGLONG)timeDiff;
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
@@ -463,8 +511,13 @@ void Replay::runReplay()
 
                     replay_bmp_graphics->Clear(Color::White);
 
-                    replay_bmp_graphics->DrawImage(
-                        replay_canvas_bmp, 0, 0
+                    drawObj->drawSectionImage(
+                        replay_bmp_graphics,
+                        replay_canvas_bmp,
+                        x - sprayRadius,
+                        y - sprayRadius,
+                        x + sprayRadius,
+                        y + sprayRadius
                     );
 
                     for (size_t k = 0; k < sprayPoints.size(); k++)
@@ -486,7 +539,14 @@ void Replay::runReplay()
                         );
                     }
 
-                    graphics.DrawImage(replay_bmp, 0, 0);
+                    drawObj->drawSectionImage(
+                        &graphics,
+                        replay_bmp,
+                        x - sprayRadius,
+                        y - sprayRadius,
+                        x + sprayRadius,
+                        y + sprayRadius
+                    );
 
                     ULONGLONG timeDiff = 0;
 
@@ -498,7 +558,7 @@ void Replay::runReplay()
                             points[j - 1].elapsed_time;
                     }
 
-                    timeDiff = (ULONGLONG)(timeDiff * 0.05);
+                    timeDiff = (ULONGLONG)timeDiff;
 
                     if (timeDiff > 0)
                         Sleep((DWORD)timeDiff);
