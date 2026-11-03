@@ -804,8 +804,12 @@ void Draw::gdiPlusStart()
 	Gdiplus::GdiplusStartupInput gdi_plus_start_up_input;
 	Gdiplus::GdiplusStartup(&drawing_token, &gdi_plus_start_up_input, NULL);
 
+	// 비트맵 크기 저장
+	drawn_bmp_width = GetSystemMetrics(SM_CXSCREEN); // 현재 주 모니터의 화면 가로 해상도(너비)를 픽셀 단위로 저장
+	drawn_bmp_height = GetSystemMetrics(SM_CYSCREEN); // 현재 주 모니터의 화면 가로 해상도(높이)를 픽셀 단위로 저장
+
 	/// 
-	drawn_bmp = new Gdiplus::Bitmap(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), PixelFormat32bppARGB); //삼중 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+	drawn_bmp = new Gdiplus::Bitmap(drawn_bmp_width, drawn_bmp_height, PixelFormat32bppARGB); //삼중 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
 	drawn_bmp_graphics = new Gdiplus::Graphics(drawn_bmp); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
 	drawn_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);	// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
 
@@ -934,6 +938,59 @@ void Draw::selectDrawStyle()
 	swprintf_s(buffer, L"getSelectPen = %d\nselect_drawStyle = %d\n", pen_style->getSelectPen(), select_drawStyle);
 	OutputDebugString(buffer);*/
 }
+
+void Draw::resizeBitmap(int client_width, int client_height)
+{
+	int new_bmp_width = 0; // 새 비트맵에 적용될 비트맵 너비
+	int new_bmp_height = 0; // 새 비트맵에 적용될 비트맵 높이
+
+	// 비트맵의 너비 또는 높이가 줄어들지 않도록 더 긴 쪽을 새 비트맵 너비 또는 높이로 지정
+	if(client_width > drawn_bmp_width)
+	{
+		new_bmp_width = client_width;
+	}
+	else
+	{
+		new_bmp_width = drawn_bmp_width;
+	}
+
+	if (client_height > drawn_bmp_height)
+	{
+		new_bmp_height = client_height;
+	}
+	else
+	{
+		new_bmp_height = drawn_bmp_height;
+	}
+
+	// 새 비트맵을 담아둘 변수 선언
+	Gdiplus::Bitmap* new_bmp = nullptr; // 새 비트맵 포인터 변수
+	Gdiplus::Graphics* new_bmp_graphics = nullptr; // 새 비트맵의 Graphics 포인터 변수
+
+	// 변한 창 크기에 맞는 비트맵을 생성
+	new_bmp = new Gdiplus::Bitmap(new_bmp_width, new_bmp_height, PixelFormat32bppARGB); //삼중 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+	new_bmp_graphics = new Gdiplus::Graphics(new_bmp); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+	new_bmp_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);	// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
+
+	// 기존 비트맵의 내용을 새 비트맵에 저장
+	new_bmp_graphics->DrawImage(drawn_bmp, 0, 0);
+
+	// 기존 비트맵 삭제
+	delete drawn_bmp_graphics;
+	delete drawn_bmp;
+	drawn_bmp_graphics = nullptr;
+	drawn_bmp = nullptr;
+
+	// 새 비트맵을 기존 비트맵 변수에 저장
+	drawn_bmp = new_bmp;
+	drawn_bmp_graphics = new_bmp_graphics;
+
+
+	// 새 비트맵의 크기를 멤버 변수에 저장
+	drawn_bmp_width = new_bmp_width;
+	drawn_bmp_height = new_bmp_height;
+}
+
 
 /// select_drawStyle변수와 pen_width 변수 초기값 설정 (PenStyle test 진행중..)
 //Draw::Draw()
