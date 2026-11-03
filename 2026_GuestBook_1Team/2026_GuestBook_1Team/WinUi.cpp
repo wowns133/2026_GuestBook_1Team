@@ -66,7 +66,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
 {
     RECT rect;
     GetClientRect(hWnd, &rect);
-    int main_ui_height = (rect.bottom - rect.top) * 0.15;
+    int main_ui_height = (rect.bottom - rect.top) * MAIN_UI_HEIGHT_RATIO;
     int canvus_ui_height = (rect.bottom - rect.top) - main_ui_height;
 
     main_ui_hwnd = CreateWindowExW(
@@ -108,7 +108,7 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     int client_height = HIWORD(lParam); // client 세로 길이
 
     // 메인 UI와 캔버스를 위아래로 배치
-    int main_ui_height = client_height * 0.15;
+    int main_ui_height = client_height * MAIN_UI_HEIGHT_RATIO;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 

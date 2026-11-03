@@ -31,6 +31,8 @@
 #define MAIN_UI_ID 1001
 #define CANVAS_ID 1002
 
+#define MAIN_UI_HEIGHT_RATIO 0.15 ///< 메인 UI창이 전체 높이 중 차지하는 비율을 정의한 매크로 상수
+
 /**
 * @file
 * @brief 자식 창 관련 기능들을 구현한 헤더 파일.
