@@ -66,7 +66,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
 {
     RECT rect;
     GetClientRect(hWnd, &rect);
-    int main_ui_height = (rect.bottom - rect.top) * 0.15;
+    int main_ui_height = (rect.bottom - rect.top) * MAIN_UI_HEIGHT_RATIO;
     int canvus_ui_height = (rect.bottom - rect.top) - main_ui_height;
 
     main_ui_hwnd = CreateWindowExW(
@@ -108,7 +108,7 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     int client_height = HIWORD(lParam); // client 세로 길이
 
     // 메인 UI와 캔버스를 위아래로 배치
-    int main_ui_height = client_height * 0.15;
+    int main_ui_height = client_height * MAIN_UI_HEIGHT_RATIO;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 
@@ -122,6 +122,8 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     SetWindowPos(main_ui_hwnd, screen_saver_hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 캔버스 창의 z-order을 맨 아래로
     SetWindowPos(canvas_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    draw->resizeBitmap(client_width, client_height);
 }
 
 void WinUi::resetScreenSaverTimer()
@@ -203,6 +205,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // 버튼 클릭을 추적해 클릭한 버튼이 있으면 버튼 ID를 저장
         int button_id = button.trackClick(lParam);
 
+        // 리플레이 중이고, 중단 버튼이 아니라면 무시
+        if (replay.getReplayState() == replayStatePlaying &&
+            button_id != CUSTOM_BUTTON_STOP)
+        {
+            break;
+        }
 
         // 버튼이 무엇인지에 따라 알맞게 처리
         if (button_id == -1) break;
