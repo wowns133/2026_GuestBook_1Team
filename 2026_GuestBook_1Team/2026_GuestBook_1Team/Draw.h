@@ -107,6 +107,10 @@ private:
 	Gdiplus::Bitmap* drawn_bmp = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 Bitmap. 지금까지 그려진 완성된 선 전체를 온전히 보관하는 비트맵
 	Gdiplus::Graphics* drawn_bmp_graphics = nullptr; ///< Draw 클래스 멤버 포인터 변수로 선언된 지금까지 그려진 완성된 선 전체를 온전히 보관하는 비트맵용 Graphics. Bitmap를 삭제하기 전 반드시 파괴해야 한다.
 
+	// drawn_bmp 비트맵 크기 저장용 변수
+	int drawn_bmp_width = 0; ///< drawn_bmp의 너비
+	int drawn_bmp_height = 0; ///< drawn_bmp의 높이
+
 	RECT client_rect; ///< 작업 영역의 크기를 저장하기 위한 RECT. right가 너미, bottom이 높이.
 
 
@@ -262,6 +266,7 @@ public:
 	* @brief GDI+ 사용 시작하는 함수. 또한 그려진 그림 전체를 보관하는 버퍼와 펜 객체를 생성한다.
 	* @details GDI+ 사용을 시작하는 함수이다. 동시에 그려진 그림 전체를 보관하는 버퍼와 펜 객체를 생성한다.
 	* GdiplusStartup를 실행한다. 프로그램 시작 시 한 번 사용하고, 마지막 프로그램 종료 직전 GdiplusShutdown 함수를 실행해야 한다.
+	* @todo 현재 초기 작업 때 그대로인 상태여서 비트맵이 전체 창 크기로 만들어지고 있습니다. 캔버스 창 크기로 만들 수 있도록 만들면 더 효율적입니다.
 	* @author challenjoy01
 	*/
 	void gdiPlusStart();
@@ -301,5 +306,23 @@ public:
 
 	/// pen_width 변수를 펜 클래스 변수의 radius값에 따라 변경되도록 하는 함수(PenStyle test 진행중..)
 	//void penWidthChange();
+
+
+	//---------------------------------비트맵 관리 함수---------------------------//
+	/**
+	* @brief 창 크기 변경 발생 시 기존 비트맵보다 창이 커졌을 때 비트맵 크기를 변경하는 함수
+	* @details 창 크기 변경 발생 시 기존 비트맵보다 창이 커졌을 때 비트맵 크기를 변경하는 함수. 창이 줄어들었다고 비트맵을 줄이면 다시 넓혔을 때 
+	데이터가 날아갈 수 있으므로 기존 비트맵보다 창이 커졌을 때만 비트맵 크기를 변경한다.
+	* @param[in] client_width 창 크기 변경 후 전체 창 너비
+	* @param[in] client_height 창 크기 변경 후 전체 창 높이
+	* @todo 현재 비트맵이 전체 창 크기로 만들어지고 있습니다. 캔버스 창 크기로 만들 수 있도록 만들면 더 효율적입니다.
+	* @note
+	* 노트북(1920x1080 해상도 125% 배율)에서 프로그램을 처음 켜고 창을 최대화했을 때 GetSystemMetrics를 이용해 비트맵을 만듭니다. 이 때 윈도우는 
+	1920x1080 해상도를 1.25배 배율을 적용한 1536x864를 화면 크기라고 프로그램에 알려줍니다. 결국 1536x864 크기의 비트맵이 생성됩니다.
+	이 상태에서 1920x1080 해상도의 100% 배율 모니터로 창을 옮기면 1920x1080 화면에 1536x864 비트맵이 들어가서 비트맵의 공백이 생깁니다.
+	이를 방지하기 위해 이 함수를 이용해 새 모니터로 옮긴 후 최대화를 했을 때 화면 크기를 구한 뒤, 알맞은 크기의 비트맵으로 갱신합니다.
+	* @author challenjoy01
+	*/
+	void resizeBitmap(int client_width, int client_height);
 
 };
