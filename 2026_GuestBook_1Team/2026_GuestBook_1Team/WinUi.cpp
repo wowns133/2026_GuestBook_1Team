@@ -291,7 +291,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_LOAD:
         {
             file.LoadFile(canvas_hwnd, *draw);
-            InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
+            //InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
         }
         break;
         case CUSTOM_BUTTON_RED:
