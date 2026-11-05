@@ -33,9 +33,10 @@ private:
 	int pen_scroll_wnd_y = 20;													///< penscroll 창 y 위치
 
 	int pen_scroll_bar_height = 10;												///< 스크롤바의 높이
-	int pen_max_width = 25;														///< 펜의 최대 반지름
+	int pen_max_radius = 25;													///< 펜의 최대 반지름
+	int pen_min_radius = 5;														///< 펜의 최소 반지름
 	int pen_scroll_bar_ratio = 8;												///< 스크롤바 비율 (50 * pen_scroll_bar_ratio 형식)
-	int pen_scroll_bar_width = pen_max_width * pen_scroll_bar_ratio;			///< 스크롤바의 너비
+	int pen_scroll_bar_width = (pen_max_radius - pen_min_radius) * pen_scroll_bar_ratio;			///< 스크롤바의 너비
 	int pen_scroll_button_width = 30;											///< 스크롤바 버튼 너비
 	
 	int pen_scroll_wnd_height = 80;						///< penscroll 창 높이

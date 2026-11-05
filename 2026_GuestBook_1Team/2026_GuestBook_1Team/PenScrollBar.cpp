@@ -150,6 +150,11 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
             (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
             pen_scroll_button_width / 2 + pen_scroll_bar_width + pen_scroll_bar_height / 2,
             (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+        
+        // 펜 반지름 테스트 코드
+        //WCHAR t[50];
+        //wsprintf(t, L"현재 펜 반지름 %d", (int)pen_style->getRadius());
+        //TextOut(hdc, 0, 0, t, wcslen(t));
 
         SelectObject(hdc, os_pen);
         SelectObject(hdc, os_brush);
@@ -194,7 +199,7 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
 {
     if (is_click == true)
     {
-        int pen_width = 0;
+        int pen_width = 0; ///< 펜의 반지름
 
         scroll_button_x = LOWORD(lParam) - (pen_scroll_button_width / 2); // 스크롤바 버튼 좌상단 x좌표 구하기
         if (scroll_button_x < 0) // 스크롤바 버튼 최소 0으로 설정
@@ -205,7 +210,10 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
         {
             scroll_button_x = pen_scroll_bar_width;
         }
-        pen_width = scroll_button_x / pen_scroll_bar_ratio; // 펜 두께를 0 ~ 50 사이의 숫자로 변환
+        // 펜 두께를 0 ~ (최댓값 - 최솟값) 사이의 숫자로 변환한 후 최솟값을 더하기
+        //결과적으로 최솟값 ~
+        pen_width = scroll_button_x / pen_scroll_bar_ratio + pen_min_radius; 
+        
         // 펜 두께 변경 함수
         pen_style->settingPenStyle(pen_style->getSelectPen(), pen_width, pen_style->getPenColor());
         InvalidateRect(hWnd, NULL, TRUE);
