@@ -12,13 +12,21 @@ void Replay::startReplay(Draw& draw, HWND targetHWnd)
     if (replayState == replayStatePlaying)
         return;
 
+    //이전 스레드의 핸들 정리
+    if (replayThreadHandle != NULL)
+    {
+        WaitForSingleObject(replayThreadHandle, INFINITE);
+        CloseHandle(replayThreadHandle);
+        replayThreadHandle = NULL;
+    }
+
     drawObj = &draw;
     hwnd = targetHWnd;
 
     replayState = replayStatePlaying;
 
     //Replay Thread 생성
-    HANDLE hThread = CreateThread(
+    replayThreadHandle = CreateThread(
         NULL,
         0,
         Replay::replayFunction,
@@ -27,11 +35,7 @@ void Replay::startReplay(Draw& draw, HWND targetHWnd)
         NULL
     );
 
-    if (hThread != NULL)
-    {
-        CloseHandle(hThread);
-    }
-    else
+    if (replayThreadHandle != NULL)
     {
         // Thread 생성 실패
         replayState = replayStateStop;
@@ -352,7 +356,7 @@ void Replay::runReplay()
                 // 붓펜은 좌표별 반지름이 달라질 수 있으므로 가장 큰 반지름만큼
                 // 좌표 범위를 넓혀 누적 캔버스의 필요한 부분만 복사
                 int brushMargin = (int)(previous_radius > current_radius
-                    ? previous_radius : current_radius) + 2;
+                    ? previous_radius : current_radius) + 4;
 
                 drawObj->drawSectionImage(
                     replay_bmp_graphics,
@@ -593,16 +597,29 @@ void Replay::runReplay()
         savedColor
     );
 
-    InvalidateRect(hwnd, NULL, FALSE);
-    UpdateWindow(hwnd);
+    //InvalidateRect(hwnd, NULL, FALSE);
+    //UpdateWindow(hwnd);  //WinUi에서 업데이트할 수 있도록 넘겨줌
 }
 
 void Replay::stopReplay()
 {
     replayState = replayStateStop;
+
+    if (replayThreadHandle != NULL)
+    {
+        WaitForSingleObject(replayThreadHandle, INFINITE);
+
+        CloseHandle(replayThreadHandle);
+        replayThreadHandle = NULL;
+    }
 }
 
 int Replay::getReplayState()
 {
     return replayState;
+}
+
+HANDLE Replay::getReplayThreadHandle()
+{
+    return replayThreadHandle;
 }

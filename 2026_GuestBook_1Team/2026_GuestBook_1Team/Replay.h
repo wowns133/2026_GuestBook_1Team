@@ -26,10 +26,13 @@ private:
 
     static DWORD WINAPI replayFunction(LPVOID lpParam);
 
+    HANDLE replayThreadHandle = NULL;
+
     void runReplay();
 
 public:
     void startReplay(Draw& draw, HWND targetHWnd);
     void stopReplay();
     int getReplayState();
+    HANDLE getReplayThreadHandle();
 };
