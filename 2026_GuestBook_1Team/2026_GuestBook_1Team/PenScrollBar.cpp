@@ -53,7 +53,8 @@ void PenScrollBar::setTrackMouseEvent(HWND hWnd)
 {
     if (!is_tracking_mouse)
     {
-        TRACKMOUSEEVENT track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
+        // 선언과 동시에 모든 멤버를 0으로 초기화
+        TRACKMOUSEEVENT track_mouse = { 0 }; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
         track_mouse.cbSize = sizeof(TRACKMOUSEEVENT);
         track_mouse.dwFlags = TME_LEAVE; //창 벗어남을 감시함
         track_mouse.hwndTrack = hWnd;
@@ -65,6 +66,51 @@ void PenScrollBar::setTrackMouseEvent(HWND hWnd)
     }
 }
 
+
+
+void PenScrollBar::setupBitmap(LPARAM lParam)
+{
+    int client_width = LOWORD(lParam);
+    int client_height = HIWORD(lParam);
+
+    // 비트맵이 없다면(첫 생성) 비트맵 초기화
+    if (scroll_bar_bitmap == nullptr)
+    {
+        // bitmap 객체는 new로 선언하고 삭제하는 방식을 추천합니다.
+        scroll_bar_bitmap = new Gdiplus::Bitmap(client_width, client_height, PixelFormat32bppARGB); //더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+        scroll_bar_bitmap_graphics = new Gdiplus::Graphics(scroll_bar_bitmap); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+        scroll_bar_bitmap_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
+
+        return;
+    }
+
+    // bitmap 객체는 new로 선언하고 삭제하는 방식을 추천합니다.
+    Gdiplus::Bitmap* new_bitmap = new Gdiplus::Bitmap(client_width, client_height, PixelFormat32bppARGB); //더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+    Gdiplus::Graphics* new_bitmap_graphics = new Gdiplus::Graphics(new_bitmap); //비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+    new_bitmap_graphics->SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);				// 안티엘리어싱 적용. 선에서 계단 현상이 줄어든다.
+
+    // 기존 비트맵의 내용을 새 비트맵에 저장
+    new_bitmap_graphics->DrawImage(scroll_bar_bitmap, 0, 0);
+
+    // 기존 비트맵 삭제
+    delete scroll_bar_bitmap_graphics;
+    delete scroll_bar_bitmap;
+    scroll_bar_bitmap_graphics = nullptr;
+    scroll_bar_bitmap = nullptr;
+
+    // 새 비트맵을 기존 비트맵 변수에 저장
+    scroll_bar_bitmap = new_bitmap;
+    scroll_bar_bitmap_graphics = new_bitmap_graphics;
+}
+
+void PenScrollBar::deleteBitmap()
+{
+    // 비트맵 삭제
+    delete scroll_bar_bitmap_graphics;
+    delete scroll_bar_bitmap;
+    scroll_bar_bitmap_graphics = nullptr;
+    scroll_bar_bitmap = nullptr;
+}
 
 LRESULT CALLBACK PenScrollBar::StaticPenScrollWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -80,6 +126,11 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
 
     }
     break;
+    case WM_SIZE:
+    {
+        // 비트맵 생성, 삭제
+        setupBitmap(lParam);
+    }
     case WM_COMMAND:
     {
         int wmId = LOWORD(wParam);
@@ -97,7 +148,6 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
         is_click = true;
         setTrackMouseEvent(hWnd);
         setScrollButton(hWnd, lParam);
-        InvalidateRect(hWnd, NULL, TRUE);
         break;
     }
     case WM_MOUSEMOVE:
@@ -124,44 +174,31 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
         // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        HPEN my_pen, os_pen;
-        HBRUSH my_brush, os_brush;
+        // gdi+ 사용 설정
+        Gdiplus::Graphics hdc_graphics(hdc);
+        hdc_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-        my_pen = CreatePen(SOLIDPEN, 0, GetSysColor(COLOR_BTNFACE));
-        os_pen = (HPEN)SelectObject(hdc, my_pen);
-
-
-        my_brush = GetSysColorBrush(COLOR_BTNFACE);
-        os_brush = (HBRUSH)SelectObject(hdc, my_brush);
-
-        Rectangle(hdc,
-            pen_scroll_button_width / 2,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
-            pen_scroll_button_width / 2 + pen_scroll_bar_width,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
-        Ellipse(hdc,
-            pen_scroll_button_width / 2 - pen_scroll_bar_height / 2,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
-            pen_scroll_button_width / 2 - pen_scroll_bar_height / 2 + pen_scroll_bar_height,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
-        Ellipse(hdc,
-            pen_scroll_button_width / 2 + pen_scroll_bar_width - pen_scroll_bar_height / 2,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2,
-            pen_scroll_button_width / 2 + pen_scroll_bar_width + pen_scroll_bar_height / 2,
-            (pen_scroll_wnd_height - pen_scroll_bar_height) / 2 + pen_scroll_bar_height);
+        // 비트맵 초기화
+        scroll_bar_bitmap_graphics->Clear(Gdiplus::Color(255, 253, 253, 255));
         
+        // 스크롤바 비트맵에 그리기
+        drawScrollBar();
+
+        //비트맵을 화면에 출력
+        hdc_graphics.DrawImage(scroll_bar_bitmap, 0, 0);
+
         // 펜 반지름 테스트 코드
         //WCHAR t[50];
         //wsprintf(t, L"현재 펜 반지름 %d", (int)pen_style->getRadius());
         //TextOut(hdc, 0, 0, t, wcslen(t));
 
-        SelectObject(hdc, os_pen);
-        SelectObject(hdc, os_brush);
-        drawScrollButton(hdc);
+
         EndPaint(hWnd, &ps);
     }
     break;
     case WM_DESTROY:
+        // 비트맵 삭제
+        deleteBitmap();
         PostQuitMessage(0);
         break;
     default:
@@ -215,18 +252,42 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
         
         // 펜 두께 변경 함수
         pen_style->settingPenStyle(pen_style->getSelectPen(), pen_width, pen_style->getPenColor());
-        InvalidateRect(hWnd, NULL, TRUE);
+        InvalidateRect(hWnd, NULL, FALSE);
 
     }
 }
 
-void PenScrollBar::drawScrollButton(HDC hdc)
+void PenScrollBar::drawScrollBar()
 {
-    Ellipse(hdc, 
-            scroll_button_x, 
-            (pen_scroll_wnd_height - pen_scroll_button_width) / 2,
-            scroll_button_x + pen_scroll_button_width, 
-            (pen_scroll_wnd_height - pen_scroll_button_width) / 2 + pen_scroll_button_width);
+    //스크롤바 버튼용 펜
+    Gdiplus::Pen button_pen(Gdiplus::Color::Black, 1);
+    Gdiplus::SolidBrush button_brush(Gdiplus::Color::White);
+
+    // 스크롤바용 그리기용 펜 생성, 양 끝을 둥글게 설정
+    Gdiplus::Pen bar_pen(Gdiplus::Color::Gray, 7);
+    bar_pen.SetStartCap(Gdiplus::LineCapRound);
+    bar_pen.SetEndCap(Gdiplus::LineCapRound);
+
+    // 스크롤바 그리기
+    scroll_bar_bitmap_graphics->DrawLine(&bar_pen, pen_scroll_button_width / 2,
+        pen_scroll_wnd_height / 2,
+        pen_scroll_button_width / 2 + pen_scroll_bar_width,
+        pen_scroll_wnd_height / 2
+    );
+
+    scroll_bar_bitmap_graphics->FillEllipse(&button_brush,
+        scroll_button_x,
+        (pen_scroll_wnd_height - pen_scroll_button_width) / 2,
+        pen_scroll_button_width,
+        pen_scroll_button_width);
+
+    scroll_bar_bitmap_graphics->DrawEllipse(&button_pen,
+        scroll_button_x,
+        (pen_scroll_wnd_height - pen_scroll_button_width) / 2,
+        pen_scroll_button_width,
+        pen_scroll_button_width);
+
+
 }
 
 

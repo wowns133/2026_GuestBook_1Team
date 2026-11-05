@@ -52,7 +52,10 @@ private:
 	//HBRUSH pen_scroll_background = nullptr; ///< PenScroll 버튼색 브러시 저장용 변수
 	HWND pen_scroll_hwnd = nullptr; ///< PenScroll 창 핸들
 
-
+	//------------------------------비트맵 관련 맴버 변수--------------------------//
+	Gdiplus::Bitmap* scroll_bar_bitmap = nullptr; ///< 더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
+	Gdiplus::Graphics* scroll_bar_bitmap_graphics = nullptr; ///< 비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
+	
 	//------------마우스 추적------------//
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
 
@@ -63,6 +66,23 @@ private:
 	*/
 	void setTrackMouseEvent(HWND hWnd);
 
+
+	//------------------비트맵 관리 함수----------------//
+	/**
+	* @brief 비트맵 생성, 크기 변경 함수
+	* @details 비트맵이 없을 땐 비트맵을 생성하고, 있을 경우는 크기를 변경하는 함수. WM_SIZE에서 실행하는 것을 상정한 함수이다.
+	* @param[in] lParam WM_SIZE에서 사용했을 경우 창 높이, 너비가 담겨 있는 변수. LOWORD(lParam) -> 너비, HIWORD(lParam) -> 높이
+	* @author challenjoy01
+	*/
+	void setupBitmap(LPARAM lParam);
+	/**
+	* @brief 비트맵 삭제 함수
+	* @details 비트맵 삭제 함수. WM_DESTROY에서 실행하는 것을 상정한 함수이다.
+	* @author challenjoy01
+	*/
+	void deleteBitmap();
+
+	
 
 	//-----------------스크롤바 함수-----------------//
 	/**
@@ -76,7 +96,7 @@ private:
 	* @details 스크롤바 버튼 그리기 함수
 	* @author challenjoy01
 	*/
-	void drawScrollButton(HDC hdc);
+	void drawScrollBar();
 
 	//------------------WndProc 함수---------------//
 	/**
