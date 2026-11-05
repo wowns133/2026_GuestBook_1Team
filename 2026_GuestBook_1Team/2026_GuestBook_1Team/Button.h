@@ -13,6 +13,9 @@
 #define BUTTON_STYLE_RECT_SHADOW 4
 #define BUTTON_STYLE_IMAGE 5
 
+#define DESIGN_WIDTH 1920    // 버튼 좌표를 정한 기준 가로 길이
+#define DESIGN_BTN_SIZE 40   // 기준 버튼 크기
+
 // 1. 펜 종류 (4종)
 #define CUSTOM_BUTTON_PEN_SOLID     101  ///< 기본펜
 #define CUSTOM_BUTTON_PEN_SPRAY     102  ///< 스프레이
@@ -63,6 +66,9 @@ struct ButtonData
 	Gdiplus::Color brush_color;
 	int button_style;
 	LPCWSTR image_path;
+
+	float x_pct;      // 창 너비 대비 x 위치 (%)
+	float size_pct;   // 창 너비 대비 버튼 크기 (%)
 };
 
 /**
@@ -84,8 +90,8 @@ private:
 	int active_func_id = -1;
 
 
-	void setButton(int button_id, LPCWSTR button_name, int x, int y, int width, int height, Gdiplus::Color pen_color, int pen_width, Gdiplus::Color brush_color, int button_style);
-	void setImageButton(int button_id, LPCWSTR button_name, int x, int y, int width, int height, LPCWSTR image_path); ///< 이미지 버튼 등록 함수 추가
+	void setButton(int button_id, LPCWSTR button_name, float x_pct, float size_pct, Gdiplus::Color pen_color, int pen_width, Gdiplus::Color brush_color, int button_style);
+	void setImageButton(int button_id, LPCWSTR button_name, float x_pct, float size_pct, LPCWSTR image_path); ///< 이미지 버튼 등록 함수 추가
 	ButtonData getButtonById(int button_id);
 	void drawButton(HDC hdc, int button_index);
 	void drawEllipseShadowButton(Gdiplus::Graphics& hdc_graphics, int button_index);

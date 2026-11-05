@@ -1,7 +1,7 @@
 #include "Button.h"
 
 
-void Button::setButton(int button_id, LPCWSTR button_name, int x, int y, int width, int height, Gdiplus::Color pen_color, int pen_width, Gdiplus::Color brush_color, int button_style)
+void Button::setButton(int button_id, LPCWSTR button_name, float x_pct, float size_pct, Gdiplus::Color pen_color, int pen_width, Gdiplus::Color brush_color, int button_style)
 {
 	for (int button_index = 0; button_index < button.size(); button_index++) //이미 같은 버튼 id가 있다면 실패하도록 제한
 	{
@@ -17,21 +17,20 @@ void Button::setButton(int button_id, LPCWSTR button_name, int x, int y, int wid
 	//데이터 입력
 	new_button.button_id = button_id;
 	new_button.button_name = button_name;
-	new_button.x = x;
-	new_button.y = y;
-	new_button.width = width;
-	new_button.height = height;
 	new_button.pen_color = pen_color; //펜을 사용하지 않는다면 Alpha 값을 0으로
 	new_button.pen_width = pen_width; //펜을 사용하지 않는다면 pen_width를 0으로
 	new_button.brush_color = brush_color;
 	new_button.button_style = button_style;
 	new_button.image_path = nullptr;
+	new_button.x_pct = x_pct;
+	new_button.size_pct = size_pct;
+	
 
 	//데이터 입력이 완료된 객체를 벡터에 저장
 	button.push_back(new_button);
 }
 
-void Button::setImageButton(int button_id, LPCWSTR button_name, int x, int y, int width, int height, LPCWSTR image_path)
+void Button::setImageButton(int button_id, LPCWSTR button_name, float x_pct, float size_pct, LPCWSTR image_path)
 {
 	for (int button_index = 0; button_index < button.size(); button_index++)
 	{
@@ -45,15 +44,14 @@ void Button::setImageButton(int button_id, LPCWSTR button_name, int x, int y, in
 
 	new_button.button_id = button_id;
 	new_button.button_name = button_name;
-	new_button.x = x;
-	new_button.y = y;
-	new_button.width = width;
-	new_button.height = height;
+	new_button.x_pct = x_pct;
+	new_button.size_pct = size_pct;
 	new_button.button_style = BUTTON_STYLE_IMAGE;
 	new_button.image_path = image_path;
 
 	button.push_back(new_button);
 }
+
 
 
 ButtonData Button::getButtonById(int button_id)
@@ -215,66 +213,34 @@ void Button::setAllButtons(HWND hWnd)
 	int client_height = rect.bottom - rect.top;
 	int button_y = (client_height - button_size) / 2;
 
-	setImageButton(
-		CUSTOM_BUTTON_PEN_SOLID,
-		L"기본펜", 20, 40, 40, 40,
-		L"assets\\pen_solid.png"
-	);
-	setImageButton(CUSTOM_BUTTON_PEN_SPRAY, L"스프레이", 70, 40, 40, 40, L"assets/pen_spray.png");
-	setImageButton(CUSTOM_BUTTON_PEN_BRUSH, L"붓펜", 120, 40, 40, 40, L"assets/pen_brush.png");
-	setImageButton(CUSTOM_BUTTON_PEN_HIGHLIGHT, L"형광펜", 180, 40, 40, 40, L"assets/pen_highlight.png");
+	setImageButton(CUSTOM_BUTTON_PEN_SOLID, L"기본펜", 1.0f, 2.5f, L"assets/pen_solid.png");
+	setImageButton(CUSTOM_BUTTON_PEN_SPRAY, L"스프레이", 4.0f, 2.5f, L"assets/pen_spray.png");
+	setImageButton(CUSTOM_BUTTON_PEN_BRUSH, L"붓펜", 7.0f, 2.5f, L"assets/pen_brush.png");
+	setImageButton(CUSTOM_BUTTON_PEN_HIGHLIGHT, L"형광펜", 10.0f, 2.5f, L"assets/pen_highlight.png");
 
-	setImageButton(CUSTOM_BUTTON_ERASER_STROKE, L"한획지우기", 1140, 40, 40, 40, L"assets/eraser_stroke.png");
-	setImageButton(CUSTOM_BUTTON_ERASER_ALL, L"전체지우기", 1200, 40, 40, 40, L"assets/eraser_all.png");
+	setImageButton(CUSTOM_BUTTON_ERASER_STROKE, L"한획지우기", 71.0f, 2.5f, L"assets/eraser_stroke.png");
+	setImageButton(CUSTOM_BUTTON_ERASER_ALL, L"전체지우기", 74.5f, 2.5f, L"assets/eraser_all.png");
 
-	setImageButton(CUSTOM_BUTTON_PLAY, L"재생", 1340, 40, 40, 40, L"assets/play.png");
-	setImageButton(CUSTOM_BUTTON_STOP, L"정지", 1400, 40, 40, 40, L"assets/stop.png");
+	setImageButton(CUSTOM_BUTTON_PLAY, L"재생", 81.0f, 2.5f, L"assets/play.png");
+	setImageButton(CUSTOM_BUTTON_STOP, L"정지", 84.5f, 2.5f, L"assets/stop.png");
 
-	setImageButton(CUSTOM_BUTTON_SAVE, L"저장", 1540, 40, 40, 40, L"assets/save.png");
-	setImageButton(CUSTOM_BUTTON_LOAD, L"불러오기", 1600, 40, 40, 40, L"assets/load.png");
+	setImageButton(CUSTOM_BUTTON_SAVE, L"저장", 91.0f, 2.5f, L"assets/save.png");
+	setImageButton(CUSTOM_BUTTON_LOAD, L"불러오기", 95.0f, 2.5f, L"assets/load.png");
 
-	// setButton으로 버튼을 등록합니다.
-	// button id는 겹치면 안됩니다.
-	setButton(
-		CUSTOM_BUTTON_RED,
-		L"빨간색",
-		350, 40, 40, 40,
-		Gdiplus::Color(0, 0, 0, 0), 0,
-		Gdiplus::Color(255, 255, 0, 0),
-		BUTTON_STYLE_ELLIPSE_SHADOW
-	);
-	setButton(
-		CUSTOM_BUTTON_BLACK,
-		L"검은색",
-		300, 40, 40, 40,
-		Gdiplus::Color(0, 0, 0, 0), 0,
-		Gdiplus::Color(255, 0, 0, 0),
-		BUTTON_STYLE_ELLIPSE_SHADOW
-	);
-	setButton(
-		CUSTOM_BUTTON_GREEN,
-		L"초록색",
-		400, 40, 40, 40,
-		Gdiplus::Color(0, 0, 0, 0), 0,
-		Gdiplus::Color(255, 0, 200, 0),
-		BUTTON_STYLE_ELLIPSE_SHADOW
-	);
-	setButton(
-		CUSTOM_BUTTON_BLUE,
-		L"파란색",
-		450, 40, 40, 40,
-		Gdiplus::Color(0, 0, 0, 0), 0,
-		Gdiplus::Color(255, 0, 0, 255),
-		BUTTON_STYLE_ELLIPSE_SHADOW
-	);
-	setButton(
-		CUSTOM_BUTTON_YELLOW,
-		L"노란색",
-		500, 40, 40, 40,
-		Gdiplus::Color(0, 0, 0, 0), 0,
-		Gdiplus::Color(255, 255, 255, 0),
-		BUTTON_STYLE_ELLIPSE_SHADOW
-	);
+	// setButton(ID, 이름, x 위치%, 크기%, 테두리색, 테두리두께, 채움색, 스타일)
+	setButton(CUSTOM_BUTTON_BLACK, L"검은색", 16.0f, 2.5f,
+		Gdiplus::Color(0, 0, 0, 0), 0, Gdiplus::Color(255, 0, 0, 0), BUTTON_STYLE_ELLIPSE_SHADOW);
+	setButton(CUSTOM_BUTTON_RED, L"빨간색", 19.0f, 2.5f,
+		Gdiplus::Color(0, 0, 0, 0), 0, Gdiplus::Color(255, 255, 0, 0), BUTTON_STYLE_ELLIPSE_SHADOW);
+	setButton(CUSTOM_BUTTON_GREEN, L"초록색", 22.0f, 2.5f,
+		Gdiplus::Color(0, 0, 0, 0), 0, Gdiplus::Color(255, 0, 200, 0), BUTTON_STYLE_ELLIPSE_SHADOW);
+	setButton(CUSTOM_BUTTON_BLUE, L"파란색", 25.0f, 2.5f,
+		Gdiplus::Color(0, 0, 0, 0), 0, Gdiplus::Color(255, 0, 0, 255), BUTTON_STYLE_ELLIPSE_SHADOW);
+	setButton(CUSTOM_BUTTON_YELLOW, L"노란색", 28.0f, 2.5f,
+		Gdiplus::Color(0, 0, 0, 0), 0, Gdiplus::Color(255, 255, 255, 0), BUTTON_STYLE_ELLIPSE_SHADOW);
+
+	resizeAllButtons(hWnd);
+	
 }
 
 
@@ -289,20 +255,32 @@ void Button::drawAllButtons(HDC hdc)
 
 void Button::resizeAllButtons(HWND hWnd)
 {
-	RECT rect; // RECT 자료형 선언
-	GetClientRect(hWnd, &rect); // hWnd 창의 클라이언트 크기를 rect에 저장
-	int button_height = 40; // 버튼의 높이
-	int client_height = rect.bottom - rect.top; // 클라이언트 높이
-	int button_y = (client_height - button_height) / 2; //창 전체 높이에서 버튼 높이를 뺀 위아래 여백 길이
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	int client_width = rect.right - rect.left;   // 창 가로 길이(px)
+	int client_height = rect.bottom - rect.top;  // 창 세로 길이(px)
+	if (client_width <= 0 || client_height <= 0) return;
 
-	for (int button_index = 0; button_index < button.size(); button_index++)
+	// 버튼이 UI 창 높이를 넘지 않도록 최대 크기 제한
+	int max_size = (int)(client_height * 0.8f);
+
+	for (int i = 0; i < (int)button.size(); i++)
 	{
-		button[button_index].y = button_y;
+
+		// 버튼 크기 = 창 너비 x (size_pct / 100)
+		// 예: 창 너비 1920, size_pct 2.5 -> 1920 x 0.025 = 48px
+		int size = (int)(client_width * button[i].size_pct / 100.0f + 0.5f);
+		if (size > max_size) size = max_size;
+
+		button[i].width = size;
+		button[i].height = size;
+
+		// 버튼 x 위치(왼쪽 모서리) = 창 너비 x (x_pct / 100)
+		// 예: 창 너비 1920, x_pct 91 -> 1920 x 0.91 = 약 1747px
+		button[i].x = (int)(client_width * button[i].x_pct / 100.0f + 0.5f);
+		button[i].y = (client_height - size) / 2;  // 버튼 y 위치 = (창 높이 - 버튼 크기) / 2 -> 위아래 여백이 같아져서 세로 가운데에 놓임
 	}
-
-
 }
-
 
 int Button::trackClick(LPARAM lParam)
 {
