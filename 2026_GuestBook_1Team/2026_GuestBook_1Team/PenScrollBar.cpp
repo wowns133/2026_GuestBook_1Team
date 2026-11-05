@@ -53,16 +53,15 @@ void PenScrollBar::setTrackMouseEvent(HWND hWnd)
 {
     if (!is_tracking_mouse)
     {
-        track_mouse = new TRACKMOUSEEVENT; //구조체 초기화
-        track_mouse->cbSize = sizeof(TRACKMOUSEEVENT);
-        track_mouse->dwFlags = TME_LEAVE; //창 벗어남을 감시함
-        track_mouse->hwndTrack = hWnd;
+        TRACKMOUSEEVENT track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
+        track_mouse.cbSize = sizeof(TRACKMOUSEEVENT);
+        track_mouse.dwFlags = TME_LEAVE; //창 벗어남을 감시함
+        track_mouse.hwndTrack = hWnd;
 
-        if (TrackMouseEvent(track_mouse)) //TrackMouseEvent 함수는 마우스 이벤트 추적을 시작하는 함수
+        if (TrackMouseEvent(&track_mouse)) //TrackMouseEvent 함수는 마우스 이벤트 추적을 시작하는 함수
         {
             is_tracking_mouse = true; //추척을 시작했을 경우 플래그 true
         }
-        delete track_mouse;
     }
 }
 

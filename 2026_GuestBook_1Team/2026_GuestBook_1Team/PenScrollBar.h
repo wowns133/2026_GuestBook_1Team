@@ -1,6 +1,10 @@
 #pragma once
 #include <Windows.h>
 #include "PenStyle.h"
+// gdiplus 사용을 위한 전처리문
+#include <unknwn.h>			// framework.h 내부 #define WIN32_LEAN_AND_MEAN로 인해 gdiplus에 필요한 몇몇 헤더들이 제외되어 직접 넣음 
+#include <gdiplus.h>
+#pragma comment(lib, "gdiplus.lib")
 
 // 창 ID 메크로 상수
 #define PEN_SCROLL_ID 1003 ///< PenScroll 창 상수 ID
@@ -51,7 +55,6 @@ private:
 
 	//------------마우스 추적------------//
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
-	TRACKMOUSEEVENT* track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
 
 	/**
 	* @brief 마우스가 창을 벗어나는 이벤트 감지를 시작하는 이벤트
