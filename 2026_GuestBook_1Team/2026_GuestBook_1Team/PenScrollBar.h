@@ -5,6 +5,8 @@
 #include <unknwn.h>			// framework.h 내부 #define WIN32_LEAN_AND_MEAN로 인해 gdiplus에 필요한 몇몇 헤더들이 제외되어 직접 넣음 
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
+#include "Draw.h"
+
 
 // 창 ID 메크로 상수
 #define PEN_SCROLL_ID 1003 ///< PenScroll 창 상수 ID
@@ -26,11 +28,17 @@
 class PenScrollBar
 {
 private:
-	PenStyle* pen_style; ///< 펜 스타일 변경을 위해 펜 스타일 객체 주소를 받아오는 포인터
-
 	static PenScrollBar* static_pen_scroll; ///< 클래스 내부의 static 함수에서 PenScrollBar 클래스를 사용하기 위한 PenScrollBar 클래스
 	static bool is_pen_scroll_created; ///< PenScrollBar가 이미 존재하는지 알려주는 플래그
 	HINSTANCE hInst = nullptr; ///< 인스턴스 핸들
+	HWND pen_scroll_hwnd = nullptr; ///< PenScroll 창 핸들
+
+	HBRUSH pen_scroll_background = nullptr; ///< PenScroll 창 배경색 브러시 저장용 변수
+	
+	//----------------------------------각종 크기 설정 관련 변수----------------------------------//
+	
+	// 현재 펜 표시 관련 변수
+	int pen_sample_width = 250; ///< 현재 펜의 상태를 보여줄 영역의 너비
 
 	// 스크롤바 관련 스타일 변수
 	int pen_scroll_wnd_x = 600;													///< penscroll 창 x 위치
@@ -43,19 +51,22 @@ private:
 	int pen_scroll_bar_width = (pen_max_radius - pen_min_radius) * pen_scroll_bar_ratio;			///< 스크롤바의 너비
 	int pen_scroll_button_width = 30;											///< 스크롤바 버튼 너비
 	
-	int pen_scroll_wnd_height = 80;						///< penscroll 창 높이
-	int pen_scroll_wnd_width = pen_scroll_bar_width + pen_scroll_button_width;	///< penscroll 창 너비
-	int is_click = 0;
-	int scroll_button_x = 0;
+	int pen_scroll_wnd_height = 80;												///< penscroll 창 높이
+	int pen_scroll_wnd_width = (pen_scroll_bar_width + pen_scroll_button_width) + 5 + pen_sample_width; ///< penscroll 창 너비(스크롤바가 차지할 범위 + 여유공간 + 펜 샘플 공간 너비)
+	int is_click = 0;															///< 클릭 중인지 나타내는 플래그 변수. 0 - 클릭 중 아님, 1 - 클릭 중
+	int scroll_button_x = 0;													///< 스크롤바 버튼의 x 좌표
 
-	HBRUSH pen_scroll_background = nullptr; ///< PenScroll 창 배경색 브러시 저장용 변수
-	//HBRUSH pen_scroll_background = nullptr; ///< PenScroll 버튼색 브러시 저장용 변수
-	HWND pen_scroll_hwnd = nullptr; ///< PenScroll 창 핸들
 
 	//------------------------------비트맵 관련 맴버 변수--------------------------//
 	Gdiplus::Bitmap* scroll_bar_bitmap = nullptr; ///< 더블 버퍼링 구현을 위한 Bitmap 객체 생성. 사용 후 삭제해야 함
 	Gdiplus::Graphics* scroll_bar_bitmap_graphics = nullptr; ///< 비트맵 출력을 담당할 Graphics 객체 생성. 사용 후 삭제해야 함
-	
+
+	//-----------------------------펜 샘플 관련 맴버 변수----------------------------//
+	Draw* draw_pointer = nullptr; ///< 현재 사용 중인 Draw 객체를 가져오기 위한 포인터
+	//PenStyle* pen_style; ///< 펜 스타일 변경을 위해 펜 스타일 객체 주소를 받아오는 포인터
+	//Gdiplus::Pen* pen_pointer = nullptr; ///< 현재 펜을 가져오기 위한 펜 포인터
+
+
 	//------------마우스 추적------------//
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
 
@@ -97,7 +108,7 @@ private:
 	* @author challenjoy01
 	*/
 	void drawScrollBar();
-
+	
 	//------------------WndProc 함수---------------//
 	/**
 	* @brief PenScrollRegisterClass에 등록할 WndProc
@@ -145,10 +156,24 @@ public:
 	*/
 	void setInst(HINSTANCE hInst);
 	/**
-	* @brief 펜 스타일 포인터 초기화 함수
-	* @details 펜 두께 변환을 위한 펜 스타일 포인터 초기화 함수. 상위 창의 WndProc의 WM_CREATE에서 실행하는 것을 추천한다.
+	* @brief 스크롤바 객체에 필요한 포인터를 초기화하는 함수
+	* @details 필요한 포인터를 초기화하는 함수. Draw 객체 포인터를 초기화한다. 상위 창의 WndProc의 WM_CREATE에서 실행하는 것을 추천한다.
 	* @author challenjoy01
 	*/
-	void setPenStyle(PenStyle* pen_style);
+	void setPointers(Draw* draw_pointer);
+	/**
+	* @brief 스크롤바 창 핸들 getter
+	* @details 스크롤바 창 핸들 getter
+	* @author challenjoy01
+	*/
+	HWND getScrollBarHandle();
+
+	//--------------------펜 샘플 관련 함수--------------//
+	/**
+	* @brief 펜 샘플 그리기 함수
+	* @details 펜 샘플 그리기 함수
+	* @author challenjoy01
+	*/
+	void drawPenSample();
 };
 

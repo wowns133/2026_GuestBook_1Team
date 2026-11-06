@@ -183,6 +183,9 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
         
         // 스크롤바 비트맵에 그리기
         drawScrollBar();
+        
+        // 현재 펜 상태 나타내기
+        drawPenSample();
 
         //비트맵을 화면에 출력
         hdc_graphics.DrawImage(scroll_bar_bitmap, 0, 0);
@@ -233,6 +236,12 @@ void PenScrollBar::setInst(HINSTANCE hInst)
 
 void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
 {
+    // 클릭한 위치가 펜 상태 보여주는 영역일 경우 실행 안함
+    if (LOWORD(lParam) > pen_scroll_wnd_width - pen_sample_width)
+    {
+        return;
+    }
+
     if (is_click == true)
     {
         int pen_width = 0; ///< 펜의 반지름
@@ -251,7 +260,9 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
         pen_width = scroll_button_x / pen_scroll_bar_ratio + pen_min_radius; 
         
         // 펜 두께 변경 함수
-        pen_style->settingPenStyle(pen_style->getSelectPen(), pen_width, pen_style->getPenColor());
+        draw_pointer->pen_style->settingPenStyle(draw_pointer->pen_style->getSelectPen(),
+                                                    pen_width,
+                                                draw_pointer->pen_style->getPenColor());
         InvalidateRect(hWnd, NULL, FALSE);
 
     }
@@ -286,12 +297,100 @@ void PenScrollBar::drawScrollBar()
         (pen_scroll_wnd_height - pen_scroll_button_width) / 2,
         pen_scroll_button_width,
         pen_scroll_button_width);
-
-
 }
 
 
-void PenScrollBar::setPenStyle(PenStyle* pen_style)
+void PenScrollBar::drawPenSample()
 {
-    this->pen_style = pen_style;
+    // 배경용 펜과 브러시
+    Gdiplus::Pen pen_sample_rect(Gdiplus::Color::LightGray, 1);
+    Gdiplus::SolidBrush pen_sample_background(Gdiplus::Color::White);
+
+    int drawing_pen = draw_pointer->pen_style->getSelectPen(); // 현재 펜 스타일을 저장
+
+    // 펜 샘플 배경 그리기(배경색)
+    scroll_bar_bitmap_graphics->FillRectangle(&pen_sample_background,
+        pen_scroll_wnd_width - pen_sample_width + 3,
+        10,
+        pen_sample_width - 4 - 10,
+        pen_scroll_wnd_height - 20
+    );
+    // 펜 샘플 배경 그리기(테두리)
+    scroll_bar_bitmap_graphics->DrawRectangle(&pen_sample_rect,
+        pen_scroll_wnd_width - pen_sample_width + 3,
+        10,
+        pen_sample_width - 4 - 10,
+        pen_scroll_wnd_height - 20
+    );
+
+
+    // 펜 스타일에 따라 다르게 그리기
+    // 일반 펜 또는 형광펜일 경우
+    if (drawing_pen == SOLIDPEN || drawing_pen == HIGHLIGHTERPEN) 
+    {
+        // 펜 상태 보여주기
+        scroll_bar_bitmap_graphics->DrawLine(draw_pointer->pen_pointer,
+            (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15),
+            pen_scroll_wnd_height / 2,
+            (int)(pen_scroll_wnd_width - draw_pointer->pen_style->getRadius() - 20),
+            pen_scroll_wnd_height / 2
+        );
+    }
+    else if (drawing_pen == SPRAYPEN) // 스프레이 펜일 경우
+    {
+        for(int point_x = (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15);
+            point_x < (int)(pen_scroll_wnd_width - draw_pointer->pen_style->getRadius() - 20);
+            point_x += 2)
+        {
+            /// 반지름 받아오기
+            int radius = draw_pointer->pen_style->getRadius();
+
+            /// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+            for (int i = 0; i < (radius * 4); i++)
+            {
+                /// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+                int rand_x = rand() % (radius * 2 + 1) - radius;
+                int rand_y = rand() % (radius * 2 + 1) - radius;
+
+                /// 원형 범위 밖이면 제외
+                if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+                {
+                    continue;
+                }
+
+                /// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+                int x = point_x + rand_x;
+                int y = pen_scroll_wnd_height / 2 + rand_y;
+
+                /// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+                scroll_bar_bitmap_graphics->FillEllipse(draw_pointer->brush_pointer, x, y, 2, 2);
+            }
+        }
+    }
+    else if (drawing_pen == BRUSHPEN) // 붓 펜일 경우
+    {
+        draw_pointer->fillBrushLine(scroll_bar_bitmap_graphics,
+            ((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15),
+            pen_scroll_wnd_height / 2,
+            draw_pointer->pen_style->getBrushPenRadius(),
+            (pen_scroll_wnd_width - draw_pointer->pen_style->getRadius() - 20),
+            pen_scroll_wnd_height / 2,
+            draw_pointer->pen_style->getBrushPenRadius() - 5
+        );
+    }
+}
+
+
+void PenScrollBar::setPointers(Draw* draw_pointer)
+{
+    //this->pen_style = pen_style;
+    //this->pen_pointer = pen_pointer;
+    this->draw_pointer = draw_pointer;
+}
+
+
+HWND PenScrollBar::getScrollBarHandle()
+{
+    return pen_scroll_hwnd;
 }
