@@ -182,7 +182,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
         //펜 두께 스크롤바 함수 세팅
         pen_scroll.createPenScrollWindows(hWnd);
-        pen_scroll.setPenStyle(draw->pen_style);
+        pen_scroll.setPointers(draw);
         
         // 화면 보호기 타이머 최초 설정
         SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
@@ -210,6 +210,13 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             button_id != CUSTOM_BUTTON_STOP)
         {
             break;
+        }
+
+        // button_id가 -1이 아니다 == 버튼을 눌렀다
+        if (button_id != -1)
+        {
+            // 스크롤바와 펜 샘플 화면 갱신
+            InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
         }
 
         // 버튼이 무엇인지에 따라 알맞게 처리
