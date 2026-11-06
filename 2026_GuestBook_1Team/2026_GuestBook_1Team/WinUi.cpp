@@ -213,7 +213,8 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
 
         // button_id가 -1이 아니다 == 버튼을 눌렀다
-        if (button_id != -1)
+        // 버튼을 눌렀고, 재생 관련 버튼을 누른게 아니라면 스크롤바 최신화
+        if (button_id != -1 && button_id != CUSTOM_BUTTON_PLAY && button_id != CUSTOM_BUTTON_STOP)
         {
             // 스크롤바와 펜 샘플 화면 갱신
             InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
