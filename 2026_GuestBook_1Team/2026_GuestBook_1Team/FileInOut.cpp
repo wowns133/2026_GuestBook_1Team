@@ -145,7 +145,35 @@ bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
     //불러온 데이터 복원 및 화면 다시 그리기
     drawObj.drawn_lines_data = temp_lines;
     drawObj.redrawAllLines(hWnd);
-    InvalidateRect(hWnd, NULL, TRUE);
+   
+
 
     return true;
 }
+
+FileInOut::FileListData FileInOut::GetFileList()
+{
+    FileListData list;   
+
+    // 폴더 안의 .bin 파일을 찾기 시작 (첫 파일 정보가 find_data에 담김)
+    WIN32_FIND_DATAW find_data;
+    HANDLE find_handle = FindFirstFileW(L"..\\2026_Draw_Data\\*.bin", &find_data);
+
+    // 폴더가 없거나 .bin 파일이 하나도 없으면 빈 목록 반환
+    if (find_handle == INVALID_HANDLE_VALUE) return list;
+
+    do
+    {
+        // 폴더가 아닌 파일만 담기
+        if (!(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            list.file_names.push_back(find_data.cFileName);
+        }
+    } while (FindNextFileW(find_handle, &find_data));   // 다음 파일로 이동, 없으면 false
+
+    FindClose(find_handle);   
+
+    list.file_count = (int)list.file_names.size();
+    return list;
+}
+
