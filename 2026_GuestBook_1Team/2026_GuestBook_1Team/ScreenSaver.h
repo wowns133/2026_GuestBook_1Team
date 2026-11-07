@@ -1,8 +1,14 @@
 #pragma once
 #include <Windows.h>
+#include <vector>
+#include <string>
+#include "Replay.h"
+#include "FileInOut.h"
+#include "Draw.h"
 
 #define SCREEN_SAVER_WINDOW_ID 1010 ///< 화면 보호기 창 ID
 #define SCREEN_SAVER_TIMER_ID 10 ///< 화면 보호기 타이머 ID
+#define SCREEN_SAVER_REPLAY_TIMER_ID 2 ///<리플레이 재생 타이머 ID
 
 #define SCREEN_SAVE_TIME_LIMIT 30 ///< 화면 보호기 실행까지의 걸리는 시간(초)
 
@@ -25,6 +31,12 @@
 class ScreenSaver
 {
 private:
+	Replay* replay = nullptr;///<현재 사용중인 리플레이 객체를 사용할 수 있도록 합니다
+	std::vector<std::wstring> fileList;///<파일 이름 목록을 저장하는 벡터
+	int currentFileIndex = 0;///<현재 재생할 파일의 인덱스
+	Draw screenSaverDraw;
+	FileInOut fileInOut;
+	void startScreenSaverReplay();
 	static ScreenSaver* static_screen_saver; ///< 클래스 내부의 static 함수에서 ScreenSaver 클래스를 사용하기 위한 ScreenSaver 클래스 포인터
 	static bool is_screen_saver_created; ///< ScreenSaver가 이미 존재하는지 알려주는 플래그
 	HINSTANCE hInst = nullptr; ///< 인스턴스 핸들
@@ -116,5 +128,7 @@ public:
 	* @author challenjoy01
 	*/
 	void resetScreenSaverTimer();
+
+	void setReplay(Replay* replay);
 };
 
