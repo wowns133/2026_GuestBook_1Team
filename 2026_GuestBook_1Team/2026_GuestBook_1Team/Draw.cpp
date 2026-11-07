@@ -171,12 +171,18 @@ void Draw::redrawAllLines(HWND hWnd)
 		{
 			if (drawn_lines_data[line_num].point_data.size() == 1) //점이 하나 뿐일 경우
 			{
-				drawn_bmp_graphics->DrawLine(pen_pointer,
-					(float)drawn_lines_data[line_num].point_data[0].point.x,
-					(float)drawn_lines_data[line_num].point_data[0].point.y,
-					(float)drawn_lines_data[line_num].point_data[0].point.x + 0.001f,
-					(float)drawn_lines_data[line_num].point_data[0].point.y
+				float x = (float)drawn_lines_data[line_num].point_data[0].point.x;
+				float y = (float)drawn_lines_data[line_num].point_data[0].point.y;
+				float brush_radius = pen_style->getBrushPenRadius();
+
+				drawn_bmp_graphics->FillEllipse(
+					brush_pointer,
+					x - brush_radius,
+					y - brush_radius,
+					brush_radius * 2,
+					brush_radius * 2
 				);
+
 				continue;
 			}//if
 			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
@@ -424,6 +430,17 @@ void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
 {
 	if (is_drawing)
 	{
+		wchar_t buffer[100];
+
+		swprintf_s(
+			buffer,
+			L"[drawingBrushPen] select_pen: %d, radius: %.1f, brush_radius: %.1f\n",
+			pen_style->getSelectPen(),
+			pen_style->getRadius(),
+			pen_style->getBrushPenRadius()
+		);
+
+		OutputDebugString(buffer);
 		/// 이동 후 현재 위치를 저장
 		current_x = LOWORD(lParam);
 		current_y = HIWORD(lParam);
@@ -693,8 +710,26 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 		{
 			if (drawn_lines_data.back().point_data.size() == 1)
 			{
-				drawn_bmp_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
-				draw_hdc_graphics->DrawLine(pen_pointer, (float)previous_x, (float)previous_y, (float)previous_x + 0.001f, (float)previous_y);
+				// 붓 펜의 현재 반지름 가져오기
+				float radius = pen_style->getBrushPenRadius();
+
+				// 비트맵에 점 출력
+				drawn_bmp_graphics->FillEllipse(
+					brush_pointer,
+					previous_x - radius,
+					previous_y - radius,
+					radius * 2,
+					radius * 2
+				);
+
+				// 화면에 점 출력
+				draw_hdc_graphics->FillEllipse(
+					brush_pointer,
+					previous_x - radius,
+					previous_y - radius,
+					radius * 2,
+					radius * 2
+				);
 			}
 		}
 	}
@@ -1012,7 +1047,6 @@ void Draw::selectDrawStyle()
 	else {
 		select_drawStyle = PEN_MODE_ER;
 	}
-
 
 	/// 변수 값 확인용
 	/*wchar_t buffer[100];
