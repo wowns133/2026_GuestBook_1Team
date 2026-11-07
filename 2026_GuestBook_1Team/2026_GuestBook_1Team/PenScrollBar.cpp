@@ -145,8 +145,18 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
     break;
     case WM_LBUTTONDOWN:
     {
+        // Replay 객체가 존재하고 Replay 실행 중이면 먼저 종료
+        if (replay != nullptr &&
+            replay->getReplayState() == replayStatePlaying)
+        {
+            replay->stopReplay();
+        }
+
+        // 마우스 추적 시작
         is_click = true;
         setTrackMouseEvent(hWnd);
+
+        // 스크롤바 버튼 옮기기
         setScrollButton(hWnd, lParam);
         break;
     }
@@ -192,7 +202,7 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
 
         // 펜 반지름 테스트 코드
         //WCHAR t[50];
-        //wsprintf(t, L"현재 펜 반지름 %d", (int)pen_style->getRadius());
+        //wsprintf(t, L"현재 펜 반지름 %d", (int)draw_pointer->pen_style->getRadius());
         //TextOut(hdc, 0, 0, t, wcslen(t));
 
 
@@ -382,11 +392,12 @@ void PenScrollBar::drawPenSample()
 }
 
 
-void PenScrollBar::setPointers(Draw* draw_pointer)
+void PenScrollBar::setPointers(Draw* draw_pointer, Replay* replay)
 {
     //this->pen_style = pen_style;
     //this->pen_pointer = pen_pointer;
-    this->draw_pointer = draw_pointer;
+    this->draw_pointer = draw_pointer; //외부에서 전달받은 Draw 객체의 주소를 멤버 포인터에 저장
+    this->replay = replay; //외부에서 전달받은 Replay 객체의 주소를 멤버 포인터에 저장
 }
 
 

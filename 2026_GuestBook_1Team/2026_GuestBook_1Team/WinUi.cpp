@@ -182,7 +182,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
         //펜 두께 스크롤바 함수 세팅
         pen_scroll.createPenScrollWindows(hWnd);
-        pen_scroll.setPointers(draw);
+        pen_scroll.setPointers(draw, &replay);
         
         // 화면 보호기 타이머 최초 설정
         SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
@@ -205,13 +205,15 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // 버튼 클릭을 추적해 클릭한 버튼이 있으면 버튼 ID를 저장
         int button_id = button.trackClick(lParam);
 
-        // 리플레이 중이고, 중단 버튼이 아니라면 무시
-        if (replay.getReplayState() == replayStatePlaying &&
-            button_id != CUSTOM_BUTTON_STOP)
-        {
-            break;
-        }
+        // 버튼이 무엇인지에 따라 알맞게 처리
+        if (button_id == -1) break;
 
+        // Replay 실행 중 다른 기능을 선택했다면 Replay 종료
+        if (replay.getReplayState() == replayStatePlaying &&
+            button_id != CUSTOM_BUTTON_PLAY)
+        {
+            replay.stopReplay();
+        }
         // button_id가 -1이 아니다 == 버튼을 눌렀다
         // 버튼을 눌렀고, 재생 관련 버튼을 누른게 아니라면 스크롤바 최신화
         if (button_id != -1 && button_id != CUSTOM_BUTTON_PLAY && button_id != CUSTOM_BUTTON_STOP)
@@ -220,8 +222,6 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
         }
 
-        // 버튼이 무엇인지에 따라 알맞게 처리
-        if (button_id == -1) break;
 
         if (button_id >= CUSTOM_BUTTON_PEN_SOLID && button_id <= CUSTOM_BUTTON_PEN_HIGHLIGHT)
         {
@@ -556,6 +556,11 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     break;
     case WM_LBUTTONDOWN:
     {
+        // Replay 실행 중이면 먼저 종료시키기
+        if (replay.getReplayState() == replayStatePlaying)
+        {
+            replay.stopReplay();
+        }
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
 

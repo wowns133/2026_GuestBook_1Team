@@ -6,6 +6,7 @@
 #include <gdiplus.h>
 #pragma comment(lib, "gdiplus.lib")
 #include "Draw.h"
+#include "Replay.h"
 
 
 // 창 ID 메크로 상수
@@ -69,6 +70,8 @@ private:
 
 	//------------마우스 추적------------//
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
+
+	Replay* replay = nullptr; ///<WinUi에 생성된 Replay 객체의 주소를 저장하는 포인터. 리플레이 중 스크롤바 클릭을 처리하는 용도
 
 	/**
 	* @brief 마우스가 창을 벗어나는 이벤트 감지를 시작하는 이벤트
@@ -160,7 +163,7 @@ public:
 	* @details 필요한 포인터를 초기화하는 함수. Draw 객체 포인터를 초기화한다. 상위 창의 WndProc의 WM_CREATE에서 실행하는 것을 추천한다.
 	* @author challenjoy01
 	*/
-	void setPointers(Draw* draw_pointer);
+	void setPointers(Draw* draw_pointer, Replay* replay);
 	/**
 	* @brief 스크롤바 창 핸들 getter
 	* @details 스크롤바 창 핸들 getter
