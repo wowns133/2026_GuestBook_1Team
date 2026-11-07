@@ -430,17 +430,6 @@ void Draw::drawingBrushPen(HWND hWnd, LPARAM lParam)
 {
 	if (is_drawing)
 	{
-		wchar_t buffer[100];
-
-		swprintf_s(
-			buffer,
-			L"[drawingBrushPen] select_pen: %d, radius: %.1f, brush_radius: %.1f\n",
-			pen_style->getSelectPen(),
-			pen_style->getRadius(),
-			pen_style->getBrushPenRadius()
-		);
-
-		OutputDebugString(buffer);
 		/// 이동 후 현재 위치를 저장
 		current_x = LOWORD(lParam);
 		current_y = HIWORD(lParam);
