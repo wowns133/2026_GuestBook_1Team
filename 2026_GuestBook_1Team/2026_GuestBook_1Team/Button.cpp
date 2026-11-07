@@ -247,10 +247,34 @@ void Button::setAllButtons(HWND hWnd)
 void Button::drawAllButtons(HDC hdc)
 {
 	// 벡터에 등록된 버튼을 그리기
-	for (int button_index = 0; button_index < button.size(); button_index++)
+	RECT rc;
+	GetClientRect(WindowFromDC(hdc), &rc);
+	int w = rc.right;
+	int h = rc.bottom;
+
+	// 화면 밖의 도화지(메모리 DC + 비트맵) 만들기
+	HDC mem_dc = CreateCompatibleDC(hdc);
+	HBITMAP mem_bmp = CreateCompatibleBitmap(hdc, w, h);
+	HBITMAP old_bmp = (HBITMAP)SelectObject(mem_dc, mem_bmp);
+
+	// 도화지에 배경과 버튼을 전부 그리기 (hdc가 아니라 mem_dc에)
+	HBRUSH bg_brush = CreateSolidBrush(RGB(253, 253, 255));
+	FillRect(mem_dc, &rc, bg_brush);
+	DeleteObject(bg_brush);
+
+	for (int i = 0; i < button.size(); i++)
 	{
-		drawButton(hdc, button_index);
+		drawButton(mem_dc, i);
 	}
+
+	// 완성된 그림을 화면에 한 번에 복사
+	BitBlt(hdc, 0, 0, w, h, mem_dc, 0, 0, SRCCOPY);
+
+	// 만든 것 정리
+	SelectObject(mem_dc, old_bmp);
+	DeleteObject(mem_bmp);
+	DeleteDC(mem_dc);
+
 }
 
 void Button::resizeAllButtons(HWND hWnd)
