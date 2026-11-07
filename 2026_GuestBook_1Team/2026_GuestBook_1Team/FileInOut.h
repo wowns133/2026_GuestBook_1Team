@@ -10,7 +10,7 @@ class Draw;
  */
 class FileInOut {
 
-   
+
 private:
     /**
      * @brief 파일 탐색기 다이얼로그 창을 띄우는 함수 (내부에서만 사용)
@@ -32,6 +32,8 @@ public:
      * @brief 탐색기를 띄우고 파일에서 그림 데이터를 불러오는 통합 함수
      */
     bool LoadFile(HWND hWnd, Draw& drawObj);
+
+    bool LoadFile(const std::wstring& filePath, Draw& drawObj);
 
     FileListData GetFileList();
 };
