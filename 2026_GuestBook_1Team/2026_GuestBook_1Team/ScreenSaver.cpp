@@ -221,6 +221,11 @@ void ScreenSaver::screenSaverTimer()
     // 남은 시간 -1
     screen_saver_time -= 1;
 
+    if (replay->getReplayState() == replayStatePlaying)
+    {
+        resetScreenSaverTimer();
+    }
+
     // 남은 시간이 없다면
     if (screen_saver_time <= 0)
     {
@@ -232,7 +237,7 @@ void ScreenSaver::screenSaverTimer()
         // 창 띄우기 전 또는 후에 확실하게 최상단 고정 및 크기 재확인
         // 원인을 알 수 없는 화면 보호기 크기 관련 버그가 있을 경우 사용하는 강제 조정 코드
         //SetWindowPos(screen_saver_hwnd, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
-        
+
         //창 켜짐 표시
         is_screen_saver_on = 1;
 
@@ -304,10 +309,3 @@ void ScreenSaver::startScreenSaverReplay()
     }
 
 }
-
-
-
-
-
-
-
