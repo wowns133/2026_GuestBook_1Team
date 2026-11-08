@@ -151,7 +151,7 @@ public:
 	* @param[in] hInstance 인스턴스 핸들
 	* @author challenjoy01
 	*/
-	void resizeWinUIWindows(LPARAM lParam);
+	void resizeWinUIWindows(HWND hWnd, LPARAM lParam);
 	/**
 	* @brief 프로세스 종료 전 창을 포함한 자원 회수를 위해 실행할 함수
 	* @details 프로세스 종료 전 창을 포함한 자원 회수를 위해 실행할 함수

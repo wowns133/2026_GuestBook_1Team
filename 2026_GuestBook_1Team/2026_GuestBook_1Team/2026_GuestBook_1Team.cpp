@@ -164,7 +164,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_SIZE:
     {
-        win_ui.resizeWinUIWindows(lParam);
+        win_ui.resizeWinUIWindows(hWnd, lParam);
     }
     break;
     case WM_COMMAND:

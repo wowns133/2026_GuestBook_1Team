@@ -101,19 +101,52 @@ void WinUi::createWinUIWindows(HWND hWnd)
     screen_saver.setOtherWindowsHandle(root_window_hwnd, main_ui_hwnd, canvas_hwnd);
 }
 
-void WinUi::resizeWinUIWindows(LPARAM lParam)
+void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
 {
+    //----------------------------------------사이즈 계산-------------------------------------//
+
+    // 현재 창이 위치한 모니터 핸들 가져오기 (어느 모니터에도 없으면 가장 가까운 모니터 선택)
+    // HMONITOR = 모니터의 핸들
+    // MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) = 지정한 창이(hWnd) 속해 있는 모니터의 핸들을 가져오는 함수
+    // MONITOR_DEFAULTTONEAREST = 창이 완전히 화면 밖에 있거나 모니터 사이 애매한 위치에 있을 때 가장 가까운 모니터를 선택하도록 설정
+    HMONITOR monitor_handle = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+
+    // 모니터 정보 구조체 선언 후 일단 0으로 초기화
+    // MONITORINFO = 모니터의 정보를 담는 구조체
+    MONITORINFO monitorInfo = { 0 };
+
+    // GetMonitorInfo 함수 실행 시 이 구조체가 MONITORINFO인지 MONITORINFOEX인지 판단하기 위한 구조체 크기 저장
+    // 이 과정이 없으면 GetMonitorInfo 함수는 크기 정보가 올바르지 않다고 판단해 실패한다(return 0).
+    monitorInfo.cbSize = sizeof(MONITORINFO);
+
+    // 모니터 크기를 저장할 변수 선언 및 초기화
+    int monitor_width = 0;
+    int monitor_height = 0;
+
+    // 모니터 정보 가져오기
+    // GetMonitorInfo(monitor_handle, &monitorInfo) = 특정 모니터의(monitor_handle) 실제 사양과 좌표 정보를 구해 모니터 정보 구조체에(monitorInfo) 저장하는 함수
+    if (GetMonitorInfo(monitor_handle, &monitorInfo)) {
+        // monitorInfo.rcMonitor = 모니터 전체의 좌표 정보를 담은 RECT 구조체
+        // 모니터의 전체 해상도 크기 계산 (큰 좌표 - 작은 좌표)
+        monitor_width = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+        monitor_height = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+    }
+
+
     // 현재 client의 크기 구하기
     int client_width = LOWORD(lParam); // client 가로 길이
     int client_height = HIWORD(lParam); // client 세로 길이
+
+
+    //--------------------------창 재배치--------------------------//
 
     // 메인 UI와 캔버스를 위아래로 배치
     int main_ui_height = client_height * MAIN_UI_HEIGHT_RATIO;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 
-    // 화면 보호기 창의 크기를 화면 전체로 재조정
-    MoveWindow(screen_saver_hwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), TRUE);
+    // 화면 보호기 창의 크기를 화면 전체로 재조정(여러 개의 모니터에 대응 가능)
+    MoveWindow(screen_saver_hwnd, 0, 0, monitor_width, monitor_height, TRUE);
 
     
     // 화면 보호기 창의 z-order을 맨 위로
