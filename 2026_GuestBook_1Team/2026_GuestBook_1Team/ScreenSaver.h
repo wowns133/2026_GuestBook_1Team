@@ -50,6 +50,8 @@ private:
 
 	int screen_saver_time = SCREEN_SAVE_TIME_LIMIT; ///< 화면 보호기 실행까지의 시간(초)
 	int is_first_mouse_move = 1; ///< 창 생성 후 첫 번째 mousemove 이벤트인지 판단하기 위한 변수. 1 - 첫 실행, 0 or under - 첫 실행이 아님
+	int screen_on_mouse_x = 0; ///< 화면 보호기가 켜진 순간의 마우스 x 좌표
+	int screen_on_mouse_y = 0; ///< 화면 보호기가 켜진 순간의 마우스 x 좌표
 	int is_screen_saver_on = 0; ///< 창이 켜져 있는지를 나타내는 플래그. 0 - 창 꺼짐, 1 - 창 켜짐
 	//------------------WndProc 함수---------------//
 	/**

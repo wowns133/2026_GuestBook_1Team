@@ -19,7 +19,7 @@ ScreenSaver::ScreenSaver()
     is_screen_saver_created = true; //객체 생성되었다고 표시
 
     static_screen_saver = this; // 이 객체의 주소를 저장
-    screen_saver_background = CreateSolidBrush(RGB(253, 253, 255)); // 배경 색 설정
+    screen_saver_background = CreateSolidBrush(RGB(255, 255, 255)); // 배경 색 설정
 }
 
 void ScreenSaver::setOtherWindowsHandle(HWND root_window_hwnd, HWND main_ui_hwnd, HWND canvas_hwnd)
@@ -58,20 +58,17 @@ ATOM ScreenSaver::ScreenSaverRegisterClass(HINSTANCE hInstance)
 
 HWND ScreenSaver::createScreenSaverWindow(HWND hWnd)
 {
-    RECT rect;
-    GetClientRect(hWnd, &rect);
-
     screen_saver_hwnd = CreateWindowExW(
-        0,        // 스타일
-        L"ScreenSaverWindowClassType",                   // RegisterClass에서 등록한 클래스 이름
-        nullptr,                                    // 창 상단 타이틀 바에 표시될 텍스트. 자식은 보통 없음
-        WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,    // 윈도우 스타일
-        rect.left, rect.top,                                       // 창이 나타날 처음 화면 위치 (x, y) - OS가 알아서 지정 
-        rect.right - rect.left, rect.bottom - rect.top,                            // 창의 처음 가로, 세로 크기 (Width, Height) 
-        hWnd,                                       // 부모 윈도우 핸들 
-        (HMENU)SCREEN_SAVER_WINDOW_ID,                          // 자식 윈도우 ID 
-        hInst,                                      // 프로그램의 인스턴스 핸들 
-        nullptr                                     // 추가 파라미터 
+        WS_EX_TOPMOST,                                                      // 스타일. z-order 최상단
+        L"ScreenSaverWindowClassType",                                      // RegisterClass에서 등록한 클래스 이름
+        nullptr,                                                            // 창 상단 타이틀 바에 표시될 텍스트. 자식은 보통 없음
+        WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,                       // 윈도우 스타일. 팝업 창 스타일.
+        0, 0,                                                               // 창이 나타날 처음 화면 위치 (x, y) - OS가 알아서 지정 
+        GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),       // 너비, 높이를 화면 크기에 맞게 설정 
+        hWnd,                                                               // 부모 윈도우 핸들 - 화면 보호기에서는 nullptr로 하는게 표준(독립 창)
+        nullptr,                                                            // 자식 윈도우 ID  - 화면 보호기에서는 nullptr로 하는게 표준(독립 창)
+        hInst,                                                              // 프로그램의 인스턴스 핸들 
+        nullptr                                                             // 추가 파라미터 
     );
 
     if (screen_saver_hwnd != nullptr)
@@ -183,13 +180,20 @@ LRESULT CALLBACK ScreenSaver::ScreenSaverWndProc(HWND hWnd, UINT message, WPARAM
     // WM_MOUSEMOVE는 창이 보이게 되었을 때 그 위치에 마우스가 있다면 직접 움직이지 않아도 반드시 1회 발생함
     case WM_MOUSEMOVE:
     {
-        // WM_MOUSEMOVE 최초 발생 시 무시하기
+        // WM_MOUSEMOVE 최초 발생 시 화면 보호기 발생 시의 마우스 좌표를 저장
         if (is_first_mouse_move == 1)
         {
+            screen_on_mouse_x = LOWORD(lParam);
+            screen_on_mouse_y = HIWORD(lParam);
             is_first_mouse_move -= 1;
             break;
         }
-        // WM_MOUSEMOVE 최초 발생이 아닐 경우 화면 보호기 창을 숨긴다.
+        // 움직이지 않은 상태의 마우스 좌표일 경우 WM_MOUSEMOVE를 무시
+        if (screen_on_mouse_x == LOWORD(lParam) && screen_on_mouse_y == HIWORD(lParam))
+        {
+            break;
+        }
+        // 화면 보호기 창을 숨긴다.
         hideScreenSaver();
     }
     case WM_PAINT:
@@ -225,6 +229,10 @@ void ScreenSaver::screenSaverTimer()
         // 창 띄우기
         ShowWindow(screen_saver_hwnd, SW_SHOW);
 
+        // 창 띄우기 전 또는 후에 확실하게 최상단 고정 및 크기 재확인
+        // 원인을 알 수 없는 화면 보호기 크기 관련 버그가 있을 경우 사용하는 강제 조정 코드
+        //SetWindowPos(screen_saver_hwnd, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
+        
         //창 켜짐 표시
         is_screen_saver_on = 1;
 
