@@ -99,6 +99,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
     screen_saver_hwnd = screen_saver.createScreenSaverWindow(hWnd);
     // screen_saver 객체의 내부 핸들 변수 세팅
     screen_saver.setOtherWindowsHandle(root_window_hwnd, main_ui_hwnd, canvas_hwnd);
+    screen_saver.setReplay(&replay);
 }
 
 void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
