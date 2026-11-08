@@ -249,8 +249,13 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             replay.stopReplay();
         }
         // button_id가 -1이 아니다 == 버튼을 눌렀다
-        // 버튼을 눌렀고, 재생 관련 버튼을 누른게 아니라면 스크롤바 최신화
-        if (button_id != -1 && button_id != CUSTOM_BUTTON_PLAY && button_id != CUSTOM_BUTTON_STOP)
+        // 펜 스타일이 바뀌는 버튼을 누른 것이라면 스크롤바 최신화
+        if (button_id != -1 && 
+            button_id != CUSTOM_BUTTON_PLAY && 
+            button_id != CUSTOM_BUTTON_STOP &&
+            button_id != CUSTOM_BUTTON_ERASER_STROKE &&
+            button_id != CUSTOM_BUTTON_ERASER_ALL &&
+            button_id != CUSTOM_BUTTON_SAVE)
         {
             // 스크롤바와 펜 샘플 화면 갱신
             InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
@@ -333,6 +338,8 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_LOAD:
         {
             file.LoadFile(canvas_hwnd, *draw);
+            // 파일 로드 후 바뀐 펜 스타일을 스크롤바에 적용
+            InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE); 
             //InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
         }
         break;

@@ -188,6 +188,10 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
         Gdiplus::Graphics hdc_graphics(hdc);
         hdc_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
+        // 스크롤바 조작이 아닌 방식으로 펜 크기가 바뀌었을 때를 대비한 스크롤바 위치 계산 코드
+        // 버튼의 x 좌표 = (펜 크기 - 펜 최소 크기) * 배수
+        scroll_button_x = (draw_pointer->pen_style->getRadius() - pen_min_radius) * pen_scroll_bar_ratio;
+
         // 비트맵 초기화
         scroll_bar_bitmap_graphics->Clear(Gdiplus::Color(255, 253, 253, 255));
         
