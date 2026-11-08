@@ -112,17 +112,18 @@ void WinUi::resizeWinUIWindows(LPARAM lParam)
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 
-    // 화면 보호기 창의 크기를 전체 창으로 재조정
-    MoveWindow(screen_saver_hwnd, 0, 0, client_width, client_height, TRUE);
+    // 화면 보호기 창의 크기를 화면 전체로 재조정
+    MoveWindow(screen_saver_hwnd, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), TRUE);
 
     
     // 화면 보호기 창의 z-order을 맨 위로
-    SetWindowPos(screen_saver_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    SetWindowPos(screen_saver_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 메인 UI 창의 z-order을 화면 보호기 창의 밑으로
     SetWindowPos(main_ui_hwnd, screen_saver_hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 캔버스 창의 z-order을 맨 아래로
     SetWindowPos(canvas_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
+    // 비트맵 크기 재조정
     draw->resizeBitmap(client_width, client_height);
 }
 
