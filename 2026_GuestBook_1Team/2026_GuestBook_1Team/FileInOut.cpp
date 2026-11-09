@@ -1,6 +1,8 @@
-﻿#include "FileInOut.h"
+﻿#include <Windows.h>
 #include <commdlg.h>
 #include <fstream>
+#include <vector>
+#include "FileInOut.h"
 #include "Draw.h"
 
 /**
@@ -88,64 +90,115 @@ bool FileInOut::SaveFile(HWND hWnd, Draw& drawObj) {
 /**
  * @brief 바이너리 파일에서 그림 데이터를 불러오는 함수
  */
-bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj) {
+bool FileInOut::LoadFile(HWND hWnd, Draw& drawObj)
+{
     wchar_t filePath[MAX_PATH] = L"";
 
-    // 불러오기용 탐색기 창을 띄우고 취소하면 바로 종료
-    if (!OpenFileDialog(hWnd, filePath, false)) {
+    // 파일 선택 대화상자
+    if (!OpenFileDialog(hWnd, filePath, false))
+    {
         return false;
     }
 
-    // 바이너리 읽기 모드(std::ios::binary)로 파일 열기
-    std::ifstream inFile(filePath, std::ios::binary);  ///< 선택한 경로의 바이너리 파일 열기
-
-    if (!inFile.is_open()) {                           ///< 파일이 안 열릴 경우 예외 처리
+    // 실제 데이터 읽기는 경로를 전달하는 함수에 맡김
+    if (!LoadFile(std::wstring(filePath), drawObj))
+    {
         MessageBox(hWnd, L"파일을 읽을 수 없습니다.", L"에러", MB_OK);
         return false;
     }
 
-    // 맨 앞에 저장된 전체 선 개수 읽기
-    size_t lineCount = 0;
-    inFile.read((char*)&lineCount, sizeof(lineCount));
-    if (inFile.fail()) {
-        inFile.close();
+    return true;
+}
+
+bool FileInOut::LoadFile(const std::wstring& filePath, Draw& drawObj)
+{
+    // 바이너리 읽기 모드로 파일 열기
+    std::ifstream inFile(filePath, std::ios::binary);
+
+    if (!inFile.is_open())
+    {
         return false;
     }
 
+    // 전체 선의 개수 읽기
+    size_t lineCount = 0;
+    inFile.read((char*)&lineCount, sizeof(lineCount));
 
-    std::vector<DrawLineData> temp_lines(lineCount);    /// 읽어온 선 개수만큼 임시 저장 공간 생성
-
-    // 5. 선 개수만큼 하나씩 읽기
-    for (int i = 0; i < lineCount; i++)
+    if (inFile.fail())
     {
-        DrawLineData& line = temp_lines[i];     /// 선을 채우기 위해 가져오기
+        return false;
+    }
 
-        // 저장했던 순서대로 펜 설정값 3개 읽기
+    // 읽어온 선을 임시로 저장할 공간
+    std::vector<DrawLineData> temp_lines(lineCount);
+
+    // 선 개수만큼 데이터 읽기
+    for (size_t i = 0; i < lineCount; i++)
+    {
+        DrawLineData& line = temp_lines[i];
+
+        // 펜 설정값 읽기
         inFile.read((char*)&line.is_pen, sizeof(line.is_pen));
         inFile.read((char*)&line.select_pen_style, sizeof(line.select_pen_style));
         inFile.read((char*)&line.select_color, sizeof(line.select_color));
 
-        // 이 선의 점 개수 읽어오기
-
+        // 점 개수 읽기
         size_t pointCount = 0;
         inFile.read((char*)&pointCount, sizeof(pointCount));
 
+        if (inFile.fail())
+        {
+            return false;
+        }
 
-        // 점 개수만큼 벡터 크기를 늘린 뒤 좌표 채우기
+        // 점 데이터 저장 공간 생성
+        line.point_data.resize(pointCount);
 
-        line.point_data.resize(pointCount); // 점을 담을 공간 생성
+        // 점 데이터 읽기
+        if (pointCount > 0)
+        {
+            inFile.read(
+                (char*)line.point_data.data(),
+                sizeof(DrawPointData) * pointCount
+            );
+        }
 
-        if (pointCount > 0) {
-            inFile.read((char*)line.point_data.data(), sizeof(DrawPointData) * pointCount);
+        if (inFile.fail())
+        {
+            return false;
         }
     }
 
-    inFile.close(); // 파일 읽기 완료 후 닫기
+    inFile.close();
 
-    //불러온 데이터 복원 및 화면 다시 그리기
+    // 읽어온 데이터를 Draw 객체에 저장
     drawObj.drawn_lines_data = temp_lines;
-    drawObj.redrawAllLines(hWnd);
-    InvalidateRect(hWnd, NULL, TRUE);
 
     return true;
+}
+
+FileInOut::FileListData FileInOut::GetFileList()
+{
+    FileListData list;
+
+    // 폴더 안의 .bin 파일을 찾기 시작 (첫 파일 정보가 find_data에 담김)
+    WIN32_FIND_DATAW find_data;
+    HANDLE find_handle = FindFirstFileW(L"..\\2026_Draw_Data\\*.bin", &find_data);
+
+    // 폴더가 없거나 .bin 파일이 하나도 없으면 빈 목록 반환
+    if (find_handle == INVALID_HANDLE_VALUE) return list;
+
+    do
+    {
+        // 폴더가 아닌 파일만 담기
+        if (!(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            list.file_names.push_back(find_data.cFileName);
+        }
+    } while (FindNextFileW(find_handle, &find_data));   // 다음 파일로 이동, 없으면 false
+
+    FindClose(find_handle);
+
+    list.file_count = (int)list.file_names.size();
+    return list;
 }
