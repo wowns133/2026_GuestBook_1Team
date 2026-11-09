@@ -121,8 +121,8 @@ void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
     monitorInfo.cbSize = sizeof(MONITORINFO);
 
     // 모니터 크기를 저장할 변수 선언 및 초기화
-    int monitor_width = 0;
-    int monitor_height = 0;
+    int monitor_width = 0;                      ///< 현재 모니터의 너비
+    int monitor_height = 0;                     ///< 현재 모니터의 높이
 
     // 모니터 정보 가져오기
     // GetMonitorInfo(monitor_handle, &monitorInfo) = 특정 모니터의(monitor_handle) 실제 사양과 좌표 정보를 구해 모니터 정보 구조체에(monitorInfo) 저장하는 함수
@@ -133,6 +133,8 @@ void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
         monitor_height = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
     }
 
+    int monitor_x = monitorInfo.rcMonitor.left; ///< 현재 모니터의 좌상단 x 좌표
+    int monitor_y = monitorInfo.rcMonitor.top;  ///< 현재 모니터의 좌상단 y 좌표
 
     // 현재 client의 크기 구하기
     int client_width = LOWORD(lParam); // client 가로 길이
@@ -147,7 +149,8 @@ void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 
     // 화면 보호기 창의 크기를 화면 전체로 재조정(여러 개의 모니터에 대응 가능)
-    MoveWindow(screen_saver_hwnd, 0, 0, monitor_width, monitor_height, TRUE);
+    // WS_POPUP 창이므로 x, y의 기준이 주 모니터의 좌상단입니다. 0, 0이 아닌 현재 윈도우의 좌상단을 x, y값으로 만들어야 한다.
+    MoveWindow(screen_saver_hwnd, monitor_x, monitor_y, monitor_width, monitor_height, TRUE);
 
     
     // 화면 보호기 창의 z-order을 맨 위로
