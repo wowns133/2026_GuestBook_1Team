@@ -57,6 +57,7 @@ struct DrawPointData
 	POINT point; ///< 좌표를 저장하는 변수
 	ULONGLONG elapsed_time; ///< 시간을 저장하는 변수
 	float radius; ///< 반지름을 저장하는 변수
+	int spray_index; ///< 스프레이 난수 배열의 행 인덱스를 저장하는 변수
 };
 /**
 * @brief 선의 데이터를 저장하기 위한 구조체
@@ -126,14 +127,14 @@ private:
 	bool is_tracking_mouse = false; ///< 마우스가 추적 중인지를 나타내는 변수 true이면 추적 중, false이면 추적 중이 아님을 나타냄
 	TRACKMOUSEEVENT* track_mouse; ///< 마우스의 움직임을 추적하기 위해 사용하는 구조체
 
+protected:
+
+public:
 
 	//----------------------------Pen-----------------------------//
 	Gdiplus::Pen* pen_pointer;				///< 펜 그리기에 사용 될 펜 포인터
 	Gdiplus::SolidBrush* brush_pointer;		///< 스프레이 그리기에 사용 될 브러시 포인터
 
-protected:
-
-public:
 	PenStyle* pen_style; ///< 펜 스타일 
 
 	bool is_pen = true; ///< 펜인지 지우개인지 구별하기 위한 변수. true일때 펜, false일때 지우개

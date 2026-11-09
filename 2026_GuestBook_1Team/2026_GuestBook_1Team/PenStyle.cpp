@@ -29,7 +29,10 @@ PenStyle::PenStyle()
 	start_timer(0),
 	anchor_point(0.0f, 0.0f),
 	pen(Gdiplus::Color(255, 0, 0, 0), (radius * 2)),
-	spray_brush(Gdiplus::Color(255,0,0,0))
+	spray_brush(Gdiplus::Color(255,0,0,0)),
+	spray_random_number_x{},
+	spray_random_number_y{},
+	spray_index(0)
 {
 	pen.SetStartCap(Gdiplus::LineCapRound);
 	pen.SetEndCap(Gdiplus::LineCapRound);
@@ -437,6 +440,57 @@ void PenStyle::setAnchorPoint(Gdiplus::PointF point)
 Gdiplus::PointF PenStyle::getAnchorPoint()
 {
 	return anchor_point;
+}
+
+/**
+* @file
+* @brief 스프레이 난수 생성 함수
+* WM_CREATE에서 한번 실행하며, 배열에 난수를 저장한다.
+*/
+void PenStyle::createSprayRandomNumber()
+{
+
+	for (int i = 0; i < 100; i++)
+	{
+		for (int j = 0; j < 125; j++)
+		{
+			spray_random_number_x[i][j] = rand();
+			spray_random_number_y[i][j] = rand();
+		}
+	}
+}
+
+/**
+* @file
+* @brief 스프레이 난수 반환 함수 getter
+* 생성된 난수의 포인터를 반환하는 함수
+*/
+unsigned short (*PenStyle::getSprayRandomNumberX())[125]
+{
+	return spray_random_number_x;
+}
+unsigned short (*PenStyle::getSprayRandomNumberY())[125]
+{
+	return spray_random_number_y;
+}
+
+/// 스프레이 인덱스의 값을 증가
+void PenStyle::sprayIndexUp()
+{
+	/// 스프레이 인덱스 증가
+	spray_index++;
+
+	/// 인덱스 값이 99 초과라면 0으로 초기화 ( 최대 인덱스 : 99 )
+	if (spray_index > 99)
+	{
+		spray_index = 0;
+	}
+}
+
+/// 스프레이 인덱스의 값을 반환 getter
+int PenStyle::getSprayIndex()
+{
+	return spray_index;
 }
 
 ///**

@@ -114,12 +114,18 @@ void Draw::redrawAllLines(HWND hWnd)
 			{
 				/// 반지름 받아오기
 				int radius = pen_style->getRadius();
+
+				/// 난수 배열 행 인덱스 받기
+				int spray_index = drawn_lines_data[line_num].point_data[0].spray_index;
+
 				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
 				for (int i = 0; i < (radius * 4); i++)
 				{
 					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
-					int rand_x = rand() % (radius * 2 + 1) - radius;
-					int rand_y = rand() % (radius * 2 + 1) - radius;
+					int rand_x = pen_style->getSprayRandomNumberX()[spray_index][i] %
+								(radius * 2 + 1) - radius;
+					int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] %
+								(radius * 2 + 1) - radius;
 
 					/// 원형 범위 밖이면 제외
 					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
@@ -142,12 +148,18 @@ void Draw::redrawAllLines(HWND hWnd)
 			{
 				/// 반지름 받아오기
 				int radius = pen_style->getRadius();
+
+				/// 난수 배열 행 인덱스 받기
+				int spray_index = drawn_lines_data[line_num].point_data[point_num].spray_index;
+
 				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
 				for (int i = 0; i < (radius * 4); i++)
 				{
 					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
-					int rand_x = rand() % (radius * 2 + 1) - radius;
-					int rand_y = rand() % (radius * 2 + 1) - radius;
+					int rand_x = pen_style->getSprayRandomNumberX()[spray_index][i] %
+								(radius * 2 + 1) - radius;
+					int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] %
+								(radius * 2 + 1) - radius;
 
 					/// 원형 범위 밖이면 제외
 					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
@@ -253,7 +265,15 @@ void Draw::startDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 		drawn_lines_data.push_back({ TRUE, pen_style->getSelectPen(), pen_style->getPenColor() });
 
 		//현재 좌표를 선의 시작점으로 저장
-		drawn_lines_data.back().point_data.push_back({ {previous_x, previous_y}, start_time, pen_style->getRadius() });
+		if (select_drawStyle == PEN_MODE_SPRAY_BRUSH)	/// 스프레이라면 난수 배열 행 인덱스 저장
+		{
+			drawn_lines_data.back().point_data.push_back({ {previous_x, previous_y}, start_time, pen_style->getRadius(),pen_style->getSprayIndex() });
+		}
+		else
+		{
+			drawn_lines_data.back().point_data.push_back({ {previous_x, previous_y}, start_time, pen_style->getRadius() });
+		}
+		
 
 		//그리는 중이라고 플래그 표시
 		is_drawing = true;
@@ -379,8 +399,14 @@ void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
 
 		ULONGLONG elapsed_time = GetTickCount64() - start_time; // 경과 시간 계산
 
+		/// 반지름 받아오기
+		int radius = pen_style->getRadius();
 
-		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getRadius() }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
+		/// 난수 배열 행 인덱스 받기
+		int spray_index = pen_style->getSprayIndex();
+
+
+		drawn_lines_data.back().point_data.push_back({ {current_x, current_y}, elapsed_time, pen_style->getRadius(),spray_index }); // 이번 점에 대한 데이터를 데이터 저장용 구조체에 저장
 		line_path->AddLine(previous_x, previous_y, current_x, current_y); // 이번에 그릴 부분을 그리기용 path에 저장
 
 		//--------------비트맵에 그리기--------------//
@@ -390,15 +416,14 @@ void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
 		/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
 		//srand((unsigned)time(NULL));
 
-		/// 반지름 받아오기
-		int radius = pen_style->getRadius();
-
 		/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
 		for (int i = 0; i < (radius * 4); i++)
 		{
 			/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
-			int rand_x = rand() % (radius * 2 + 1) - radius;
-			int rand_y = rand() % (radius * 2 + 1) - radius;
+			int rand_x =  pen_style->getSprayRandomNumberX()[spray_index][i] %
+						(radius * 2 + 1) - radius;
+			int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] % 
+						(radius * 2 + 1) - radius;
 
 			/// 원형 범위 밖이면 제외
 			if (rand_x * rand_x + rand_y * rand_y > radius * radius)
@@ -415,6 +440,9 @@ void Draw::drawingBrush(HWND hWnd, LPARAM lParam)
 			draw_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
 			drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
 		}
+
+		/// 난수배열 행 인덱스 증가시키기
+		pen_style->sprayIndexUp();
 
 
 		//-----------------국소 범위 화면 출력-----------------//
@@ -749,12 +777,17 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 				/// 반지름 받아오기
 				int radius = pen_style->getRadius();
 
+				/// 난수 배열 행 인덱스 받기
+				int spray_index = drawn_lines_data.back().point_data.back().spray_index;
+
 				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
 				for (int i = 0; i < (radius * 4); i++)
 				{
 					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
-					int rand_x = rand() % (radius * 2 + 1) - radius;
-					int rand_y = rand() % (radius * 2 + 1) - radius;
+					int rand_x = pen_style->getSprayRandomNumberX()[spray_index][i] % 
+								(radius * 2 + 1) - radius;
+					int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] % 
+								(radius * 2 + 1) - radius;
 
 					/// 원형 범위 밖이면 제외
 					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
@@ -772,6 +805,9 @@ void Draw::endDrawingLine(HWND hWnd, LPARAM lParam, int pen_mode)
 					drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
 					draw_hdc_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
 				}
+
+				/// 난수 배열 행 인덱스 증가
+				pen_style->sprayIndexUp();
 				
 				
 			}

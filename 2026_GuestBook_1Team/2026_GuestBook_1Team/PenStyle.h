@@ -53,6 +53,9 @@ private:
 	PenColor pen_color;					///< 펜 색깔 클래스 변수
 	Gdiplus::Pen pen;					///< gdiplus 기본펜 색상 및 두께 지정 클래스 변수
 	Gdiplus::SolidBrush spray_brush;	///< gdiplus 브러시 스프레이 색상 정하는 클래스 변수
+	unsigned short spray_random_number_x[100][125];	///< 스프레이의 x좌표 난수를 저장하는 배열
+	unsigned short spray_random_number_y[100][125];	///< 스프레이의 y좌표 난수를 저장하는 배열
+	int spray_index;								///< 스프레이 난수 배열의 행 인덱스를 저장하는 변수
 
 
 public:
@@ -127,6 +130,20 @@ public:
 	/// 붓 펜 한곳에 멈췄을 때 기준이 되는 기준점 setter/getter
 	void setAnchorPoint(Gdiplus::PointF point);
 	Gdiplus::PointF getAnchorPoint();
+
+	/// 스프레이 난수 생성 함수
+	void createSprayRandomNumber();
+
+	/// 스프레이 난수 배열 포인터 반환 함수
+	unsigned short (*getSprayRandomNumberX())[125];
+	unsigned short (*getSprayRandomNumberY())[125];
+
+	/// 스프레이 인덱스의 값을 증가
+	void sprayIndexUp();
+
+	/// 스프레이 인덱스의 값을 반환 getter
+	int getSprayIndex();
+
 
 
 
