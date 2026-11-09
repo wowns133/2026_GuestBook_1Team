@@ -162,6 +162,9 @@ void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
 
     // 비트맵 크기 재조정
     draw->resizeBitmap(client_width, client_height);
+
+    // 스크롤바 재조정
+    pen_scroll.resizePenScrollBar(main_ui_hwnd);
 }
 
 void WinUi::resetScreenSaverTimer()

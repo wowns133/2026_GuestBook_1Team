@@ -233,7 +233,7 @@ void PenScrollBar::createPenScrollWindows(HWND hWnd)
         L"PenScrollWindowClassType",                   // RegisterClass에서 등록한 클래스 이름
         nullptr, // 창 상단 타이틀 바에 표시될 텍스트. 
         WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, // 윈도우 스타일 (자식 창임 | 생성 즉시 화면에 보이도록 | 부모 창이 내 영역 제외하고 그리기)
-        pen_scroll_wnd_x, pen_scroll_wnd_y, // 창이 나타날 처음 화면 위치 (X, Y) - OS가 알아서 지정 
+        pen_scroll_wnd_x, pen_scroll_wnd_y, // 창이 나타날 처음 화면 위치
         pen_scroll_wnd_width, pen_scroll_wnd_height, // 창의 처음 가로, 세로 크기 (Width, Height) - OS가 알아서 지정 
         hWnd, // 부모 윈도우 핸들 
         (HMENU)PEN_SCROLL_ID, // 메뉴 핸들 
@@ -408,4 +408,32 @@ void PenScrollBar::setPointers(Draw* draw_pointer, Replay* replay)
 HWND PenScrollBar::getScrollBarHandle()
 {
     return pen_scroll_hwnd;
+}
+
+void PenScrollBar::resizePenScrollBar(HWND hWnd)
+{
+    RECT rect;
+    GetClientRect(hWnd, &rect);
+    int rect_width = rect.right - rect.left;
+    int rect_height = rect.bottom - rect.top;
+
+    // 시작 위치 = 부모 창 크기 * 비율
+    pen_scroll_wnd_x = (int)(rect_width * wnd_start_x_ratio);
+    pen_scroll_wnd_y = (rect_height - pen_scroll_wnd_height) / 2;
+
+    // 스크롤바 창 너비 = 창 끝나는 위치 - 창 시작하는 위치
+    pen_scroll_wnd_width = (int)((rect_width * wnd_end_x_ratio) - pen_scroll_wnd_x);
+    // 스크롤바 배율 = 스크롤바 창의 반(스크롤바 영역) / 스크롤바 배수(펜 두께 최대 - 최소) --> 나머지는 버림 처리
+    pen_scroll_bar_ratio = (int)((pen_scroll_wnd_width - pen_scroll_button_width) / 2) / (pen_max_radius - pen_min_radius);
+    // 스크롤바 길이 = 스크롤바 배수 * 배율
+    pen_scroll_bar_width = (pen_max_radius - pen_min_radius) * pen_scroll_bar_ratio;
+
+
+    // 현재 펜 표시 관련 변수
+    pen_sample_width = (pen_scroll_wnd_width / 2) - 5; ///< 현재 펜의 상태를 보여줄 영역의 너비
+
+    // 스크롤바 관련 스타일 변수
+
+    MoveWindow(pen_scroll_hwnd, pen_scroll_wnd_x, pen_scroll_wnd_y, pen_scroll_wnd_width, pen_scroll_wnd_height, TRUE);
+    InvalidateRect(pen_scroll_hwnd, NULL, FALSE);
 }
