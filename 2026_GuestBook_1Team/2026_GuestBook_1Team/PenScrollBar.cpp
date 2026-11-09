@@ -387,10 +387,10 @@ void PenScrollBar::drawPenSample()
         draw_pointer->fillBrushLine(scroll_bar_bitmap_graphics,
             ((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15),
             pen_scroll_wnd_height / 2,
-            draw_pointer->pen_style->getBrushPenRadius(),
+            draw_pointer->pen_style->getRadius(),
             (pen_scroll_wnd_width - draw_pointer->pen_style->getRadius() - 20),
             pen_scroll_wnd_height / 2,
-            draw_pointer->pen_style->getBrushPenRadius() - 5
+            draw_pointer->pen_style->getRadius() - 5
         );
     }
 }
