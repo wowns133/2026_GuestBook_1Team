@@ -99,30 +99,65 @@ void WinUi::createWinUIWindows(HWND hWnd)
     screen_saver_hwnd = screen_saver.createScreenSaverWindow(hWnd);
     // screen_saver 객체의 내부 핸들 변수 세팅
     screen_saver.setOtherWindowsHandle(root_window_hwnd, main_ui_hwnd, canvas_hwnd);
+    screen_saver.setReplay(&replay);
 }
 
-void WinUi::resizeWinUIWindows(LPARAM lParam)
+void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
 {
+    //----------------------------------------사이즈 계산-------------------------------------//
+
+    // 현재 창이 위치한 모니터 핸들 가져오기 (어느 모니터에도 없으면 가장 가까운 모니터 선택)
+    // HMONITOR = 모니터의 핸들
+    // MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) = 지정한 창이(hWnd) 속해 있는 모니터의 핸들을 가져오는 함수
+    // MONITOR_DEFAULTTONEAREST = 창이 완전히 화면 밖에 있거나 모니터 사이 애매한 위치에 있을 때 가장 가까운 모니터를 선택하도록 설정
+    HMONITOR monitor_handle = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+
+    // 모니터 정보 구조체 선언 후 일단 0으로 초기화
+    // MONITORINFO = 모니터의 정보를 담는 구조체
+    MONITORINFO monitorInfo = { 0 };
+
+    // GetMonitorInfo 함수 실행 시 이 구조체가 MONITORINFO인지 MONITORINFOEX인지 판단하기 위한 구조체 크기 저장
+    // 이 과정이 없으면 GetMonitorInfo 함수는 크기 정보가 올바르지 않다고 판단해 실패한다(return 0).
+    monitorInfo.cbSize = sizeof(MONITORINFO);
+
+    // 모니터 크기를 저장할 변수 선언 및 초기화
+    int monitor_width = 0;
+    int monitor_height = 0;
+
+    // 모니터 정보 가져오기
+    // GetMonitorInfo(monitor_handle, &monitorInfo) = 특정 모니터의(monitor_handle) 실제 사양과 좌표 정보를 구해 모니터 정보 구조체에(monitorInfo) 저장하는 함수
+    if (GetMonitorInfo(monitor_handle, &monitorInfo)) {
+        // monitorInfo.rcMonitor = 모니터 전체의 좌표 정보를 담은 RECT 구조체
+        // 모니터의 전체 해상도 크기 계산 (큰 좌표 - 작은 좌표)
+        monitor_width = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+        monitor_height = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+    }
+
+
     // 현재 client의 크기 구하기
     int client_width = LOWORD(lParam); // client 가로 길이
     int client_height = HIWORD(lParam); // client 세로 길이
+
+
+    //--------------------------창 재배치--------------------------//
 
     // 메인 UI와 캔버스를 위아래로 배치
     int main_ui_height = client_height * MAIN_UI_HEIGHT_RATIO;
     MoveWindow(canvas_hwnd, 0, main_ui_height, client_width, client_height - main_ui_height, TRUE);
     MoveWindow(main_ui_hwnd, 0, 0, client_width, main_ui_height, TRUE);
 
-    // 화면 보호기 창의 크기를 전체 창으로 재조정
-    MoveWindow(screen_saver_hwnd, 0, 0, client_width, client_height, TRUE);
+    // 화면 보호기 창의 크기를 화면 전체로 재조정(여러 개의 모니터에 대응 가능)
+    MoveWindow(screen_saver_hwnd, 0, 0, monitor_width, monitor_height, TRUE);
 
     
     // 화면 보호기 창의 z-order을 맨 위로
-    SetWindowPos(screen_saver_hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    SetWindowPos(screen_saver_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 메인 UI 창의 z-order을 화면 보호기 창의 밑으로
     SetWindowPos(main_ui_hwnd, screen_saver_hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 캔버스 창의 z-order을 맨 아래로
     SetWindowPos(canvas_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
+    // 비트맵 크기 재조정
     draw->resizeBitmap(client_width, client_height);
 }
 
@@ -182,7 +217,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
         //펜 두께 스크롤바 함수 세팅
         pen_scroll.createPenScrollWindows(hWnd);
-        pen_scroll.setPenStyle(draw->pen_style);
+        pen_scroll.setPointers(draw, &replay);
         
         // 화면 보호기 타이머 최초 설정
         SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
@@ -205,15 +240,28 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // 버튼 클릭을 추적해 클릭한 버튼이 있으면 버튼 ID를 저장
         int button_id = button.trackClick(lParam);
 
-        // 리플레이 중이고, 중단 버튼이 아니라면 무시
-        if (replay.getReplayState() == replayStatePlaying &&
-            button_id != CUSTOM_BUTTON_STOP)
-        {
-            break;
-        }
-
         // 버튼이 무엇인지에 따라 알맞게 처리
         if (button_id == -1) break;
+
+        // Replay 실행 중 다른 기능을 선택했다면 Replay 종료
+        if (replay.getReplayState() == replayStatePlaying &&
+            button_id != CUSTOM_BUTTON_PLAY)
+        {
+            replay.stopReplay();
+        }
+        // button_id가 -1이 아니다 == 버튼을 눌렀다
+        // 펜 스타일이 바뀌는 버튼을 누른 것이라면 스크롤바 최신화
+        if (button_id != -1 && 
+            button_id != CUSTOM_BUTTON_PLAY && 
+            button_id != CUSTOM_BUTTON_STOP &&
+            button_id != CUSTOM_BUTTON_ERASER_STROKE &&
+            button_id != CUSTOM_BUTTON_ERASER_ALL &&
+            button_id != CUSTOM_BUTTON_SAVE)
+        {
+            // 스크롤바와 펜 샘플 화면 갱신
+            InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+        }
+
 
         if (button_id >= CUSTOM_BUTTON_PEN_SOLID && button_id <= CUSTOM_BUTTON_PEN_HIGHLIGHT)
         {
@@ -230,7 +278,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             button.setEraserMode(true);
         }
 
-        InvalidateRect(hWnd, NULL, TRUE);
+        InvalidateRect(hWnd, NULL, FALSE);
  
 
         switch (button_id)
@@ -291,7 +339,9 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_LOAD:
         {
             file.LoadFile(canvas_hwnd, *draw);
-            InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
+            // 파일 로드 후 바뀐 펜 스타일을 스크롤바에 적용
+            InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE); 
+            //InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
         }
         break;
         case CUSTOM_BUTTON_RED:
@@ -548,6 +598,11 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     break;
     case WM_LBUTTONDOWN:
     {
+        // Replay 실행 중이면 먼저 종료시키기
+        if (replay.getReplayState() == replayStatePlaying)
+        {
+            replay.stopReplay();
+        }
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
 
