@@ -94,7 +94,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
         hInst, // 이 창을 만드는 프로그램의 인스턴스 핸들 
         nullptr // 추가 파라미터 
     );
-    
+
     // 화면 보호기 창 생성
     screen_saver_hwnd = screen_saver.createScreenSaverWindow(hWnd);
     // screen_saver 객체의 내부 핸들 변수 세팅
@@ -152,7 +152,7 @@ void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
     // WS_POPUP 창이므로 x, y의 기준이 주 모니터의 좌상단입니다. 0, 0이 아닌 현재 윈도우의 좌상단을 x, y값으로 만들어야 한다.
     MoveWindow(screen_saver_hwnd, monitor_x, monitor_y, monitor_width, monitor_height, TRUE);
 
-    
+
     // 화면 보호기 창의 z-order을 맨 위로
     SetWindowPos(screen_saver_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     // 메인 UI 창의 z-order을 화면 보호기 창의 밑으로
@@ -224,7 +224,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         //펜 두께 스크롤바 함수 세팅
         pen_scroll.createPenScrollWindows(hWnd);
         pen_scroll.setPointers(draw, &replay);
-        
+
         // 화면 보호기 타이머 최초 설정
         SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
     }
@@ -250,15 +250,15 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         if (button_id == -1) break;
 
         // Replay 실행 중 다른 기능을 선택했다면 Replay 종료
-        if (replay.getReplayState() == replayStatePlaying &&
-            button_id != CUSTOM_BUTTON_PLAY)
-        {
-            replay.stopReplay();
-        }
+        //if (replay.getReplayState() == replayStatePlaying &&
+        //    button_id != CUSTOM_BUTTON_PLAY)
+        //{
+        //    replay.stopReplay();
+        //}
         // button_id가 -1이 아니다 == 버튼을 눌렀다
         // 펜 스타일이 바뀌는 버튼을 누른 것이라면 스크롤바 최신화
-        if (button_id != -1 && 
-            button_id != CUSTOM_BUTTON_PLAY && 
+        if (button_id != -1 &&
+            button_id != CUSTOM_BUTTON_PLAY &&
             button_id != CUSTOM_BUTTON_STOP &&
             button_id != CUSTOM_BUTTON_ERASER_STROKE &&
             button_id != CUSTOM_BUTTON_ERASER_ALL &&
@@ -285,7 +285,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         }
 
         InvalidateRect(hWnd, NULL, FALSE);
- 
+
 
         switch (button_id)
         {
@@ -335,6 +335,11 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_STOP:
         {
             replay.stopReplay();
+            // 재생 대상 창 갱신
+            if (canvas_hwnd != NULL)
+            {
+                InvalidateRect(canvas_hwnd, NULL, FALSE);
+            }
         }
         break;
         case CUSTOM_BUTTON_SAVE:
@@ -344,10 +349,26 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         break;
         case CUSTOM_BUTTON_LOAD:
         {
-            file.LoadFile(canvas_hwnd, *draw);
-            // 파일 로드 후 바뀐 펜 스타일을 스크롤바에 적용
-            InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE); 
-            //InvalidateRect(canvas_hwnd, NULL, TRUE); // 파일 로드 후 캔버스 갱신
+            std::wstring filePath;
+
+            //파일 선택 창 실행 (기존 Replay는 계속 실행)
+            if (!file.SelectLoadFile(canvas_hwnd, filePath))
+                break;
+
+            //파일 선택이 완료된 시점에 기존 Replay 종료
+            replay.stopReplay();
+
+            //선택한 파일 데이터 로드
+            bool isLoaded = file.LoadFile(filePath, *draw);
+
+            if (isLoaded)
+            {
+                //펜 스타일 스크롤바 갱신
+                InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+
+                //새 파일 Replay 실행
+                replay.startReplay(*draw, canvas_hwnd);
+            }
         }
         break;
         case CUSTOM_BUTTON_RED:
@@ -608,6 +629,7 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         if (replay.getReplayState() == replayStatePlaying)
         {
             replay.stopReplay();
+            InvalidateRect(canvas_hwnd, NULL, FALSE);
         }
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
