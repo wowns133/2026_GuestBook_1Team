@@ -212,15 +212,18 @@ void Replay::runReplay()
             {
                 int sprayRadius = (int)points[0].radius;
 
+                /// 난수 배열 행 인덱스 받기
+                int spray_index = points[0].spray_index;
+
                 std::vector<Point> sprayPoints;
 
                 for (int k = 0; k < sprayRadius * 4; k++)
                 {
-                    int rand_x =
-                        rand() % (sprayRadius * 2 + 1) - sprayRadius;
+                    int rand_x = drawObj->pen_style->getSprayRandomNumberX()[spray_index][k]
+                        % (sprayRadius * 2 + 1) - sprayRadius;
 
-                    int rand_y =
-                        rand() % (sprayRadius * 2 + 1) - sprayRadius;
+                    int rand_y = drawObj->pen_style->getSprayRandomNumberY()[spray_index][k]
+                        % (sprayRadius * 2 + 1) - sprayRadius;
 
                     if (rand_x * rand_x + rand_y * rand_y >
                         sprayRadius * sprayRadius)
@@ -579,12 +582,18 @@ void Replay::runReplay()
                     int x = points[0].point.x;
                     int y = points[0].point.y;
 
+                    /// 난수 배열 행 인덱스 받기
+                    int spray_index = points[0].spray_index;
+
                     std::vector<Point> sprayPoints;
 
                     for (int k = 0; k < sprayRadius * 4; k++)
                     {
-                        int rand_x = rand() % (sprayRadius * 2 + 1) - sprayRadius;
-                        int rand_y = rand() % (sprayRadius * 2 + 1) - sprayRadius;
+                        int rand_x = drawObj->pen_style->getSprayRandomNumberX()[spray_index][k]
+                            % (sprayRadius * 2 + 1) - sprayRadius;
+
+                        int rand_y = drawObj->pen_style->getSprayRandomNumberY()[spray_index][k]
+                            % (sprayRadius * 2 + 1) - sprayRadius;
 
                         if (rand_x * rand_x + rand_y * rand_y >
                             sprayRadius * sprayRadius)
@@ -635,18 +644,19 @@ void Replay::runReplay()
                         int x = points[j].point.x;
                         int y = points[j].point.y;
 
+                        /// 난수 배열 행 인덱스 받기
+                        int spray_index = points[j].spray_index;
+
                         // 현재 점의 랜덤 점을 먼저 생성
                         std::vector<Point> sprayPoints;
 
                         for (int k = 0; k < sprayRadius * 4; k++)
                         {
-                            int rand_x =
-                                rand() % (sprayRadius * 2 + 1)
-                                - sprayRadius;
+                            int rand_x = drawObj->pen_style->getSprayRandomNumberX()[spray_index][k]
+                                % (sprayRadius * 2 + 1) - sprayRadius;
 
-                            int rand_y =
-                                rand() % (sprayRadius * 2 + 1)
-                                - sprayRadius;
+                            int rand_y = drawObj->pen_style->getSprayRandomNumberY()[spray_index][k]
+                                % (sprayRadius * 2 + 1) - sprayRadius;
 
                             if (rand_x * rand_x + rand_y * rand_y >
                                 sprayRadius * sprayRadius)
@@ -734,7 +744,7 @@ void Replay::runReplay()
 
 
     // 원본 그림으로 화면 복원
-    drawObj->redrawAllLines(hwnd);
+    //drawObj->redrawAllLines(hwnd);
 
     // 재생 전 펜 설정 복구
     drawObj->pen_style->settingPenStyle(
