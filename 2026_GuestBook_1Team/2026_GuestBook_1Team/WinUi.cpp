@@ -322,6 +322,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         break;
         case CUSTOM_BUTTON_ERASER_ALL: // 전체 지우기
         {
+            // Replay 실행 중 지우기 했다면 Replay 중단
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                replay.stopReplay();
+            }
+
             ac.all_clear(canvas_hwnd, *draw);
             InvalidateRect(canvas_hwnd, NULL, TRUE); // 지운 후 캔버스 갱신
         }
