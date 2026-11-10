@@ -45,10 +45,13 @@ private:
 	int pen_scroll_wnd_x = 600;													///< penscroll 창 x 위치
 	int pen_scroll_wnd_y = 20;													///< penscroll 창 y 위치
 
+	float wnd_start_x_ratio = 0.35;											///< penscroll 창이 시작하는 x위치가 부모 창의 몇%인지
+	float wnd_end_x_ratio = 0.65;											///< penscroll 창이 끝나는 x위치가 부모 창의 몇%인지
+
 	int pen_scroll_bar_height = 10;												///< 스크롤바의 높이
 	int pen_max_radius = 25;													///< 펜의 최대 반지름
 	int pen_min_radius = 5;														///< 펜의 최소 반지름
-	int pen_scroll_bar_ratio = 8;												///< 스크롤바 비율 (50 * pen_scroll_bar_ratio 형식)
+	int pen_scroll_bar_ratio = 8;												///< 스크롤바 배율 (50 * pen_scroll_bar_ratio 형식)
 	int pen_scroll_bar_width = (pen_max_radius - pen_min_radius) * pen_scroll_bar_ratio;			///< 스크롤바의 너비
 	int pen_scroll_button_width = 30;											///< 스크롤바 버튼 너비
 	
@@ -178,5 +181,11 @@ public:
 	* @author challenjoy01
 	*/
 	void drawPenSample();
+	/**
+	* @brief 펜 스크롤바 창 크기 조절 함수
+	* @details 펜 스크롤바 창 크기 조절 함수
+	* @author challenjoy01
+	*/
+	void resizePenScrollBar(HWND hWnd);
 };
 
