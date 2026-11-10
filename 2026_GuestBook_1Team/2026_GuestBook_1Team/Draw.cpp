@@ -40,6 +40,187 @@ void Draw::sc_line(int index)
 	}
 }
 
+
+void Draw::redrawBitmapAllLines(HWND hWnd)
+{
+	HDC hdc = GetDC(hWnd); //hdc 생성
+	Gdiplus::Graphics hdc_graphics(hdc); //hdc용 grapgics 생성
+
+	//세번째 버퍼 청소
+	drawn_bmp_graphics->Clear(Gdiplus::Color(255, 255, 255, 255));
+
+
+	//세 번째 버퍼에 불러온 모든 데이터를 그리기
+	for (size_t line_num = 0; line_num < drawn_lines_data.size(); line_num++)
+	{
+		pen_style->settingPenStyle(drawn_lines_data[line_num].select_pen_style, drawn_lines_data[line_num].point_data[0].radius, drawn_lines_data[line_num].select_color);
+
+		if (drawn_lines_data[line_num].select_pen_style == SOLIDPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.size() == 1) //점이 하나 뿐일 경우
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer,
+					(float)drawn_lines_data[line_num].point_data[0].point.x,
+					(float)drawn_lines_data[line_num].point_data[0].point.y,
+					(float)drawn_lines_data[line_num].point_data[0].point.x + 0.001f,
+					(float)drawn_lines_data[line_num].point_data[0].point.y
+				);
+				continue;
+			}//if
+			else
+			{
+				for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+				{
+					drawn_bmp_graphics->DrawLine(pen_pointer,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.y
+					);
+				}//for
+			}//else
+		}//if
+		else if (drawn_lines_data[line_num].select_pen_style == HIGHLIGHTERPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.size() == 1)
+			{
+				drawn_bmp_graphics->DrawLine(pen_pointer,
+					(float)drawn_lines_data[line_num].point_data[0].point.x,
+					(float)drawn_lines_data[line_num].point_data[0].point.y,
+					(float)drawn_lines_data[line_num].point_data[0].point.x + 0.001f,
+					(float)drawn_lines_data[line_num].point_data[0].point.y
+				);
+			}
+			else
+			{
+				Gdiplus::GraphicsPath temp_path;
+				for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+				{
+					temp_path.AddLine(
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.x,
+						(INT)drawn_lines_data[line_num].point_data[point_num].point.y
+					);
+				}//for
+				drawn_bmp_graphics->DrawPath(pen_pointer, &temp_path);
+			}
+		}
+		/// 스프레이 그리기
+		else if (drawn_lines_data[line_num].select_pen_style == SPRAYPEN)
+		{
+			/// 랜덤한 위치에 점을 생성하기 위한 난수 생성
+			//srand((unsigned)time(NULL));
+			if (drawn_lines_data[line_num].point_data.size() == 1) //점이 하나 뿐일 경우
+			{
+				/// 반지름 받아오기
+				int radius = pen_style->getRadius();
+
+				/// 난수 배열 행 인덱스 받기
+				int spray_index = drawn_lines_data[line_num].point_data[0].spray_index;
+
+				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+				for (int i = 0; i < (radius * 4); i++)
+				{
+					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+					int rand_x = pen_style->getSprayRandomNumberX()[spray_index][i] %
+						(radius * 2 + 1) - radius;
+					int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] %
+						(radius * 2 + 1) - radius;
+
+					/// 원형 범위 밖이면 제외
+					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+					{
+						continue;
+					}
+
+					/// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+					int x = (INT)drawn_lines_data[line_num].point_data[0].point.x + rand_x;
+					int y = (INT)drawn_lines_data[line_num].point_data[0].point.y + rand_y;
+
+					/// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+					//draw_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+					drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+				}//for
+			}
+
+			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+			{
+				/// 반지름 받아오기
+				int radius = pen_style->getRadius();
+
+				/// 난수 배열 행 인덱스 받기
+				int spray_index = drawn_lines_data[line_num].point_data[point_num].spray_index;
+
+				/// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+				for (int i = 0; i < (radius * 4); i++)
+				{
+					/// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+					int rand_x = pen_style->getSprayRandomNumberX()[spray_index][i] %
+						(radius * 2 + 1) - radius;
+					int rand_y = pen_style->getSprayRandomNumberY()[spray_index][i] %
+						(radius * 2 + 1) - radius;
+
+					/// 원형 범위 밖이면 제외
+					if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+					{
+						continue;
+					}
+
+					/// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+					int x = (INT)drawn_lines_data[line_num].point_data[point_num].point.x + rand_x;
+					int y = (INT)drawn_lines_data[line_num].point_data[point_num].point.y + rand_y;
+
+					/// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+					//draw_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+					drawn_bmp_graphics->FillEllipse(brush_pointer, x, y, 2, 2);
+				}//for
+			}//for
+		}
+		/// 붓펜 그리기
+		else if (drawn_lines_data[line_num].select_pen_style == BRUSHPEN)
+		{
+			if (drawn_lines_data[line_num].point_data.size() == 1) //점이 하나 뿐일 경우
+			{
+				float x = (float)drawn_lines_data[line_num].point_data[0].point.x;
+				float y = (float)drawn_lines_data[line_num].point_data[0].point.y;
+				float brush_radius = pen_style->getBrushPenRadius();
+
+				drawn_bmp_graphics->FillEllipse(
+					brush_pointer,
+					x - brush_radius,
+					y - brush_radius,
+					brush_radius * 2,
+					brush_radius * 2
+				);
+
+				continue;
+			}//if
+			for (size_t point_num = 1; point_num < drawn_lines_data[line_num].point_data.size(); point_num++)
+			{
+				fillBrushLine(drawn_bmp_graphics,
+					(float)drawn_lines_data[line_num].point_data[point_num - 1].point.x,
+					(float)drawn_lines_data[line_num].point_data[point_num - 1].point.y,
+					drawn_lines_data[line_num].point_data[point_num - 1].radius,
+					(float)drawn_lines_data[line_num].point_data[point_num].point.x,
+					(float)drawn_lines_data[line_num].point_data[point_num].point.y,
+					drawn_lines_data[line_num].point_data[point_num].radius);
+			}
+		}
+	}//for
+
+	/// 붓 펜 기본 두께로 원복
+	if (select_drawStyle == PEN_MODE_BRUSHPEN)
+	{
+		pen_style->brushPenSetMaxRadius();
+	}
+
+	ReleaseDC(hWnd, hdc); //hdc 삭제
+}
+
+
 void Draw::redrawAllLines(HWND hWnd)
 {
 	HDC hdc = GetDC(hWnd); //hdc 생성

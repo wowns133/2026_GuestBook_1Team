@@ -167,6 +167,7 @@ public:
 
 
 	//------------------------------그리기 함수----------------------//
+	void redrawBitmapAllLines(HWND hWnd);
 	void redrawAllLines(HWND hWnd);
 	/**
 	* @brief 더블 버퍼링이 적용된 선 그리기 시작 함수. 선 그리기에 필요한 각종 값 설정 및 객체 생성을 맡는다.
