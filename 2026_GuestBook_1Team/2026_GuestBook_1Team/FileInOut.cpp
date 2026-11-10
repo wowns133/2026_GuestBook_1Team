@@ -177,6 +177,19 @@ bool FileInOut::LoadFile(const std::wstring& filePath, Draw& drawObj)
     return true;
 }
 
+bool FileInOut::SelectLoadFile(HWND hWnd, std::wstring& filePath)
+{
+    wchar_t selectedPath[MAX_PATH] = L"";
+
+    if (!OpenFileDialog(hWnd, selectedPath, false))
+    {
+        return false;
+    }
+
+    filePath = selectedPath;
+    return true;
+}
+
 FileInOut::FileListData FileInOut::GetFileList()
 {
     FileListData list;

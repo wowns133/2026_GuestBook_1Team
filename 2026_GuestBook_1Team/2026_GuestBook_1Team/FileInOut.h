@@ -35,5 +35,7 @@ public:
 
     bool LoadFile(const std::wstring& filePath, Draw& drawObj);
 
+    bool SelectLoadFile(HWND hWnd, std::wstring& filePath);
+
     FileListData GetFileList();
 };
