@@ -765,6 +765,8 @@ void Replay::runReplay()
     // Replay 종료 확인 후
     drawObj->redrawAllLines(hwnd);
     replayState = replayStateStop;
+    PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
+
     //InvalidateRect(hwnd, NULL, FALSE);
 
     //InvalidateRect(hwnd, NULL, FALSE);
@@ -775,7 +777,7 @@ void Replay::runReplay()
 void Replay::stopReplay()
 {
     replayState = replayStateStop;
-    PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
+    //PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
 
     if (replayThreadHandle != NULL)
     {
@@ -799,7 +801,7 @@ void Replay::pauseReplay()
 {
     if (replayState == replayStatePlaying)
         replayState = replayStatePause;
-    PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
+    //PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
 }
 
 void Replay::resumeReplay()
