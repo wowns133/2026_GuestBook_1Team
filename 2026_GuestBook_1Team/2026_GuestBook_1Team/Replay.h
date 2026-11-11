@@ -6,6 +6,7 @@
 
 #define replayStatePlaying 0
 #define replayStateStop 1
+#define replayStatePause 2
 
 class Replay
 {
@@ -34,5 +35,8 @@ public:
     void startReplay(Draw& draw, HWND targetHWnd);
     void stopReplay();
     int getReplayState();
+    void pauseReplay();
+    void resumeReplay();
+    bool waitReplayDelay(DWORD delay);
     HANDLE getReplayThreadHandle();
 };
