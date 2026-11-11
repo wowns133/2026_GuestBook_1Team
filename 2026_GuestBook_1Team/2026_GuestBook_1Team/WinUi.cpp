@@ -323,7 +323,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_ERASER_ALL: // 전체 지우기
         {
             // Replay 실행 중 지우기 했다면 Replay 중단
-            if (replay.getReplayState() == replayStatePlaying)
+            if (replay.getReplayState() != replayStateStop)
             {
                 replay.stopReplay();
             }
@@ -335,11 +335,15 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // --- 3. 리플레이 (2종) ---
         case CUSTOM_BUTTON_PLAY:
         {
+            InvalidateRect(canvas_hwnd, NULL, FALSE);
             replay.startReplay(*draw, canvas_hwnd);
+
         }
         break;
         case CUSTOM_BUTTON_STOP:
         {
+
+
             replay.stopReplay();
             // 재생 대상 창 갱신
             if (canvas_hwnd != NULL)
@@ -350,29 +354,57 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         break;
         case CUSTOM_BUTTON_SAVE:
         {
-            file.SaveFile(canvas_hwnd, *draw);
+            // 기존 리플레이가 실행 중이었는지 확인
+            bool wasReplayPlaying = (replay.getReplayState() == replayStatePlaying);
+
+            // 기존 리플레이 일시정지
+            if (wasReplayPlaying)
+                replay.pauseReplay();
+            if (!file.SaveFile(canvas_hwnd, *draw))
+            {
+                if (wasReplayPlaying)
+                    replay.resumeReplay();
+
+                break;
+            }
+            //file.SaveFile(canvas_hwnd, *draw);
+
+            replay.stopReplay();
         }
         break;
         case CUSTOM_BUTTON_LOAD:
         {
             std::wstring filePath;
 
-            //파일 선택 창 실행 (기존 Replay는 계속 실행)
-            if (!file.SelectLoadFile(canvas_hwnd, filePath))
-                break;
+            // 기존 리플레이가 실행 중이었는지 확인
+            bool wasReplayPlaying = (replay.getReplayState() == replayStatePlaying);
 
-            //파일 선택이 완료된 시점에 기존 Replay 종료
+            // 기존 리플레이 일시정지
+            if (wasReplayPlaying)
+                replay.pauseReplay();
+            //draw->clearDrawnBitmap();
+
+            // 파일 선택 창 열기
+            if (!file.SelectLoadFile(canvas_hwnd, filePath))
+            {
+                // 파일 선택 취소 시 기존 리플레이 재개
+                if (wasReplayPlaying)
+                    replay.resumeReplay();
+
+                break;
+            }
+
+            // 새로운 파일을 선택했다면 기존 리플레이 스레드 종료
             replay.stopReplay();
 
-            //선택한 파일 데이터 로드
             bool isLoaded = file.LoadFile(filePath, *draw);
 
             if (isLoaded)
             {
-                //펜 스타일 스크롤바 갱신
-                InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+                // 기존 원본 비트맵도 흰색으로 초기화
+                //draw->clearDrawnBitmap();
 
-                //새 파일 Replay 실행
+                // 새로운 파일 리플레이
                 replay.startReplay(*draw, canvas_hwnd);
             }
         }
@@ -698,10 +730,15 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        draw->drawWindowLines(hWnd, hdc);
+
+        if (replay.getReplayState() == replayStateStop)
+        //{
+            draw->drawWindowLines(hWnd, hdc);
+        //}
+
         EndPaint(hWnd, &ps);
     }
+    break;
     break;
     case WM_DESTROY:
         PostQuitMessage(0);
