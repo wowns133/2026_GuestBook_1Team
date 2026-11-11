@@ -445,7 +445,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 
             // 새로운 파일을 선택했다면 기존 리플레이 스레드 종료
             replay.stopReplay();
-
+            
             bool isLoaded = file.LoadFile(filePath, *draw);
 
             if (isLoaded)
@@ -751,6 +751,8 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             replay.stopReplay();
             InvalidateRect(canvas_hwnd, NULL, FALSE);
             UpdateWindow(canvas_hwnd);
+            draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
+
         }
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
