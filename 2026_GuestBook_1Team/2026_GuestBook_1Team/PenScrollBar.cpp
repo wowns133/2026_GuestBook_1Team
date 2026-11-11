@@ -536,7 +536,7 @@ void PenScrollBar::tempDrawScrollBar(HDC hdc)
     // ÀÏ¹Ý Ææ ¶Ç´Â Çü±¤ÆæÀÏ °æ¿ì
     if (drawing_pen == SOLIDPEN)
     {
-        Gdiplus::Pen temp_pen(Gdiplus::Color(255, 0, 0, 0), draw_pointer->temp_radius);
+        Gdiplus::Pen temp_pen(Gdiplus::Color(255, 0, 0, 0), (draw_pointer->temp_radius * 2));
         temp_pen.SetStartCap(Gdiplus::LineCapRound);
         temp_pen.SetEndCap(Gdiplus::LineCapRound);
         switch (draw_pointer->temp_pen_color)
@@ -577,7 +577,7 @@ void PenScrollBar::tempDrawScrollBar(HDC hdc)
     }
     if (drawing_pen == HIGHLIGHTERPEN)
     {
-        Gdiplus::Pen temp_pen(Gdiplus::Color(100, 0, 0, 0), draw_pointer->temp_radius);
+        Gdiplus::Pen temp_pen(Gdiplus::Color(100, 0, 0, 0), (draw_pointer->temp_radius * 2));
 
         switch (draw_pointer->temp_pen_color)
         {
