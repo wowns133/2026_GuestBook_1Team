@@ -453,9 +453,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
                 // 기존 원본 비트맵도 흰색으로 초기화
                 //draw->clearDrawnBitmap();
                 // 기존 펜 스타일 저장
-                draw->temp_select_pen = draw->pen_style->getSelectPen();
-                draw->temp_radius = draw->pen_style->getRadius();
-                draw->temp_pen_color = draw->pen_style->getPenColor();
+                if (!wasReplayPlaying)
+                {
+                    draw->temp_select_pen = draw->pen_style->getSelectPen();
+                    draw->temp_radius = draw->pen_style->getRadius();
+                    draw->temp_pen_color = draw->pen_style->getPenColor();
+                }
                 // 플레이 시작했다는 플래그
                 draw->is_play_end = 1;
 
