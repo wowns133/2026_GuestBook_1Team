@@ -142,7 +142,7 @@ void Replay::runReplay()
 
     for (size_t i = 0; i < linesData.size(); i++)
     {
-        if (replayState == replayStateStop)
+        if (!waitReplayDelay(0))
             break;
 
         const DrawLineData& currentLineData = linesData[i];
@@ -162,12 +162,12 @@ void Replay::runReplay()
             pen_color
         );
 
-        Pen* currentPen = drawObj->pen_style->getPen();
-        SolidBrush* currentBrush = drawObj->pen_style->getBrush();
-        if (currentPen != nullptr)
+        Pen* pen_pointer = drawObj->pen_pointer;
+        SolidBrush* brush_pointer = drawObj->brush_pointer;
+        if (pen_pointer != nullptr)
         {
             if (select_pen != HIGHLIGHTERPEN)
-                currentPen->SetLineJoin(Gdiplus::LineJoinRound);
+                pen_pointer->SetLineJoin(Gdiplus::LineJoinRound);
         }
 
         // 획과 획 사이 시간 보정
@@ -193,10 +193,13 @@ void Replay::runReplay()
                 strokeDelay = 200;
 
             if (strokeDelay > 0)
-                Sleep((DWORD)strokeDelay);
+            {
+                if (!waitReplayDelay((DWORD)strokeDelay))
+                    break;
+            }
         }
 
-        if (replayState == replayStateStop)
+        if (!waitReplayDelay(0))
             break;
 
         // 점 하나만 있는 획
@@ -208,7 +211,7 @@ void Replay::runReplay()
             replay_bmp_graphics->Clear(Color::White);
 
             // 스프레이 펜
-            if (select_pen == SPRAYPEN && currentBrush != nullptr)
+            if (select_pen == SPRAYPEN && brush_pointer != nullptr)
             {
                 int sprayRadius = (int)points[0].radius;
 
@@ -248,7 +251,7 @@ void Replay::runReplay()
                 for (size_t k = 0; k < sprayPoints.size(); k++)
                 {
                     replay_bmp_graphics->FillEllipse(
-                        currentBrush,
+                        brush_pointer,
                         sprayPoints[k].X,
                         sprayPoints[k].Y,
                         2,
@@ -256,7 +259,7 @@ void Replay::runReplay()
                     );
 
                     replay_canvas_graphics->FillEllipse(
-                        currentBrush,
+                        brush_pointer,
                         sprayPoints[k].X,
                         sprayPoints[k].Y,
                         2,
@@ -284,12 +287,12 @@ void Replay::runReplay()
                 );
 
                 // 붓펜
-                if (select_pen == BRUSHPEN && currentBrush != nullptr)
+                if (select_pen == BRUSHPEN && brush_pointer != nullptr)
                 {
                     int radius = (int)points[0].radius;
 
                     replay_bmp_graphics->FillEllipse(
-                        currentBrush,
+                        brush_pointer,
                         x - radius,
                         y - radius,
                         radius * 2,
@@ -297,7 +300,7 @@ void Replay::runReplay()
                     );
 
                     replay_canvas_graphics->FillEllipse(
-                        currentBrush,
+                        brush_pointer,
                         x - radius,
                         y - radius,
                         radius * 2,
@@ -305,10 +308,10 @@ void Replay::runReplay()
                     );
                 }
                 // 기존 일반 펜의 점 처리와 동일
-                else if (currentPen != nullptr)
+                else if (pen_pointer != nullptr)
                 {
                     replay_bmp_graphics->DrawLine(
-                        currentPen,
+                        pen_pointer,
                         (float)x,
                         (float)y,
                         (float)x + 0.001f,
@@ -316,7 +319,7 @@ void Replay::runReplay()
                     );
 
                     replay_canvas_graphics->DrawLine(
-                        currentPen,
+                        pen_pointer,
                         (float)x,
                         (float)y,
                         (float)x + 0.001f,
@@ -338,7 +341,7 @@ void Replay::runReplay()
         // 일반 펜
         if (select_pen == SOLIDPEN)
         {
-            if (currentPen != nullptr)
+            if (pen_pointer != nullptr)
             {
                 replay_bmp_graphics->Clear(Color::White);
 
@@ -349,11 +352,11 @@ void Replay::runReplay()
 
                 for (size_t j = 1; j < points.size(); j++)
                 {
-                    if (replayState == replayStateStop)
+                    if (!waitReplayDelay(0))
                         break;
 
                     replay_bmp_graphics->DrawLine(
-                        currentPen,
+                        pen_pointer,
                         (float)points[j - 1].point.x,
                         (float)points[j - 1].point.y,
                         (float)points[j].point.x,
@@ -381,11 +384,11 @@ void Replay::runReplay()
 
                     timeDiff = (ULONGLONG)timeDiff;
 
-                    if (timeDiff > 0)
-                        Sleep((DWORD)timeDiff);
+                    if (!waitReplayDelay((DWORD)timeDiff))
+                        break;
                 }
 
-                if (replayState == replayStateStop)
+                if (!waitReplayDelay(0))
                     break;
 
                 GraphicsPath finalPath;
@@ -401,7 +404,7 @@ void Replay::runReplay()
                 }
 
                 replay_canvas_graphics->DrawPath(
-                    currentPen, &finalPath
+                    pen_pointer, &finalPath
                 );
             }
 
@@ -414,7 +417,7 @@ void Replay::runReplay()
         {
             for (size_t j = 1; j < points.size(); j++)
             {
-                if (replayState == replayStateStop)
+                if (!waitReplayDelay(0))
                     break;
 
                 float previous_x = (float)points[j - 1].point.x;
@@ -492,8 +495,8 @@ void Replay::runReplay()
                     timeDiff = points[j].elapsed_time - points[j - 1].elapsed_time;
                 }
 
-                if (timeDiff > 0)
-                    Sleep((DWORD)timeDiff);
+                if (!waitReplayDelay((DWORD)timeDiff))
+                    break;
             }
 
             continue;
@@ -503,13 +506,13 @@ void Replay::runReplay()
         // 형광펜
         if (select_pen == HIGHLIGHTERPEN)
         {
-            if (currentPen != nullptr)
+            if (pen_pointer != nullptr)
             {
                 GraphicsPath replayPath;
 
                 for (size_t j = 1; j < points.size(); j++)
                 {
-                    if (replayState == replayStateStop)
+                    if (!waitReplayDelay(0))
                         break;
 
                     replayPath.AddLine(
@@ -531,7 +534,7 @@ void Replay::runReplay()
                     );
 
                     replay_bmp_graphics->DrawPath(
-                        currentPen, &replayPath
+                        pen_pointer, &replayPath
                     );
 
                     drawObj->drawSectionImage(
@@ -555,15 +558,15 @@ void Replay::runReplay()
 
                     timeDiff = (ULONGLONG)timeDiff;
 
-                    if (timeDiff > 0)
-                        Sleep((DWORD)timeDiff);
+                    if (!waitReplayDelay((DWORD)timeDiff))
+                        break;
                 }
 
-                if (replayState == replayStateStop)
+                if (!waitReplayDelay(0))
                     break;
 
                 replay_canvas_graphics->DrawPath(
-                    currentPen, &replayPath
+                    pen_pointer, &replayPath
                 );
             }
 
@@ -573,7 +576,7 @@ void Replay::runReplay()
         // 스프레이 펜
         if (select_pen == SPRAYPEN)
         {
-            if (currentBrush != nullptr)
+            if (brush_pointer != nullptr)
             {
                 // 점 하나로 구성된 스프레이 획
                 if (points.size() == 1)
@@ -616,11 +619,11 @@ void Replay::runReplay()
                     for (size_t k = 0; k < sprayPoints.size(); k++)
                     {
                         replay_bmp_graphics->FillEllipse(
-                            currentBrush, sprayPoints[k].X, sprayPoints[k].Y, 2, 2
+                            brush_pointer, sprayPoints[k].X, sprayPoints[k].Y, 2, 2
                         );
 
                         replay_canvas_graphics->FillEllipse(
-                            currentBrush, sprayPoints[k].X, sprayPoints[k].Y, 2, 2
+                            brush_pointer, sprayPoints[k].X, sprayPoints[k].Y, 2, 2
                         );
                     }
 
@@ -637,7 +640,7 @@ void Replay::runReplay()
                 {
                     for (size_t j = 1; j < points.size(); j++)
                     {
-                        if (replayState == replayStateStop)
+                        if (!waitReplayDelay(0))
                             break;
 
                         int sprayRadius = (int)points[j].radius;
@@ -683,7 +686,7 @@ void Replay::runReplay()
                         for (size_t k = 0; k < sprayPoints.size(); k++)
                         {
                             replay_bmp_graphics->FillEllipse(
-                                currentBrush,
+                                brush_pointer,
                                 sprayPoints[k].X,
                                 sprayPoints[k].Y,
                                 2,
@@ -691,7 +694,7 @@ void Replay::runReplay()
                             );
 
                             replay_canvas_graphics->FillEllipse(
-                                currentBrush,
+                                brush_pointer,
                                 sprayPoints[k].X,
                                 sprayPoints[k].Y,
                                 2,
@@ -720,8 +723,8 @@ void Replay::runReplay()
 
                         timeDiff = (ULONGLONG)timeDiff;
 
-                        if (timeDiff > 0)
-                            Sleep((DWORD)timeDiff);
+                        if (!waitReplayDelay((DWORD)timeDiff))
+                            break;
                     }
                 }
             }
@@ -729,6 +732,7 @@ void Replay::runReplay()
     }
 
     ReleaseDC(hwnd, hdc);
+
 
     delete replay_bmp_graphics;
     replay_bmp_graphics = nullptr;
@@ -753,9 +757,14 @@ void Replay::runReplay()
         savedColor
     );
 
+    // Replay 종료 확인 후
+    drawObj->redrawAllLines(hwnd);
+    replayState = replayStateStop;
+    //InvalidateRect(hwnd, NULL, FALSE);
+
     //InvalidateRect(hwnd, NULL, FALSE);
     //UpdateWindow(hwnd);
-    replayState = replayStateStop;
+    //replayState = replayStateStop;
 }
 
 void Replay::stopReplay()
@@ -768,6 +777,62 @@ void Replay::stopReplay()
 
         CloseHandle(replayThreadHandle);
         replayThreadHandle = NULL;
+    }
+
+    // Replay 스레드 종료 후 최종 그림 복원
+    if (drawObj != nullptr && hwnd != NULL)
+    {
+        //drawObj->clearDrawnBitmap();
+        //drawObj->redrawAllLines(hwnd);
+        //InvalidateRect(hwnd, NULL, FALSE);
+
+    }
+}
+
+void Replay::pauseReplay()
+{
+    if (replayState == replayStatePlaying)
+        replayState = replayStatePause;
+}
+
+void Replay::resumeReplay()
+{
+    if (replayState == replayStatePause)
+        replayState = replayStatePlaying;
+}
+
+bool Replay::waitReplayDelay(DWORD delay)
+{
+    DWORD remaining = delay;
+
+    while (true)
+    {
+        if (replayState == replayStateStop)
+            return false;
+
+        if (replayState == replayStatePause)
+        {
+            Sleep(5);
+            continue;
+        }
+
+        if (remaining == 0)
+            return true;
+
+        ULONGLONG waitTime = (remaining > 5) ? 5 : remaining;
+        ULONGLONG startTime = GetTickCount64();
+
+        Sleep(waitTime);
+
+        ULONGLONG elapsed = GetTickCount64() - startTime;
+
+        if (replayState == replayStatePlaying)
+        {
+            if (elapsed >= remaining)
+                remaining = 0;
+            else
+                remaining -= elapsed;
+        }
     }
 }
 
