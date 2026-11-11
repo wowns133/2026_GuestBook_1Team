@@ -187,5 +187,13 @@ public:
 	* @author challenjoy01
 	*/
 	void resizePenScrollBar(HWND hWnd);
+	/**
+	* @brief 재생 중 버튼 조작에 대응하기 위한 함수
+	* @details 재생 중 버튼 조작에 대응하기 위한 함수
+	* @warning 이런 식의 코드는 좋지 않은 코드이니 이런 식으로 만들 일 없도록 하세요.
+	* @author challenjoy01
+	*/
+	void tempSetScrollBar(LPARAM lParam);
+	void tempDrawScrollBar(HDC hdc);
 };
 

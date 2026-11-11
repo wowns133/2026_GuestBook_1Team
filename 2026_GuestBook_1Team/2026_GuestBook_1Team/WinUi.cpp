@@ -236,6 +236,23 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             // 타이머 처리 함수
             screen_saver.screenSaverTimer();
         }
+        else if (wParam == PEN_CHECK_TIMER_ID)
+        {
+            // 재생 끝난 직후에 펜 스타일 세팅할 수 있도록
+            if (draw->is_play_end == 1)
+            {
+                if (replay.getReplayState() == replayStateStop)
+                {
+                    // 펜 스타일 변경 실행 완료
+                    draw->is_play_end = 0;
+                    // 저장해둔 스타일 변경
+                    draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
+                    // 스크롤바와 펜 샘플 화면 갱신
+                    InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+                    KillTimer(main_ui_hwnd, PEN_CHECK_TIMER_ID);
+                }
+            }
+        }
     }
     break;
     case WM_LBUTTONDOWN:
@@ -262,7 +279,8 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
             button_id != CUSTOM_BUTTON_STOP &&
             button_id != CUSTOM_BUTTON_ERASER_STROKE &&
             button_id != CUSTOM_BUTTON_ERASER_ALL &&
-            button_id != CUSTOM_BUTTON_SAVE)
+            button_id != CUSTOM_BUTTON_SAVE &&
+            button_id != CUSTOM_BUTTON_LOAD)
         {
             // 스크롤바와 펜 샘플 화면 갱신
             InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
@@ -291,24 +309,44 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
         case CUSTOM_BUTTON_PEN_SOLID:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_select_pen = SOLIDPEN;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPen(SOLIDPEN);
         }
         break;
         case CUSTOM_BUTTON_PEN_SPRAY:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_select_pen = SPRAYPEN;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPen(SPRAYPEN);
         }
         break;
         case CUSTOM_BUTTON_PEN_BRUSH:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_select_pen = BRUSHPEN;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPen(BRUSHPEN);
         }
         break;
         case CUSTOM_BUTTON_PEN_HIGHLIGHT:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_select_pen = HIGHLIGHTERPEN;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPen(HIGHLIGHTERPEN);
         }
@@ -323,7 +361,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         case CUSTOM_BUTTON_ERASER_ALL: // 전체 지우기
         {
             // Replay 실행 중 지우기 했다면 Replay 중단
-            if (replay.getReplayState() == replayStatePlaying)
+            if (replay.getReplayState() != replayStateStop)
             {
                 replay.stopReplay();
             }
@@ -335,11 +373,24 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // --- 3. 리플레이 (2종) ---
         case CUSTOM_BUTTON_PLAY:
         {
+            // 기존 펜 스타일 저장
+            draw->temp_select_pen = draw->pen_style->getSelectPen();
+            draw->temp_radius = draw->pen_style->getRadius();
+            draw->temp_pen_color = draw->pen_style->getPenColor();
+            // 플레이 시작했다는 플래그
+            draw->is_play_end = 1;
+
+            // 리플레이 시작
             replay.startReplay(*draw, canvas_hwnd);
+
+            SetTimer(hWnd, PEN_CHECK_TIMER_ID, 100, NULL);
+
         }
         break;
         case CUSTOM_BUTTON_STOP:
         {
+
+
             replay.stopReplay();
             // 재생 대상 창 갱신
             if (canvas_hwnd != NULL)
@@ -350,59 +401,120 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         break;
         case CUSTOM_BUTTON_SAVE:
         {
-            file.SaveFile(canvas_hwnd, *draw);
+            // 기존 리플레이가 실행 중이었는지 확인
+            bool wasReplayPlaying = (replay.getReplayState() == replayStatePlaying);
+
+            // 기존 리플레이 일시정지
+            if (wasReplayPlaying)
+                replay.pauseReplay();
+            if (!file.SaveFile(canvas_hwnd, *draw))
+            {
+                if (wasReplayPlaying)
+                    replay.resumeReplay();
+
+                break;
+            }
+            //file.SaveFile(canvas_hwnd, *draw);
+
+            replay.stopReplay();
         }
         break;
         case CUSTOM_BUTTON_LOAD:
         {
             std::wstring filePath;
 
-            //파일 선택 창 실행 (기존 Replay는 계속 실행)
-            if (!file.SelectLoadFile(canvas_hwnd, filePath))
-                break;
+            // 기존 리플레이가 실행 중이었는지 확인
+            bool wasReplayPlaying = (replay.getReplayState() == replayStatePlaying);
 
-            //파일 선택이 완료된 시점에 기존 Replay 종료
+            // 기존 리플레이 일시정지
+            if (wasReplayPlaying)
+                replay.pauseReplay();
+            //draw->clearDrawnBitmap();
+
+            // 파일 선택 창 열기
+            if (!file.SelectLoadFile(canvas_hwnd, filePath))
+            {
+                // 파일 선택 취소 시 기존 리플레이 재개
+                if (wasReplayPlaying)
+                    replay.resumeReplay();
+
+                break;
+            }
+
+            // 새로운 파일을 선택했다면 기존 리플레이 스레드 종료
             replay.stopReplay();
 
-            //선택한 파일 데이터 로드
             bool isLoaded = file.LoadFile(filePath, *draw);
 
             if (isLoaded)
             {
-                //펜 스타일 스크롤바 갱신
-                InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+                // 기존 원본 비트맵도 흰색으로 초기화
+                //draw->clearDrawnBitmap();
+                // 기존 펜 스타일 저장
+                draw->temp_select_pen = draw->pen_style->getSelectPen();
+                draw->temp_radius = draw->pen_style->getRadius();
+                draw->temp_pen_color = draw->pen_style->getPenColor();
+                // 플레이 시작했다는 플래그
+                draw->is_play_end = 1;
 
-                //새 파일 Replay 실행
+                // 새로운 파일 리플레이
                 replay.startReplay(*draw, canvas_hwnd);
+                SetTimer(hWnd, PEN_CHECK_TIMER_ID, 100, NULL);
+
             }
         }
         break;
         case CUSTOM_BUTTON_RED:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_pen_color = RED;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(RED);
         }
         break;
         case CUSTOM_BUTTON_BLACK:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_pen_color = BLACK;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(BLACK);
         }
         break;
         case CUSTOM_BUTTON_GREEN:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_pen_color = GREEN;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(GREEN);
         }
         break;
         case CUSTOM_BUTTON_BLUE:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_pen_color = BLUE;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(BLUE);
         }
         break;
         case CUSTOM_BUTTON_YELLOW:
         {
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                draw->temp_pen_color = YELLOW;
+                break;
+            }
             draw->setIsPen(true);
             draw->pen_style->selectPenColor(YELLOW);
         }
@@ -698,10 +810,15 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        draw->drawWindowLines(hWnd, hdc);
+
+        if (replay.getReplayState() == replayStateStop)
+        //{
+            draw->drawWindowLines(hWnd, hdc);
+        //}
+
         EndPaint(hWnd, &ps);
     }
+    break;
     break;
     case WM_DESTROY:
         PostQuitMessage(0);
