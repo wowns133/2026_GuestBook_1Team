@@ -750,6 +750,7 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             replay.stopReplay();
             InvalidateRect(canvas_hwnd, NULL, FALSE);
+            UpdateWindow(canvas_hwnd);
         }
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
