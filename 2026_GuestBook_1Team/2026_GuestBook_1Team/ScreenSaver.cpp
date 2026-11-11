@@ -74,6 +74,7 @@ HWND ScreenSaver::createScreenSaverWindow(HWND hWnd)
     if (screen_saver_hwnd != nullptr)
     {
         screenSaverDraw.gdiPlusStart();
+        screenSaverDraw.pen_style->createSprayRandomNumber();
     }
 
     return screen_saver_hwnd;
