@@ -146,23 +146,44 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
     case WM_LBUTTONDOWN:
     {
         // Replay 객체가 존재하고 Replay 실행 중이면 먼저 종료
-        if (replay != nullptr &&
-            replay->getReplayState() == replayStatePlaying)
-        {
-            replay->stopReplay();
-        }
+        //if (replay != nullptr &&
+        //    replay->getReplayState() == replayStatePlaying)
+        //{
+        //    replay->stopReplay();
+        //}
 
         // 마우스 추적 시작
         is_click = true;
         setTrackMouseEvent(hWnd);
 
-        // 스크롤바 버튼 옮기기
-        setScrollButton(hWnd, lParam);
+        // Replay 객체가 존재하고 Replay 실행 중이면
+        if (replay != nullptr &&
+            replay->getReplayState() == replayStatePlaying)
+        {
+            tempSetScrollBar(lParam);
+        }
+        else if (replay != nullptr && replay->getReplayState() == replayStateStop)
+        {
+            // 스크롤바 버튼 옮기기
+            setScrollButton(hWnd, lParam);
+        }
         break;
     }
     case WM_MOUSEMOVE:
     {
-        setScrollButton(hWnd, lParam);
+        if (is_click == true)
+        {
+            if (replay != nullptr &&
+                replay->getReplayState() == replayStatePlaying)
+            {
+                tempSetScrollBar(lParam);
+            }
+            else if (replay != nullptr && replay->getReplayState() == replayStateStop)
+            {
+                // 스크롤바 버튼 옮기기
+                setScrollButton(hWnd, lParam);
+            }
+        }
         break;
     }
     case WM_LBUTTONUP:
@@ -183,31 +204,39 @@ LRESULT CALLBACK PenScrollBar::PenScrollWndProc(HWND hWnd, UINT message, WPARAM 
     {
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hWnd, &ps);
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        // gdi+ 사용 설정
-        Gdiplus::Graphics hdc_graphics(hdc);
-        hdc_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+        if (replay != nullptr &&
+            replay->getReplayState() == replayStatePlaying)
+        {
+            tempDrawScrollBar(hdc);
+        }
+        else if (replay != nullptr &&
+            replay->getReplayState() == replayStateStop) {
+            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+            // gdi+ 사용 설정
+            Gdiplus::Graphics hdc_graphics(hdc);
+            hdc_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
 
-        // 스크롤바 조작이 아닌 방식으로 펜 크기가 바뀌었을 때를 대비한 스크롤바 위치 계산 코드
-        // 버튼의 x 좌표 = (펜 크기 - 펜 최소 크기) * 배수
-        scroll_button_x = (draw_pointer->pen_style->getRadius() - pen_min_radius) * pen_scroll_bar_ratio;
+            // 스크롤바 조작이 아닌 방식으로 펜 크기가 바뀌었을 때를 대비한 스크롤바 위치 계산 코드
+            // 버튼의 x 좌표 = (펜 크기 - 펜 최소 크기) * 배수
+            scroll_button_x = (draw_pointer->pen_style->getRadius() - pen_min_radius) * pen_scroll_bar_ratio;
 
-        // 비트맵 초기화
-        scroll_bar_bitmap_graphics->Clear(Gdiplus::Color(255, 253, 253, 255));
-        
-        // 스크롤바 비트맵에 그리기
-        drawScrollBar();
-        
-        // 현재 펜 상태 나타내기
-        drawPenSample();
+            // 비트맵 초기화
+            scroll_bar_bitmap_graphics->Clear(Gdiplus::Color(255, 253, 253, 255));
+            // 현재 펜 상태 나타내기
+            drawPenSample();
+            // 스크롤바 비트맵에 그리기
+            drawScrollBar();
 
-        //비트맵을 화면에 출력
-        hdc_graphics.DrawImage(scroll_bar_bitmap, 0, 0);
 
-        // 펜 반지름 테스트 코드
-        //WCHAR t[50];
-        //wsprintf(t, L"현재 펜 반지름 %d", (int)draw_pointer->pen_style->getRadius());
-        //TextOut(hdc, 0, 0, t, wcslen(t));
+
+            //비트맵을 화면에 출력
+            hdc_graphics.DrawImage(scroll_bar_bitmap, 0, 0);
+
+            // 펜 반지름 테스트 코드
+            //WCHAR t[50];
+            //wsprintf(t, L"현재 펜 반지름 %d", (int)draw_pointer->pen_style->getRadius());
+            //TextOut(hdc, 0, 0, t, wcslen(t));
+        }
 
 
         EndPaint(hWnd, &ps);
@@ -271,12 +300,12 @@ void PenScrollBar::setScrollButton(HWND hWnd, LPARAM lParam)
         }
         // 펜 두께를 0 ~ (최댓값 - 최솟값) 사이의 숫자로 변환한 후 최솟값을 더하기
         //결과적으로 최솟값 ~
-        pen_width = scroll_button_x / pen_scroll_bar_ratio + pen_min_radius; 
-        
+        pen_width = scroll_button_x / pen_scroll_bar_ratio + pen_min_radius;
+
         // 펜 두께 변경 함수
         draw_pointer->pen_style->settingPenStyle(draw_pointer->pen_style->getSelectPen(),
-                                                    pen_width,
-                                                draw_pointer->pen_style->getPenColor());
+            pen_width,
+            draw_pointer->pen_style->getPenColor());
         InvalidateRect(hWnd, NULL, FALSE);
 
     }
@@ -316,6 +345,7 @@ void PenScrollBar::drawScrollBar()
 
 void PenScrollBar::drawPenSample()
 {
+
     // 배경용 펜과 브러시
     Gdiplus::Pen pen_sample_rect(Gdiplus::Color::LightGray, 1);
     Gdiplus::SolidBrush pen_sample_background(Gdiplus::Color::White);
@@ -340,7 +370,7 @@ void PenScrollBar::drawPenSample()
 
     // 펜 스타일에 따라 다르게 그리기
     // 일반 펜 또는 형광펜일 경우
-    if (drawing_pen == SOLIDPEN || drawing_pen == HIGHLIGHTERPEN) 
+    if (drawing_pen == SOLIDPEN || drawing_pen == HIGHLIGHTERPEN)
     {
         // 펜 상태 보여주기
         scroll_bar_bitmap_graphics->DrawLine(draw_pointer->pen_pointer,
@@ -352,7 +382,7 @@ void PenScrollBar::drawPenSample()
     }
     else if (drawing_pen == SPRAYPEN) // 스프레이 펜일 경우
     {
-        for(int point_x = (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15);
+        for (int point_x = (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->pen_style->getRadius() + 15);
             point_x < (int)(pen_scroll_wnd_width - draw_pointer->pen_style->getRadius() - 20);
             point_x += 2)
         {
@@ -436,4 +466,292 @@ void PenScrollBar::resizePenScrollBar(HWND hWnd)
 
     MoveWindow(pen_scroll_hwnd, pen_scroll_wnd_x, pen_scroll_wnd_y, pen_scroll_wnd_width, pen_scroll_wnd_height, TRUE);
     InvalidateRect(pen_scroll_hwnd, NULL, FALSE);
+}
+
+
+void PenScrollBar::tempSetScrollBar(LPARAM lParam)
+{
+    int pen_width = 0; ///< 펜의 반지름
+
+    scroll_button_x = LOWORD(lParam) - (pen_scroll_button_width / 2); // 스크롤바 버튼 좌상단 x좌표 구하기
+    if (scroll_button_x < 0) // 스크롤바 버튼 최소 0으로 설정
+    {
+        scroll_button_x = 0;
+    }
+    else if (scroll_button_x > pen_scroll_bar_width) // 스크롤바 버튼 최대를 지정된 최댓값으로 설정
+    {
+        scroll_button_x = pen_scroll_bar_width;
+    }
+    // 펜 두께를 0 ~ (최댓값 - 최솟값) 사이의 숫자로 변환한 후 최솟값을 더하기
+    //결과적으로 최솟값 ~
+    pen_width = scroll_button_x / pen_scroll_bar_ratio + pen_min_radius;
+
+    // 펜 두께 변경 함수
+    draw_pointer->temp_radius = pen_width;
+
+    InvalidateRect(pen_scroll_hwnd, NULL, FALSE);
+}
+
+
+void PenScrollBar::tempDrawScrollBar(HDC hdc)
+{
+    // gdi+ 사용 설정
+    Gdiplus::Graphics hdc_graphics(hdc);
+    hdc_graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
+    // 스크롤바 조작이 아닌 방식으로 펜 크기가 바뀌었을 때를 대비한 스크롤바 위치 계산 코드
+    // 버튼의 x 좌표 = (펜 크기 - 펜 최소 크기) * 배수
+    scroll_button_x = (draw_pointer->temp_radius - pen_min_radius) * pen_scroll_bar_ratio;
+
+    // 비트맵 초기화
+    scroll_bar_bitmap_graphics->Clear(Gdiplus::Color(255, 253, 253, 255));
+
+    // 스크롤바 비트맵에 그리기
+    drawScrollBar();
+
+    //--------------------------------------------------------- 펜 샘플 그리기 -----------------------------------------------------------------//
+    // 배경용 펜과 브러시
+    Gdiplus::Pen pen_sample_rect(Gdiplus::Color::LightGray, 1);
+    Gdiplus::SolidBrush pen_sample_background(Gdiplus::Color::White);
+
+    int drawing_pen = draw_pointer->temp_select_pen; // 현재 펜 스타일을 저장
+
+    // 펜 샘플 배경 그리기(배경색)
+    scroll_bar_bitmap_graphics->FillRectangle(&pen_sample_background,
+        pen_scroll_wnd_width - pen_sample_width + 3,
+        10,
+        pen_sample_width - 4 - 10,
+        pen_scroll_wnd_height - 20
+    );
+    // 펜 샘플 배경 그리기(테두리)
+    scroll_bar_bitmap_graphics->DrawRectangle(&pen_sample_rect,
+        pen_scroll_wnd_width - pen_sample_width + 3,
+        10,
+        pen_sample_width - 4 - 10,
+        pen_scroll_wnd_height - 20
+    );
+
+
+    // 펜 스타일에 따라 다르게 그리기
+    // 일반 펜 또는 형광펜일 경우
+    if (drawing_pen == SOLIDPEN)
+    {
+        Gdiplus::Pen temp_pen(Gdiplus::Color(255, 0, 0, 0), draw_pointer->temp_radius);
+        temp_pen.SetStartCap(Gdiplus::LineCapRound);
+        temp_pen.SetEndCap(Gdiplus::LineCapRound);
+        switch (draw_pointer->temp_pen_color)
+        {
+        case BLACK:
+        {
+            temp_pen.SetColor(Gdiplus::Color(255, 0, 0, 0));
+        }
+        break;
+        case RED:
+        {
+            temp_pen.SetColor(Gdiplus::Color(255, 255, 0, 0));
+        }
+        break;
+        case GREEN:
+        {
+            temp_pen.SetColor(Gdiplus::Color(255, 0, 255, 0));
+        }
+        break;
+        case BLUE:
+        {
+            temp_pen.SetColor(Gdiplus::Color(255, 0, 0, 255));
+        }
+        break;
+        case YELLOW:
+        {
+            temp_pen.SetColor(Gdiplus::Color(255, 255, 255, 0));
+        }
+        break;
+        }
+        // 펜 상태 보여주기
+        scroll_bar_bitmap_graphics->DrawLine(&temp_pen,
+            (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->temp_radius + 15),
+            pen_scroll_wnd_height / 2,
+            (int)(pen_scroll_wnd_width - draw_pointer->temp_radius - 20),
+            pen_scroll_wnd_height / 2
+        );
+    }
+    if (drawing_pen == HIGHLIGHTERPEN)
+    {
+        Gdiplus::Pen temp_pen(Gdiplus::Color(100, 0, 0, 0), draw_pointer->temp_radius);
+
+        switch (draw_pointer->temp_pen_color)
+        {
+        case BLACK:
+        {
+            temp_pen.SetColor(Gdiplus::Color(100, 0, 0, 0));
+        }
+        break;
+        case RED:
+        {
+            temp_pen.SetColor(Gdiplus::Color(100, 255, 0, 0));
+        }
+        break;
+        case GREEN:
+        {
+            temp_pen.SetColor(Gdiplus::Color(100, 0, 255, 0));
+        }
+        break;
+        case BLUE:
+        {
+            temp_pen.SetColor(Gdiplus::Color(100, 0, 0, 255));
+        }
+        break;
+        case YELLOW:
+        {
+            temp_pen.SetColor(Gdiplus::Color(100, 255, 255, 0));
+        }
+        break;
+        }
+        // 펜 상태 보여주기
+        scroll_bar_bitmap_graphics->DrawLine(&temp_pen,
+            (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->temp_radius + 15),
+            pen_scroll_wnd_height / 2,
+            (int)(pen_scroll_wnd_width - draw_pointer->temp_radius - 20),
+            pen_scroll_wnd_height / 2
+        );
+    }
+    else if (drawing_pen == SPRAYPEN) // 스프레이 펜일 경우
+    {
+        Gdiplus::SolidBrush temp_brush(Gdiplus::Color(255, 0, 0, 0));
+
+        switch (draw_pointer->temp_pen_color)
+        {
+        case BLACK:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 0, 0));
+        }
+        break;
+        case RED:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 255, 0, 0));
+        }
+        break;
+        case GREEN:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 255, 0));
+        }
+        break;
+        case BLUE:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 0, 255));
+        }
+        break;
+        case YELLOW:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 255, 255, 0));
+        }
+        break;
+        }
+
+        for (int point_x = (int)((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->temp_radius + 15);
+            point_x < (int)(pen_scroll_wnd_width - draw_pointer->temp_radius - 20);
+            point_x += 2)
+        {
+            /// 반지름 받아오기
+            int radius = draw_pointer->temp_radius;
+
+            /// 두께의 4배만큼 스프레이 점 찍기(ex : 반지름이 10이라면 점을 40개 찍음.)
+            for (int i = 0; i < (radius * 4); i++)
+            {
+                /// 반지름이 40이라면, -40 ~ 40 까지 랜덤으로 값이 적용되는 공식
+                int rand_x = rand() % (radius * 2 + 1) - radius;
+                int rand_y = rand() % (radius * 2 + 1) - radius;
+
+                /// 원형 범위 밖이면 제외
+                if (rand_x * rand_x + rand_y * rand_y > radius * radius)
+                {
+                    continue;
+                }
+
+                /// 마우스 좌표를 기준으로 랜덤 값 더하기
+
+                int x = point_x + rand_x;
+                int y = pen_scroll_wnd_height / 2 + rand_y;
+
+                /// FillEllipse로 랜덤한 위치에 2 * 2 짜리 점을 찍어준다. 
+                scroll_bar_bitmap_graphics->FillEllipse(&temp_brush, x, y, 2, 2);
+            }
+        }
+    }
+    else if (drawing_pen == BRUSHPEN) // 붓 펜일 경우
+    {
+        Gdiplus::SolidBrush temp_brush(Gdiplus::Color(255, 0, 0, 0));
+
+        switch (draw_pointer->temp_pen_color)
+        {
+        case BLACK:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 0, 0));
+        }
+        break;
+        case RED:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 255, 0, 0));
+        }
+        break;
+        case GREEN:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 255, 0));
+        }
+        break;
+        case BLUE:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 0, 0, 255));
+        }
+        break;
+        case YELLOW:
+        {
+            temp_brush.SetColor(Gdiplus::Color(255, 255, 255, 0));
+        }
+        break;
+        }
+
+        float start_x = ((pen_scroll_bar_width + pen_scroll_button_width) + draw_pointer->temp_radius + 15);
+        float start_y = pen_scroll_wnd_height / 2;
+        float start_radius = draw_pointer->temp_radius;
+        float end_x = (pen_scroll_wnd_width - draw_pointer->temp_radius - 20);
+        float end_y = pen_scroll_wnd_height / 2;
+        float end_radius = draw_pointer->temp_radius - 5;
+
+
+        /// 이전 좌표와 현재 좌표 사이의 거리계산용 x,y
+        float fill_difference_x = end_x - start_x;
+        float fill_difference_y = end_y - start_y;
+        /// 이전 좌표와 현재 좌표 사이의 거리
+        float fill_distance = sqrtf(fill_difference_x * fill_difference_x + fill_difference_y * fill_difference_y);
+
+        /// 2px 간격으로 원을 채울 개수 (최소 1개)
+        int fill_count = max(1, (int)ceilf(fill_distance / 2.0f));
+
+        /// 이전 좌표와 현재 좌표 사이에 2px 간격으로 원 채우기
+        for (int fill_index = 0; fill_index <= fill_count; fill_index++)
+        {
+            /// 0.0(이전 좌표) ~ 1.0(현재 좌표) 사이의 비율
+            float fill_ratio = (float)fill_index / fill_count;
+
+            /// 반지름 이전좌표에서 현재좌표로 조금씩 변화주기
+            float fill_x = start_x + fill_difference_x * fill_ratio;
+            float fill_y = start_y + fill_difference_y * fill_ratio;
+            float fill_radius = start_radius + (end_radius - start_radius) * fill_ratio;
+
+            /// 그리기
+            scroll_bar_bitmap_graphics->FillEllipse(&temp_brush,
+                fill_x - fill_radius, fill_y - fill_radius, fill_radius * 2, fill_radius * 2);
+        }
+    }
+
+    //비트맵을 화면에 출력
+    hdc_graphics.DrawImage(scroll_bar_bitmap, 0, 0);
+
+    // 펜 반지름 테스트 코드
+    //WCHAR t[50];
+    //wsprintf(t, L"현재 펜 반지름 %d", (int)draw_pointer->pen_style->getRadius());
+    //TextOut(hdc, 0, 0, t, wcslen(t));
+
+
 }

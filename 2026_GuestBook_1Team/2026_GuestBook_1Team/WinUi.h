@@ -33,6 +33,8 @@
 
 #define MAIN_UI_HEIGHT_RATIO 0.11 ///< 메인 UI창이 전체 높이 중 차지하는 비율을 정의한 매크로 상수
 
+#define PEN_CHECK_TIMER_ID 3 ///< 재생 끝 타이밍에 실행이 끝나는 재생 중 펜 변화 적용 타이머
+
 /**
 * @file
 * @brief 자식 창 관련 기능들을 구현한 헤더 파일.
