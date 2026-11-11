@@ -375,6 +375,12 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // --- 3. 리플레이 (2종) ---
         case CUSTOM_BUTTON_PLAY:
         {
+            // 이미 재생 중이라면 재실행 방지
+            if (replay.getReplayState() == replayStatePlaying)
+            {
+                break;
+            }
+                
             // 기존 펜 스타일 저장
             draw->temp_select_pen = draw->pen_style->getSelectPen();
             draw->temp_radius = draw->pen_style->getRadius();
