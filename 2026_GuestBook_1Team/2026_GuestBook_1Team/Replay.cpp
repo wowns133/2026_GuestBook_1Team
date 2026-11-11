@@ -7,6 +7,11 @@
 
 using namespace Gdiplus;
 
+void Replay::setMainUiHandle(HWND hWnd)
+{
+    main_ui_hwnd = hWnd;
+}
+
 void Replay::startReplay(Draw& draw, HWND targetHWnd)
 {
     if (replayState == replayStatePlaying)
@@ -64,9 +69,9 @@ void Replay::runReplay()
         return;
     }
 
-    int savedPen = drawObj->pen_style->getSelectPen();
-    float savedRadius = drawObj->pen_style->getRadius();
-    int savedColor = drawObj->pen_style->getPenColor();
+    //int savedPen = drawObj->pen_style->getSelectPen();
+    //float savedRadius = drawObj->pen_style->getRadius();
+    //int savedColor = drawObj->pen_style->getPenColor();
 
     RECT rect;
 
@@ -751,11 +756,11 @@ void Replay::runReplay()
     //drawObj->redrawAllLines(hwnd);
 
     // 재생 전 펜 설정 복구
-    drawObj->pen_style->settingPenStyle(
-        savedPen,
-        savedRadius,
-        savedColor
-    );
+    //drawObj->pen_style->settingPenStyle(
+    //    savedPen,
+    //    savedRadius,
+    //    savedColor
+    //);
 
     // Replay 종료 확인 후
     drawObj->redrawAllLines(hwnd);
@@ -770,6 +775,7 @@ void Replay::runReplay()
 void Replay::stopReplay()
 {
     replayState = replayStateStop;
+    PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
 
     if (replayThreadHandle != NULL)
     {
@@ -793,6 +799,7 @@ void Replay::pauseReplay()
 {
     if (replayState == replayStatePlaying)
         replayState = replayStatePause;
+    PostMessage(main_ui_hwnd, WM_REPLAY_ENDED, 0, 0);
 }
 
 void Replay::resumeReplay()

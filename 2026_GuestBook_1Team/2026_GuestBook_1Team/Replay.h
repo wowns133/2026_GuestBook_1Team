@@ -7,6 +7,9 @@
 #define replayStatePlaying 0
 #define replayStateStop 1
 #define replayStatePause 2
+#define WM_REPLAY_ENDED    (WM_USER + 1) ///< 리플레이가 끝났음을 알리는 윈도우 메시지
+
+
 
 class Replay
 {
@@ -16,6 +19,8 @@ private:
     int replayState = replayStateStop;
 
     HWND hwnd = NULL;
+    HWND main_ui_hwnd; ///< 메인 UI의 창 핸들
+
 
     // 지금까지 Replay가 완료한 그림
     Gdiplus::Bitmap* replay_canvas_bmp = nullptr;
@@ -32,6 +37,7 @@ private:
     void runReplay();
 
 public:
+    void setMainUiHandle(HWND hWnd);
     void startReplay(Draw& draw, HWND targetHWnd);
     void stopReplay();
     int getReplayState();

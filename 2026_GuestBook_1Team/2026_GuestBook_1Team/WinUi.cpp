@@ -100,6 +100,7 @@ void WinUi::createWinUIWindows(HWND hWnd)
     // screen_saver 객체의 내부 핸들 변수 세팅
     screen_saver.setOtherWindowsHandle(root_window_hwnd, main_ui_hwnd, canvas_hwnd);
     screen_saver.setReplay(&replay);
+    replay.setMainUiHandle(main_ui_hwnd);
 }
 
 void WinUi::resizeWinUIWindows(HWND hWnd, LPARAM lParam)
@@ -229,29 +230,30 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         SetTimer(hWnd, SCREEN_SAVER_TIMER_ID, 1000, NULL);
     }
     break;
+    case WM_REPLAY_ENDED:
+    {
+        // 재생 끝난 직후에 펜 스타일 세팅할 수 있도록
+        if (draw->is_play_end == 1)
+        {
+            if (replay.getReplayState() == replayStateStop || replay.getReplayState() == replayStatePause)
+            {
+                // 펜 스타일 변경 실행 완료
+                draw->is_play_end = 0;
+                // 저장해둔 스타일 변경
+                draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
+                // 스크롤바와 펜 샘플 화면 갱신
+                InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
+                KillTimer(main_ui_hwnd, PEN_CHECK_TIMER_ID);
+            }
+        }
+    }
+    break;
     case WM_TIMER:
     {
         if (wParam == SCREEN_SAVER_TIMER_ID)
         {
             // 타이머 처리 함수
             screen_saver.screenSaverTimer();
-        }
-        else if (wParam == PEN_CHECK_TIMER_ID)
-        {
-            // 재생 끝난 직후에 펜 스타일 세팅할 수 있도록
-            if (draw->is_play_end == 1)
-            {
-                if (replay.getReplayState() == replayStateStop)
-                {
-                    // 펜 스타일 변경 실행 완료
-                    draw->is_play_end = 0;
-                    // 저장해둔 스타일 변경
-                    draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
-                    // 스크롤바와 펜 샘플 화면 갱신
-                    InvalidateRect(pen_scroll.getScrollBarHandle(), NULL, FALSE);
-                    KillTimer(main_ui_hwnd, PEN_CHECK_TIMER_ID);
-                }
-            }
         }
     }
     break;
