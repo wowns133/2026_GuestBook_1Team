@@ -577,33 +577,35 @@ void PenScrollBar::tempDrawScrollBar(HDC hdc)
     }
     if (drawing_pen == HIGHLIGHTERPEN)
     {
-        Gdiplus::Pen temp_pen(Gdiplus::Color(100, 0, 0, 0), (draw_pointer->temp_radius * 2));
+        Gdiplus::Pen temp_pen(Gdiplus::Color(31, 0, 0, 0), (draw_pointer->temp_radius * 2));
+        temp_pen.SetStartCap(Gdiplus::LineCapSquare);		///< LineCapSquare : 끝을 더 연장시켜서 끝이 직각으로 나오도록함.
+        temp_pen.SetEndCap(Gdiplus::LineCapSquare);
 
         switch (draw_pointer->temp_pen_color)
         {
         case BLACK:
         {
-            temp_pen.SetColor(Gdiplus::Color(100, 0, 0, 0));
+            temp_pen.SetColor(Gdiplus::Color(31, 0, 0, 0));
         }
         break;
         case RED:
         {
-            temp_pen.SetColor(Gdiplus::Color(100, 255, 0, 0));
+            temp_pen.SetColor(Gdiplus::Color(31, 255, 0, 0));
         }
         break;
         case GREEN:
         {
-            temp_pen.SetColor(Gdiplus::Color(100, 0, 255, 0));
+            temp_pen.SetColor(Gdiplus::Color(31, 0, 255, 0));
         }
         break;
         case BLUE:
         {
-            temp_pen.SetColor(Gdiplus::Color(100, 0, 0, 255));
+            temp_pen.SetColor(Gdiplus::Color(31, 0, 0, 255));
         }
         break;
         case YELLOW:
         {
-            temp_pen.SetColor(Gdiplus::Color(100, 255, 255, 0));
+            temp_pen.SetColor(Gdiplus::Color(31, 255, 255, 0));
         }
         break;
         }
@@ -752,6 +754,4 @@ void PenScrollBar::tempDrawScrollBar(HDC hdc)
     //WCHAR t[50];
     //wsprintf(t, L"현재 펜 반지름 %d", (int)draw_pointer->pen_style->getRadius());
     //TextOut(hdc, 0, 0, t, wcslen(t));
-
-
 }
