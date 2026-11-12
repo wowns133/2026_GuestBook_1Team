@@ -766,6 +766,13 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
 
+        if (draw->is_pen == false)
+        {
+                draw->temp_select_pen = draw->pen_style->getSelectPen();
+                draw->temp_radius = draw->pen_style->getRadius();
+                draw->temp_pen_color = draw->pen_style->getPenColor();
+        }
+
         /// 펜 스타일에 따라 그리기 스타일 변경 ( penStyle 테스트 진행중 ... )
         draw->selectDrawStyle();
         draw->startDrawingLine(hWnd, lParam, draw->select_drawStyle);
@@ -783,11 +790,24 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     {
         // 화면보호기 실행까지의 시간 초기화
         screen_saver.resetScreenSaverTimer();
+        int was_drawing = false;
+        if (draw->is_drawing == true)
+        {
+            was_drawing = true;
+        }
 
         draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
 
         /// 붓 펜 한곳에 머무른 뒤 마우스 땠을 시 플래그 변수 false 지정
         draw->pen_style->setTimerFlag(false);
+        if (was_drawing == true)
+        {
+            was_drawing = false;
+            if (draw->is_pen == false && replay.getReplayState() == replayStateStop)
+            {
+                draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
+            }
+        }
         break;
     }
     case WM_RBUTTONDOWN:
@@ -800,7 +820,21 @@ LRESULT CALLBACK WinUi::CanvasWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
     break;
     case WM_MOUSELEAVE:
     {
+        int was_drawing = false;
+        if (draw->is_drawing == true)
+        {
+            was_drawing = true;
+        }
+
         draw->endDrawingLine(hWnd, lParam, draw->select_drawStyle);
+        if (was_drawing == true)
+        {
+            was_drawing = false;
+            if (draw->is_pen == false && replay.getReplayState() == replayStateStop)
+            {
+                draw->pen_style->settingPenStyle(draw->temp_select_pen, draw->temp_radius, draw->temp_pen_color);
+            }
+        }
         break;
     }
     case WM_MOUSEWHEEL:

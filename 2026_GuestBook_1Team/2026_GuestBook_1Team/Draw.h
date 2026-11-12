@@ -88,8 +88,6 @@ private:
 
 	double previous_speed = -1;	///< 붓 펜 이전 속도 
 
-	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
-
 	ULONGLONG start_time; ///< 선을 그릴 때 시작이 되는 지점(기준점)
 
 
@@ -130,6 +128,8 @@ private:
 protected:
 
 public:
+	bool is_drawing = false;///< 마우스 클릭 상태인지 표시하는 플래그 변수
+
 	//-------------------------------재생 중 펜 스타일 변경에 대응하기 위한 변수들-----------------------------//
 	int is_play_end = 0; ///< 재생이 끝난 직후인지 알려 주는 변수 0 - 단순히 재생 중 아닌 상태, 1 - 재생이 끝난 직후
 	int temp_pen_color;					///< 재생 중 저장한 펜 색깔 클래스 변수
