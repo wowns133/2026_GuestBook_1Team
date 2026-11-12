@@ -313,6 +313,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_select_pen = SOLIDPEN;
                 break;
             }
@@ -324,6 +325,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_select_pen = SPRAYPEN;
                 break;
             }
@@ -335,6 +337,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_select_pen = BRUSHPEN;
                 break;
             }
@@ -346,6 +349,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_select_pen = HIGHLIGHTERPEN;
                 break;
             }
@@ -479,6 +483,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_pen_color = RED;
                 break;
             }
@@ -490,6 +495,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_pen_color = BLACK;
                 break;
             }
@@ -501,6 +507,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_pen_color = GREEN;
                 break;
             }
@@ -512,6 +519,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_pen_color = BLUE;
                 break;
             }
@@ -523,6 +531,7 @@ LRESULT CALLBACK WinUi::MainUIWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         {
             if (replay.getReplayState() == replayStatePlaying)
             {
+                draw->setIsPen(true);
                 draw->temp_pen_color = YELLOW;
                 break;
             }
